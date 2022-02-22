@@ -238,8 +238,8 @@ class EGL14RenderClient extends GLRenderClient {
         if (viewPort.getWidth() <= 0 || viewPort.getHeight() <= 0) {
             return;
         }
-        if (layer instanceof GLLayerSet) {
-            render((GLLayerSet) layer, outputBuffer, layerTimeMs);
+        if (layer instanceof GLLayerGroup) {
+            render((GLLayerGroup) layer, outputBuffer, layerTimeMs);
             return;
         }
 
@@ -273,7 +273,7 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    protected void render(GLLayerSet frameLayer, GLFrameBuffer outputBuffer, long renderTimeMs) {
+    protected void render(GLLayerGroup frameLayer, GLFrameBuffer outputBuffer, long renderTimeMs) {
         if (outputBuffer == null) {
             throw new IllegalArgumentException("outputBuffer is null");
         }
@@ -298,8 +298,8 @@ class EGL14RenderClient extends GLRenderClient {
             layer.setRenderDuration(layer.getDuration() == GLLayer.DURATION_MATCH_PARENT ?
                     frameLayer.getRenderDuration() :
                     layer.getDuration());
-            if (layer instanceof GLLayerSet) {
-                GLLayerSet glLayerSet = (GLLayerSet) layer;
+            if (layer instanceof GLLayerGroup) {
+                GLLayerGroup glLayerSet = (GLLayerGroup) layer;
                 glLayerSet.render(currentFrameBuffer, renderTimeMs);
             } else {
                 layer.render(currentFrameBuffer, renderTimeMs);
@@ -694,8 +694,8 @@ class EGL14RenderClient extends GLRenderClient {
 
 
     @Override
-    public GLLayerSet newLayerSet() {
-        return new GLLayerSet(this);
+    public GLLayerGroup newLayerGroup() {
+        return new GLLayerGroup(this);
     }
 
     @Override

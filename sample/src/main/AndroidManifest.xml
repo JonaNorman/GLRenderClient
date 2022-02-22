@@ -26,7 +26,11 @@
 
         <activity
             android:name=".RenderClientActivity"
-            android:label="EGLClientActivity"></activity>
+            android:label="RenderClientActivity"></activity>
+
+        <activity
+            android:name=".GLLayerActivity"
+            android:label="GLLayerActivity"></activity>
     </application>
 
 </manifest>

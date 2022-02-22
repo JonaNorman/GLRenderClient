@@ -227,7 +227,7 @@ public abstract class GLTexture extends GLObject {
             width = textureWidth;
             height = textureHeight;
             premult = true;
-            textureMatrix.clear();
+            textureMatrix.setIdentity();
             maxMipmapLevel = 0;
         }
 

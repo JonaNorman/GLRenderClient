@@ -5,14 +5,14 @@ package com.byteplay.android.renderclient;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GLLayerSet extends GLLayer {
+public class GLLayerGroup extends GLLayer {
 
     private final List<GLLayer> layerList = new ArrayList<>();
 
     private GLScale scale = GLScale.FIT;
     private GLXfermode selfXfermode;
 
-    public GLLayerSet(GLRenderClient client) {
+    public GLLayerGroup(GLRenderClient client) {
         super(client, null, null, client.newDrawArray());
         selfXfermode = GLXfermode.SRC_OVER;
     }

@@ -1,28 +1,29 @@
 package com.byteplay.android.renderclient.math;
 
+import android.opengl.Matrix;
+
 import java.util.Arrays;
 import java.util.Stack;
 
-public class Matrix4 {
+public class Matrix4 implements Cloneable {
     private static final float[] MULTIPLY_MM_TEMP = new float[16];
     private final Stack<float[]> matrixStack = new Stack<>();
-    private float[] val;
+    private float[] val = new float[16];
     private final float[] mTemp = new float[16];
 
     public Matrix4(float[] matrix) {
-        this.val = matrix;
+        set(matrix);
     }
 
 
     public Matrix4(Matrix4 matrix) {
-        this.val = matrix.get();
+        set(matrix.get());
+        matrixStack.addAll(matrix.matrixStack);
     }
 
 
     public Matrix4() {
-        float[] matrix = new float[16];
-        android.opengl.Matrix.setIdentityM(matrix, 0);
-        val = matrix;
+        setIdentity();
     }
 
 
@@ -39,31 +40,31 @@ public class Matrix4 {
     }
 
     public Matrix4 lookAt(Vector3 eye, Vector3 center, Vector3 up) {
-        return lookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
+        return lookAt(eye.getX(), eye.getY(), eye.getZ(), center.getX(), center.getY(), center.getZ(), up.getX(), up.getY(), up.getZ());
     }
 
     public Matrix4 lookAt(float eyeX, float eyeY, float eyeZ,
                           float centerX, float centerY, float centerZ, float upX, float upY,
                           float upZ) {
-        android.opengl.Matrix.setLookAtM(mTemp, 0, eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
+        Matrix.setLookAtM(mTemp, 0, eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
         postMul(mTemp);
         return this;
     }
 
     public Matrix4 frustum(float left, float right, float bottom, float top, float near, float far) {
-        android.opengl.Matrix.frustumM(mTemp, 0, left, right, bottom, top, near, far);
+        Matrix.frustumM(mTemp, 0, left, right, bottom, top, near, far);
         postMul(mTemp);
         return this;
     }
 
     public Matrix4 perspective(float fovy, float aspect, float zNear, float zFar) {
-        android.opengl.Matrix.perspectiveM(mTemp, 0, fovy, aspect, zNear, zFar);
+        Matrix.perspectiveM(mTemp, 0, fovy, aspect, zNear, zFar);
         postMul(mTemp);
         return this;
     }
 
     public Matrix4 ortho(float left, float right, float bottom, float top, float near, float far) {
-        android.opengl.Matrix.orthoM(mTemp, 0, left, right, bottom, top, near, far);
+        Matrix.orthoM(mTemp, 0, left, right, bottom, top, near, far);
         postMul(mTemp);
         return this;
 
@@ -76,24 +77,24 @@ public class Matrix4 {
         while (angle <= -360.0f) {
             angle += 360.0f;
         }
-        android.opengl.Matrix.setRotateM(mTemp, 0, angle, x, y, z);
+        Matrix.setRotateM(mTemp, 0, angle, x, y, z);
         postMul(mTemp);
         return this;
     }
 
     public Matrix4 rotate(float angle, Vector3 rotate) {
-        return rotate(angle, rotate.x, rotate.y, rotate.z);
+        return rotate(angle, rotate.getX(), rotate.getY(), rotate.getZ());
     }
 
     public Matrix4 translate(float x, float y, float z) {
-        android.opengl.Matrix.setIdentityM(mTemp, 0);
-        android.opengl.Matrix.translateM(mTemp, 0, x, y, z);
+        Matrix.setIdentityM(mTemp, 0);
+        Matrix.translateM(mTemp, 0, x, y, z);
         postMul(mTemp);
         return this;
     }
 
     public Matrix4 translate(Vector3 translate) {
-        return translate(translate.x, translate.y, translate.z);
+        return translate(translate.getX(), translate.getY(), translate.getZ());
     }
 
     public Matrix4 translateX(float x) {
@@ -112,12 +113,12 @@ public class Matrix4 {
     }
 
     public Matrix4 scale(Vector3 scale) {
-        return scale(scale.x, scale.y, scale.z);
+        return scale(scale.getX(), scale.getY(), scale.getZ());
     }
 
     public Matrix4 scale(float x, float y, float z) {
-        android.opengl.Matrix.setIdentityM(mTemp, 0);
-        android.opengl.Matrix.scaleM(mTemp, 0, x, y, z);
+        Matrix.setIdentityM(mTemp, 0);
+        Matrix.scaleM(mTemp, 0, x, y, z);
         postMul(mTemp);
         return this;
     }
@@ -139,8 +140,8 @@ public class Matrix4 {
     }
 
 
-    public Matrix4 clear() {
-        android.opengl.Matrix.setIdentityM(val, 0);
+    public Matrix4 setIdentity() {
+        Matrix.setIdentityM(val, 0);
         return this;
     }
 
@@ -179,14 +180,20 @@ public class Matrix4 {
         return this;
     }
 
+    @Override
+    public Matrix4 clone() {
+        Matrix4 matrix4 = new Matrix4(val);
+        return matrix4;
+    }
+
     static void multiplyMM(float[] result, float[] left, float[] right) {
         boolean useTemp = result == left || result == right;
         if (!useTemp) {
-            android.opengl.Matrix.multiplyMM(result, 0, left, 0, right, 0);
+            Matrix.multiplyMM(result, 0, left, 0, right, 0);
             return;
         }
         synchronized (MULTIPLY_MM_TEMP) {
-            android.opengl.Matrix.multiplyMM(MULTIPLY_MM_TEMP, 0, left, 0, right, 0);
+            Matrix.multiplyMM(MULTIPLY_MM_TEMP, 0, left, 0, right, 0);
             System.arraycopy(MULTIPLY_MM_TEMP, 0, result, 0, 16);
         }
     }

@@ -1,9 +1,9 @@
 package com.byteplay.android.renderclient.math;
 
-public class Vector2 {
+public class Vector2 implements Cloneable {
 
-    public float x;
-    public float y;
+    private float x;
+    private float y;
 
     public Vector2() {
     }
@@ -19,8 +19,10 @@ public class Vector2 {
     }
 
 
-    public Vector2 cpy() {
-        return new Vector2(this);
+    @Override
+    public Vector2 clone() {
+        Vector2 vector2 = new Vector2(this);
+        return vector2;
     }
 
     public float len() {
@@ -44,6 +46,15 @@ public class Vector2 {
         return this;
     }
 
+    public Vector2 setY(float y) {
+        this.y = y;
+        return this;
+    }
+
+    public Vector2 setX(float x) {
+        this.x = x;
+        return this;
+    }
 
     public Vector2 sub(Vector2 v) {
         x -= v.x;
@@ -147,6 +158,13 @@ public class Vector2 {
         return x == 0 && y == 0;
     }
 
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
 
     public Vector2 setZero() {
         this.x = 0;

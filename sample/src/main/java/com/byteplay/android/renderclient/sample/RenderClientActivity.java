@@ -21,7 +21,7 @@ import com.byteplay.android.renderclient.GLFrameLayoutLayer;
 import com.byteplay.android.renderclient.GLGravity;
 import com.byteplay.android.renderclient.GLKeyframes;
 import com.byteplay.android.renderclient.GLLayer;
-import com.byteplay.android.renderclient.GLLayerSet;
+import com.byteplay.android.renderclient.GLLayerGroup;
 import com.byteplay.android.renderclient.GLRenderClient;
 import com.byteplay.android.renderclient.GLShaderEffect;
 import com.byteplay.android.renderclient.GLTexture;
@@ -74,7 +74,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
     }
 
 
-    GLLayerSet frameLayer;
+    GLLayerGroup frameLayer;
     EGLSurface eglSurface;
 
     @Override
@@ -89,7 +89,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                 }
                 eglSurface = renderClient.newWindowSurface(surface);
                 renderClient.attachCurrentThread();
-                frameLayer = renderClient.newLayerSet();
+                frameLayer = renderClient.newLayerGroup();
                 frameLayer.setDuration(10000);
 
                 {
@@ -123,7 +123,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                 }
 
                 {
-                    GLLayerSet frameLayer = renderClient.newLayerSet();
+                    GLLayerGroup frameLayer = renderClient.newLayerGroup();
                     frameLayer.setWidth(500);
                     frameLayer.setHeight(500);
                     frameLayer.setGravity(GLGravity.TOP_CENTER_HORIZONTAL);
@@ -184,7 +184,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                 }
 
                 {
-                    GLLayerSet frameLayer = renderClient.newLayerSet();
+                    GLLayerGroup frameLayer = renderClient.newLayerGroup();
                     frameLayer.setWidth(600);
                     frameLayer.setHeight(500);
                     frameLayer.setGravity(GLGravity.BOTTOM_CENTER_HORIZONTAL);

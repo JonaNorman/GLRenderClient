@@ -82,7 +82,7 @@ public abstract class GLRenderClient {
 
     public abstract GLColorLayer newColorLayer();
 
-    public abstract GLLayerSet newLayerSet();
+    public abstract GLLayerGroup newLayerGroup();
 
     public abstract GLFrameLayoutLayer newFrameLayoutLayer(Context context, int styleRes);
 
@@ -100,7 +100,7 @@ public abstract class GLRenderClient {
 
     protected abstract void render(GLLayer layer, GLFrameBuffer frameBuffer, long renderTimeMs);
 
-    protected abstract void render(GLLayerSet layer, GLFrameBuffer frameBuffer, long renderTimeMs);
+    protected abstract void render(GLLayerGroup layer, GLFrameBuffer frameBuffer, long renderTimeMs);
 
     protected abstract GLFrameBuffer applyEffect(GLEffect effect, GLFrameBuffer input, long timeMs);
 
