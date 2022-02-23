@@ -123,10 +123,7 @@ public class GLLayoutLayer extends GLLayer {
 
     @Override
     protected void onDispose() {
-        if (handler != null) {
-            handler.removeCallbacksAndMessages(null);
-        }
-        dispatchDetachWindow(rootLayout);
+        detachWindow();
         surfaceTexture.setOnFrameAvailableListener(null);
         releaseSurfaceTextureHandler();
         surface.release();
@@ -210,8 +207,7 @@ public class GLLayoutLayer extends GLLayer {
         if (handler == null) {
             handler = new Handler();
         } else if (!handler.getLooper().equals(Looper.myLooper())) {
-            handler.removeCallbacksAndMessages(null);
-            dispatchDetachWindow(rootLayout);
+            detachWindow();
             handler = new Handler();
         }
         dispatchAttachWindow(rootLayout);
@@ -320,6 +316,13 @@ public class GLLayoutLayer extends GLLayer {
                 dispatchPreDraw(vg.getChildAt(i));
             }
         }
+    }
+
+    private void detachWindow() {
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+        }
+        dispatchDetachWindow(rootLayout);
     }
 
 

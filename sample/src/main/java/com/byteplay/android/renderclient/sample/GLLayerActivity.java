@@ -12,8 +12,8 @@ import android.view.TextureView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.byteplay.android.renderclient.GLRenderSurface;
 import com.byteplay.android.renderclient.GLRenderClient;
+import com.byteplay.android.renderclient.GLRenderSurface;
 import com.byteplay.android.renderclient.GLTexture;
 import com.byteplay.android.renderclient.GLTextureLayer;
 import com.byteplay.android.renderclient.GLTextureType;
@@ -31,6 +31,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
     private Handler handler;
 
     private AtomicBoolean surfaceDestroy = new AtomicBoolean();
+
 
     private Handler.Callback callback = new Handler.Callback() {
         GLRenderSurface eglSurface;

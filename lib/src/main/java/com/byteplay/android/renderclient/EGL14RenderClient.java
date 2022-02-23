@@ -100,6 +100,10 @@ class EGL14RenderClient extends GLRenderClient {
             }
         }
     };
+    private EGLSurface attachRecordReadEGLSurface;
+    private EGLSurface attachRecordDrawEGLSurface;
+    private EGLDisplay attachRecordDisplay;
+    private EGLContext attachRecordContext;
 
     @Override
     protected void checkThread() {
@@ -110,6 +114,10 @@ class EGL14RenderClient extends GLRenderClient {
             }
             if (!currentThread.equals(attachThread)) {
                 throw new IllegalStateException("must call in attachThread " + attachThread.getName());
+            }
+            EGLContext currentContext = EGL14.eglGetCurrentContext();
+            if (!currentContext.equals(eglContext)) {
+                throw new IllegalStateException("currentEGLContext is wrong");
             }
         }
     }
@@ -197,15 +205,18 @@ class EGL14RenderClient extends GLRenderClient {
         blend = newBlend();
     }
 
-
     @Override
     public void attachCurrentThread() {
         checkRelease();
         Thread currentThread = Thread.currentThread();
-        if (!currentThread.equals(attachThread)) {
-            defaultBufferSurface.makeCurrent();
-            attachThread = currentThread;
+        if (currentThread.equals(attachThread)) {
+            return;
         }
+        attachRecordReadEGLSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_READ);
+        attachRecordDrawEGLSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
+        attachRecordContext = EGL14.eglGetCurrentContext();
+        defaultBufferSurface.makeCurrent();
+        attachThread = currentThread;
     }
 
     @Override
@@ -218,9 +229,10 @@ class EGL14RenderClient extends GLRenderClient {
         if (!currentThread.equals(attachThread)) {
             throw new IllegalThreadStateException("detach must in attached thread");
         }
-        if (currentEGLSurface != null) {
-            currentEGLSurface.makeNoCurrent();
-        }
+        EGL14.eglMakeCurrent(eglDisplay, attachRecordDrawEGLSurface, attachRecordReadEGLSurface, attachRecordContext);
+        checkEGLError();
+        currentEGLSurface = null;
+        attachThread = null;
     }
 
     @Override
@@ -867,17 +879,12 @@ class EGL14RenderClient extends GLRenderClient {
         if (release) {
             return;
         }
-        android.opengl.EGLSurface currentReadEGLSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_READ);
-        android.opengl.EGLSurface currentDrawEGLSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
-        EGLDisplay currentDisplay = EGL14.eglGetCurrentDisplay();
-        EGLContext currentContext = EGL14.eglGetCurrentContext();
-        defaultBufferSurface.makeCurrent();
+        attachCurrentThread();
         List<GLObject> disposeObjectList = new ArrayList<>();
         disposeObjectList.addAll(objectList);
         for (GLObject object : disposeObjectList) {
             object.dispose();
         }
-        defaultBufferSurface.makeNoCurrent();
         List<GLRenderSurface> disposeSurfaceList = new ArrayList<>();
         disposeSurfaceList.addAll(renderSurfaceList);
         for (GLRenderSurface eglSurface : disposeSurfaceList) {
@@ -888,6 +895,7 @@ class EGL14RenderClient extends GLRenderClient {
         windowSurfaceCache.clear();
         shaderUsingMap.clear();
         shaderMap.clear();
+        detachCurrentThread();
         EGL14.eglDestroyContext(eglDisplay, eglContext);
         checkEGLError();
         EGL14.eglReleaseThread();
@@ -895,10 +903,6 @@ class EGL14RenderClient extends GLRenderClient {
         EGL14.eglTerminate(eglDisplay);
         checkEGLError();
         release = true;
-        if (!currentContext.equals(eglContext)) {
-            EGL14.eglMakeCurrent(currentDisplay, currentDrawEGLSurface, currentReadEGLSurface, currentContext);
-            checkEGLError();
-        }
     }
 
 

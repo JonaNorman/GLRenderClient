@@ -2,8 +2,7 @@
 a lightweight rendering library that makes people forget the technical details of Opengl
 
 # task
-- [ ] demo 
-- [ ] check code
+- [ ] demo
 - [ ] article
 - [ ] readme
 - [ ] scale rotate offset
