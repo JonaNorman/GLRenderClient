@@ -16,34 +16,30 @@ class GL20FrameBuffer extends GLFrameBuffer {
     private final GL20 gl;
     private int initWidth;
     private int initHeight;
-    private int width;
-    private int height;
     private GLTexture texture;
-    private final EGLSurface eglSurface;
+    private final GLRenderSurface renderSurface;
 
     public GL20FrameBuffer(GLRenderClient client, int width, int height) {
         super(client);
         this.defaultFrameBuffer = false;
         this.initWidth = width;
         this.initHeight = height;
-        this.width = width;
-        this.height = height;
         gl = client.getGL20();
-        eglSurface = client.getDefaultEGLBufferSurface();
+        renderSurface = client.getDefaultPBufferSurface();
     }
 
     public GL20FrameBuffer(GLRenderClient client, GLTexture texture) {
         super(client);
         this.defaultFrameBuffer = false;
         gl = client.getGL20();
-        eglSurface = client.getDefaultEGLBufferSurface();
+        renderSurface = client.getDefaultPBufferSurface();
         this.texture = texture;
     }
 
-    public GL20FrameBuffer(GLRenderClient client, EGLSurface surface) {
+    public GL20FrameBuffer(GLRenderClient client, GLRenderSurface surface) {
         super(client);
         defaultFrameBuffer = true;
-        eglSurface = surface;
+        renderSurface = surface;
         gl = client.getGL20();
     }
 
@@ -66,23 +62,21 @@ class GL20FrameBuffer extends GLFrameBuffer {
     @Override
     public void setSize(int width, int height) {
         super.setSize(width, height);
-        this.width = width;
-        this.height = height;
     }
 
     @Override
-    public EGLSurface getEGLSurface() {
-        return eglSurface;
+    public GLRenderSurface getRenderSurface() {
+        return renderSurface;
     }
 
     @Override
     public int getWidth() {
-        return defaultFrameBuffer ? eglSurface.getWidth() : getColorTexture().getWidth();
+        return defaultFrameBuffer ? renderSurface.getWidth() : getColorTexture().getWidth();
     }
 
     @Override
     public int getHeight() {
-        return defaultFrameBuffer ? eglSurface.getHeight() : getColorTexture().getHeight();
+        return defaultFrameBuffer ? renderSurface.getHeight() : getColorTexture().getHeight();
     }
 
     @Override
@@ -114,7 +108,7 @@ class GL20FrameBuffer extends GLFrameBuffer {
 
     @Override
     protected void onBind() {
-        eglSurface.makeCurrent();
+        renderSurface.makeCurrent();
         gl.glBindFramebuffer(GL20.GL_FRAMEBUFFER, frameBufferId);
     }
 
@@ -207,11 +201,11 @@ class GL20FrameBuffer extends GLFrameBuffer {
         if (this == o) return true;
         if (!(o instanceof GL20FrameBuffer)) return false;
         GL20FrameBuffer that = (GL20FrameBuffer) o;
-        return frameBufferId == that.frameBufferId && defaultFrameBuffer == that.defaultFrameBuffer && initWidth == that.initWidth && initHeight == that.initHeight && Objects.equals(gl, that.gl) && Objects.equals(texture, that.texture) && Objects.equals(eglSurface, that.eglSurface);
+        return frameBufferId == that.frameBufferId && defaultFrameBuffer == that.defaultFrameBuffer && initWidth == that.initWidth && initHeight == that.initHeight && Objects.equals(gl, that.gl) && Objects.equals(texture, that.texture) && Objects.equals(renderSurface, that.renderSurface);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(frameBufferId, defaultFrameBuffer, gl, initWidth, initHeight, texture, eglSurface);
+        return Objects.hash(frameBufferId, defaultFrameBuffer, gl, initWidth, initHeight, texture, renderSurface);
     }
 }

@@ -6,7 +6,7 @@ import android.opengl.EGLExt;
 
 import java.util.Objects;
 
-class EGL14Config implements EGLConfig {
+class EGL14Config extends EGLConfig {
 
     private static final int[] EGL_CONFIG_ENUMS =
             {
@@ -409,7 +409,7 @@ class EGL14Config implements EGLConfig {
 
 
     @Override
-    public android.opengl.EGLConfig getEGLConfig() {
+    protected android.opengl.EGLConfig getEGLConfig() {
         return eglConfig;
     }
 

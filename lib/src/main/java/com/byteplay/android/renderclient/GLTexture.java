@@ -2,9 +2,8 @@ package com.byteplay.android.renderclient;
 
 import android.graphics.Bitmap;
 
-
-import com.byteplay.android.renderclient.math.MathUtils;
 import com.byteplay.android.renderclient.math.Matrix4;
+import com.byteplay.android.renderclient.utils.MathUtils;
 
 import java.util.Objects;
 
@@ -101,10 +100,18 @@ public abstract class GLTexture extends GLObject {
         this.premult = premult;
     }
 
-    public void setTextureFilter(GLTextureFilter minFilter, GLTextureFilter magFilter) {
+    public void setMinFilter(GLTextureFilter minFilter) {
         GLTextureFilterMethod textureFilterMethod = findMethod(GLTextureFilterMethod.class);
         textureFilterMethod.setMinFilter(minFilter);
+    }
+
+    public void setMagFilter(GLTextureFilter magFilter) {
+        GLTextureFilterMethod textureFilterMethod = findMethod(GLTextureFilterMethod.class);
         textureFilterMethod.setMagFilter(magFilter);
+    }
+
+    public void applyFilter() {
+        GLTextureFilterMethod textureFilterMethod = findMethod(GLTextureFilterMethod.class);
         textureFilterMethod.call();
     }
 
@@ -118,10 +125,18 @@ public abstract class GLTexture extends GLObject {
         return textureFilterMethod.getMagFilter();
     }
 
-    public void setTextureWrap(GLTextureWrap wraps, GLTextureWrap wrapt) {
+    public void setWrapS(GLTextureWrap wraps) {
         GLTextureWrapMethod textureWrapMethod = findMethod(GLTextureWrapMethod.class);
         textureWrapMethod.setWrapS(wraps);
-        textureWrapMethod.setWrapT(wrapt);
+    }
+
+    public void setWrapT(GLTextureWrap wraps) {
+        GLTextureWrapMethod textureWrapMethod = findMethod(GLTextureWrapMethod.class);
+        textureWrapMethod.setWrapT(wraps);
+    }
+
+    public void applyWrap() {
+        GLTextureWrapMethod textureWrapMethod = findMethod(GLTextureWrapMethod.class);
         textureWrapMethod.call();
     }
 
@@ -157,8 +172,8 @@ public abstract class GLTexture extends GLObject {
 
 
     class GLTextureFilterMethod extends GLMethod {
-        private GLTextureFilter minFilter = GLTextureFilter.LINEAR;
-        private GLTextureFilter magFilter = GLTextureFilter.LINEAR;
+        private GLTextureFilter minFilter = GLTextureFilter.NEAREST;
+        private GLTextureFilter magFilter = GLTextureFilter.NEAREST;
 
         public GLTextureFilterMethod() {
             super();
@@ -172,6 +187,12 @@ public abstract class GLTexture extends GLObject {
 
 
         public void setMagFilter(GLTextureFilter magFilter) {
+            if (magFilter == GLTextureFilter.LINEAR_MIPMAP_LINEAR
+                    || magFilter == GLTextureFilter.LINEAR_MIPMAP_NEAREST
+                    || magFilter == GLTextureFilter.NEAREST_MIPMAP_LINEAR
+                    || magFilter == GLTextureFilter.NEAREST_MIPMAP_NEAREST) {
+                throw new IllegalArgumentException("mag filter can not set mipmap");
+            }
             this.magFilter = magFilter;
         }
 
@@ -288,11 +309,14 @@ public abstract class GLTexture extends GLObject {
         if (!(o instanceof GLTexture)) return false;
         if (!super.equals(o)) return false;
         GLTexture texture = (GLTexture) o;
-        return textureId == texture.textureId && textureType == texture.textureType;
+        return textureId == texture.textureId
+                && textureType == texture.textureType
+                && isCreated() == texture.isCreated()
+                && isDisposed() == texture.isDisposed();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), textureType, textureId);
+        return Objects.hash(textureType, textureId, isCreated(), isDisposed());
     }
 }

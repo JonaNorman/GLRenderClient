@@ -37,7 +37,7 @@ public abstract class GLRenderClient {
 
     public abstract GLFrameBuffer newFrameBuffer(int width, int height);
 
-    public abstract GLFrameBuffer newFrameBuffer(EGLSurface eglSurface);
+    public abstract GLFrameBuffer newFrameBuffer(GLRenderSurface eglSurface);
 
     public abstract GLFrameBuffer newFrameBuffer(Surface surface);
 
@@ -55,18 +55,20 @@ public abstract class GLRenderClient {
 
     public abstract GLViewPort newViewPort();
 
-    public abstract EGLWindowSurface newWindowSurface(Surface surface);
+    public abstract GLWindowSurface obtainWindowSurface(Surface surface);
 
-    public abstract EGLWindowSurface newWindowSurface(SurfaceHolder surface);
+    public abstract GLWindowSurface obtainWindowSurface(SurfaceHolder surface);
 
-    public abstract EGLWindowSurface newWindowSurface(SurfaceTexture surface);
+    public abstract GLWindowSurface obtainWindowSurface(SurfaceTexture surface);
 
-    public abstract EGLPbufferSurface newBufferSurface(int width, int height);
+    public abstract GLPbufferSurface newPbufferSurface(int width, int height);
 
 
-    protected abstract EGLPbufferSurface getDefaultEGLBufferSurface();
+    protected abstract GLPbufferSurface getDefaultPBufferSurface();
 
-    protected abstract void makeCurrentEGLSurface(EGLSurface surface);
+    protected abstract void makeCurrent(GLRenderSurface surface);
+
+    protected abstract void swapBuffers(GLRenderSurface surface);
 
     protected abstract GLFrameBuffer onBindFrameBuffer(GLFrameBuffer newFrameBuffer);
 
@@ -84,9 +86,9 @@ public abstract class GLRenderClient {
 
     public abstract GLLayerGroup newLayerGroup();
 
-    public abstract GLFrameLayoutLayer newFrameLayoutLayer(Context context, int styleRes);
+    public abstract GLLayoutLayer newLayoutLayer(Context context, int styleRes);
 
-    public abstract GLFrameLayoutLayer newFrameLayoutLayer(Context context);
+    public abstract GLLayoutLayer newLayoutLayer(Context context);
 
 
     public abstract void setMaxProgramSize(int maxProgramSize);
@@ -94,7 +96,7 @@ public abstract class GLRenderClient {
 
     public abstract void attachCurrentThread();
 
-    public abstract void detachThread();
+    public abstract void detachCurrentThread();
 
     public abstract Thread getAttachThread();
 
@@ -112,9 +114,9 @@ public abstract class GLRenderClient {
 
     protected abstract void disposeObject(GLObject object);
 
-    protected abstract void createEGLSurface(EGLSurface surface);
+    protected abstract void createEGLSurface(GLRenderSurface surface);
 
-    protected abstract void disposeEGLSurface(EGLSurface surface);
+    protected abstract void disposeEGLSurface(GLRenderSurface surface);
 
     protected abstract void checkThread();
 
@@ -126,11 +128,18 @@ public abstract class GLRenderClient {
 
     protected abstract EGLDisplay getEGLDisplay();
 
-    protected abstract android.opengl.EGLSurface createEGLWindowSurface(EGLWindowSurface windowSurface);
+    protected abstract android.opengl.EGLSurface create(GLWindowSurface windowSurface);
 
-    protected abstract android.opengl.EGLSurface createEGLPbufferSurface(EGLPbufferSurface eglPbufferSurface);
+    protected abstract android.opengl.EGLSurface create(GLPbufferSurface eglPbufferSurface);
 
-    protected abstract void destroyEGLSurface(EGLSurface eglSurface);
+
+    protected abstract void destroy(GLWindowSurface windowSurface);
+
+    protected abstract void destroy(GLPbufferSurface pbufferSurface);
+
+    protected abstract int queryWidth(GLWindowSurface windowSurface);
+
+    protected abstract int queryHeight(GLWindowSurface windowSurface);
 
     public abstract void addGLErrorListener(GLErrorListener listener);
 
@@ -169,14 +178,14 @@ public abstract class GLRenderClient {
             this.context = context;
         }
 
-        public void setConfigChooser(EGLConfigChooser configChooser) {
+        public void setEGLConfigChooser(EGLConfigChooser configChooser) {
             this.configChooser = configChooser;
         }
 
         public GLRenderClient build() {
             EGLConfigChooser chooser = configChooser;
             if (chooser == null) {
-                chooser = new EGLComponentChooser.Builder().build();
+                chooser = new EGLConfigSimpleChooser.Builder().build();
             }
             return new EGL14RenderClient(context,
                     chooser);

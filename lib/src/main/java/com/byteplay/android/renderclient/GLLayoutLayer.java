@@ -1,5 +1,6 @@
 package com.byteplay.android.renderclient;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.SurfaceTexture;
@@ -23,26 +24,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class GLFrameLayoutLayer extends GLLayer {
+public class GLLayoutLayer extends GLLayer {
 
-    private static final float POSITION_COORDINATES[] = {
-            -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
-            1.0f, -1.0f, 0.0f, 1.0f,//right bottom
-            -1.0f, 1.0f, 0.0f, 1.0f, //left top
-            1.0f, 1.0f, 0.0f, 1.0f//right top
-    };
-
-    private static final float TEXTURE_COORDINATES[] = {
-            0.0f, 0.0f, 0.0f, 1.0f,//left bottom
-            1.0f, 0.0f, 0.0f, 1.0f,//right bottom
-            0.0f, 1.0f, 0.0f, 1.0f,//left top
-            1.0f, 1.0f, 0.0f, 1.0f//right  top
-    };
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
             "attribute vec4 position;\n" +
@@ -78,9 +64,6 @@ public class GLFrameLayoutLayer extends GLLayer {
 
     private final Map<View, Boolean> viewAttachments = new HashMap<>();
 
-    private final float[] positionCoordinates;
-    private final float[] textureCoordinates;
-    private final Matrix4 positionMatrix = new Matrix4();
     private final Matrix4 textureMatrix = new Matrix4();
     private final FrameLayout rootLayout;
 
@@ -95,16 +78,14 @@ public class GLFrameLayoutLayer extends GLLayer {
     private Object object = new Object();
     private boolean done;
 
-    protected GLFrameLayoutLayer(GLRenderClient client, Context context) {
+    protected GLLayoutLayer(GLRenderClient client, Context context) {
         this(client, context, 0);
     }
 
-    protected GLFrameLayoutLayer(GLRenderClient client, Context context, int style) {
+    protected GLLayoutLayer(GLRenderClient client, Context context, int style) {
         super(client, VERTEX_SHADER, FRAGMENT_SHADER, client.newDrawArray());
         context = new ContextThemeWrapper(context.getApplicationContext(), style);
         rootLayout = new FrameLayout(context);
-        textureCoordinates = Arrays.copyOf(TEXTURE_COORDINATES, TEXTURE_COORDINATES.length);
-        positionCoordinates = Arrays.copyOf(POSITION_COORDINATES, POSITION_COORDINATES.length);
         ReflectionLimitUtils.clearLimit();
     }
 
@@ -115,39 +96,18 @@ public class GLFrameLayoutLayer extends GLLayer {
     @Override
     protected void onCreate() {
         viewTexture = client.newTexture(GLTextureType.TEXTURE_OES);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            surfaceTexture = new SurfaceTexture(viewTexture.getTextureId());
-            surfaceTexture.setOnFrameAvailableListener(surfaceTexture -> {
-                synchronized (object) {
-                    done = true;
-                    object.notify();
-                }
-            }, getSurfaceTextureHandler());
-        } else {
-            AtomicBoolean done = new AtomicBoolean();
-            Handler handler = getSurfaceTextureHandler();
-            handler.post(() -> {
-                surfaceTexture = new SurfaceTexture(viewTexture.getTextureId());
-                synchronized (done) {
-                    done.set(true);
-                    done.notifyAll();
-                }
-            });
-            synchronized (done) {
-                try {
-                    while (!done.get()) {
-                        done.wait();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        surfaceTexture = new SurfaceTexture(viewTexture.getTextureId());
+        surfaceTexture.setOnFrameAvailableListener(surfaceTexture -> {
+            synchronized (object) {
+                done = true;
+                object.notify();
             }
-        }
+        }, getSurfaceTextureHandler());
         surface = new Surface(surfaceTexture);
     }
 
     private Handler getSurfaceTextureHandler() {
-        synchronized (GLFrameLayoutLayer.class) {
+        synchronized (GLLayoutLayer.class) {
             if (surfaceTextureHandler == null) {
                 if (FRAME_AVAILABLE_HANDLER == null) {
                     HandlerThread handlerThread = new HandlerThread("SurfaceTextureFrameAvailableThread");
@@ -175,7 +135,7 @@ public class GLFrameLayoutLayer extends GLLayer {
     }
 
     private void releaseSurfaceTextureHandler() {
-        synchronized (GLFrameLayoutLayer.class) {
+        synchronized (GLLayoutLayer.class) {
             if (surfaceTextureHandler != null) {
                 surfaceTextureHandler.removeCallbacksAndMessages(null);
                 FRAME_AVAILABLE_COUNT--;
@@ -199,12 +159,8 @@ public class GLFrameLayoutLayer extends GLLayer {
         GLShaderParam shaderParam = layer.getDefaultShaderParam();
         shaderParam.put("inputImageTexture", viewTexture.getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
-        shaderParam.put("position", positionCoordinates);
-        shaderParam.put("inputTextureCoordinate", textureCoordinates);
-        shaderParam.put("positionMatrix", positionMatrix.get());
-        shaderParam.put("textureMatrix", positionMatrix.get());
-        int viewWidth = layer.getViewWidth();
-        int viewHeight = layer.getViewHeight();
+        int viewWidth = layer.getRenderWidth();
+        int viewHeight = layer.getRenderHeight();
         if (lastSurfaceTextureWidth != viewWidth || lastSurfaceTextureHeight != viewHeight) {
             surfaceTexture.setDefaultBufferSize(viewWidth, viewHeight);
             lastSurfaceTextureWidth = viewWidth;
@@ -370,6 +326,7 @@ public class GLFrameLayoutLayer extends GLLayer {
     private void dispatchDetachWindow(View view) {
         if (viewAttachments.containsKey(view)) {
             try {
+                @SuppressLint("SoonBlockedPrivateApi")
                 Method method = View.class.getDeclaredMethod("dispatchDetachedFromWindow");
                 method.setAccessible(true);
                 method.invoke(view);

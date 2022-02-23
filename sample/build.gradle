@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.byteplay.android.renderclient.sample"
-        minSdkVersion 16
+        minSdkVersion 21
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 29
         versionCode 1

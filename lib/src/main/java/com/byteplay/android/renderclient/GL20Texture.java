@@ -4,7 +4,7 @@ package com.byteplay.android.renderclient;
 import android.graphics.Bitmap;
 import android.opengl.GLUtils;
 
-import com.byteplay.android.renderclient.math.MathUtils;
+import com.byteplay.android.renderclient.utils.MathUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -120,7 +120,7 @@ class GL20Texture extends GLTexture {
                 int stride = imgWidth;
                 int[] tempLine = new int[stride];
                 for (int j = 0; j < imgHeight; j++) {
-                    bitmap.getPixels(tempLine, 0, stride, 0, j, width, 1);//get s
+                    bitmap.getPixels(tempLine, 0, stride, 0, j, width, 1);
                     premultBitmap.setPixels(tempLine, 0, stride, 0, j, width, 1);
                 }
                 premultBitmap.setPremultiplied(true);

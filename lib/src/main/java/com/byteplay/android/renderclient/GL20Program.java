@@ -114,7 +114,7 @@ class GL20Program extends GLProgram {
                     for (int j = 0; j < size[0]; j++) {
                         String arrayName = uniformName + "[" + j + "]";
                         int arrayLocation = gl.glGetUniformLocation(programId, arrayName);
-                        GLUniform arrayUniform = new GL20Uniform(client, this, arrayLocation, type[0], arrayName, 1);
+                        GLUniform arrayUniform = new GL20Uniform(client, this, arrayLocation, type[0], arrayName, 1);// array data is limited to one
                         uniformMap.put(arrayName, arrayUniform);
                     }
                 }
@@ -140,7 +140,7 @@ class GL20Program extends GLProgram {
                 GLUniform uniform = uniformMap.get(key);
                 if (uniform != null) {
                     uniform.update(shaderParam.get(key));
-                }
+                }//In Opengl, the data is not set and the last data is used,you can use defaultShaderParam
                 GLAttribute attribute = attributeMap.get(key);
                 if (attribute != null) {
                     attribute.update(shaderParam.get(key));

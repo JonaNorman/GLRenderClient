@@ -3,7 +3,6 @@ package com.byteplay.android.renderclient;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,21 +35,21 @@ public class GLLayer extends GLObject {
     private int y;
     private int width = SIZE_MATCH_PARENT;
     private int height = SIZE_MATCH_PARENT;
-    private long time;
-    private int viewWidth;
-    private int viewHeight;
-    private EGLSurface outEGLSurface;
+    private long timeMs;
+    private int renderWidth;
+    private int renderHeight;
+    private GLRenderSurface outEGLSurface;
     private GLFrameBuffer ownFrameBuffer;
     private int backgroundColor;
     private List<LayerTransform> layerTransforms = new ArrayList<>();
     private long startTime;
     private long duration = DURATION_MATCH_PARENT;
     private long renderDuration = DURATION_MATCH_PARENT;
-    private Map<String, GLKeyframes> keyframesMap = new HashMap<>();
+    private Map<String, GLKeyframeSet> keyframesMap = new HashMap<>();
     private GLEffectSet effectSet;
 
 
-    protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode,  GLDraw draw) {
+    protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode, GLDraw draw) {
         super(client);
         this.enable = client.newEnable();
         this.xfermode = GLXfermode.SRC_OVER;
@@ -70,21 +69,22 @@ public class GLLayer extends GLObject {
 
     @Override
     protected void onDispose() {
-
         if (ownFrameBuffer != null) {
             ownFrameBuffer.dispose();
             ownFrameBuffer = null;
         }
-
     }
 
     public void render(GLFrameBuffer frameBuffer) {
         render(frameBuffer, getTime());
     }
 
-    public void render(EGLSurface eglSurface, SurfaceReadBitmapCallback callback) {
+    public void render(GLRenderSurface eglSurface, SurfaceReadBitmapCallback callback) {
         if (outEGLSurface != eglSurface) {
             outEGLSurface = eglSurface;
+            if (ownFrameBuffer != null) {
+                ownFrameBuffer.dispose();
+            }
             ownFrameBuffer = client.newFrameBuffer(eglSurface);
         }
         ownFrameBuffer.clearColor(Color.TRANSPARENT);
@@ -101,7 +101,7 @@ public class GLLayer extends GLObject {
         ownFrameBuffer.swapBuffers();
     }
 
-    public void render(EGLSurface eglSurface) {
+    public void render(GLRenderSurface eglSurface) {
         render(eglSurface, null);
     }
 
@@ -126,20 +126,20 @@ public class GLLayer extends GLObject {
         this.height = height;
     }
 
-    public void setViewWidth(int viewWidth) {
-        this.viewWidth = viewWidth;
+    protected void setRenderWidth(int viewWidth) {
+        this.renderWidth = viewWidth;
     }
 
-    public void setViewHeight(int viewHeight) {
-        this.viewHeight = viewHeight;
+    protected void setRenderHeight(int renderHeight) {
+        this.renderHeight = renderHeight;
     }
 
-    public int getViewWidth() {
-        return viewWidth;
+    public int getRenderWidth() {
+        return renderWidth;
     }
 
-    public int getViewHeight() {
-        return viewHeight;
+    public int getRenderHeight() {
+        return renderHeight;
     }
 
     public int getX() {
@@ -220,7 +220,7 @@ public class GLLayer extends GLObject {
         layerTransforms.add(index, transform);
     }
 
-    public void setKeyframe(String key, GLKeyframes keyframeSet) {
+    public void setKeyframe(String key, GLKeyframeSet keyframeSet) {
         keyframesMap.put(key, keyframeSet);
     }
 
@@ -228,7 +228,7 @@ public class GLLayer extends GLObject {
         return keyframesMap.keySet();
     }
 
-    public GLKeyframes getKeyframes(String key) {
+    public GLKeyframeSet getKeyframes(String key) {
         return keyframesMap.get(key);
     }
 
@@ -253,11 +253,11 @@ public class GLLayer extends GLObject {
         return enable;
     }
 
-    public void setFragmentShaderCode( String fragmentShaderCode) {
+    public void setFragmentShaderCode(String fragmentShaderCode) {
         this.fragmentShaderCode = fragmentShaderCode;
     }
 
-    public void setVertexShaderCode( String vertexShaderCode) {
+    public void setVertexShaderCode(String vertexShaderCode) {
         this.vertexShaderCode = vertexShaderCode;
     }
 
@@ -270,20 +270,20 @@ public class GLLayer extends GLObject {
     }
 
 
-    public void setTime(long time) {
-        this.time = time;
+    public void setTime(long timeMs) {
+        this.timeMs = timeMs;
     }
 
     public long getTime() {
-        return time;
+        return timeMs;
     }
 
 
-    public void setDraw( GLDraw draw) {
+    public void setDraw(GLDraw draw) {
         this.draw = draw;
     }
 
-    public void setEnable( GLEnable enable) {
+    public void setEnable(GLEnable enable) {
         this.enable = enable;
     }
 
@@ -328,7 +328,7 @@ public class GLLayer extends GLObject {
         return viewPort;
     }
 
-    public void setGravity( GLGravity gravity) {
+    public void setGravity(GLGravity gravity) {
         this.gravity = gravity;
     }
 
@@ -338,8 +338,8 @@ public class GLLayer extends GLObject {
 
     protected void onViewPort(GLViewPort viewPort, int frameWidth, int frameHeight) {
         setGravityViewPort(viewPort, frameWidth, frameHeight);
-        setViewWidth(viewPort.getWidth());
-        setViewHeight(viewPort.getHeight());
+        setRenderWidth(viewPort.getWidth());
+        setRenderHeight(viewPort.getHeight());
     }
 
 
@@ -373,18 +373,7 @@ public class GLLayer extends GLObject {
         return renderDuration;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GLLayer)) return false;
-        GLLayer layer = (GLLayer) o;
-        return x == layer.x && y == layer.y && width == layer.width && height == layer.height && time == layer.time && Objects.equals(vertexShaderCode, layer.vertexShaderCode) && Objects.equals(fragmentShaderCode, layer.fragmentShaderCode) && Objects.equals(draw, layer.draw) && Objects.equals(shaderParam, layer.shaderParam) && Objects.equals(enable, layer.enable) && Objects.equals(xfermode, layer.xfermode) && Objects.equals(gravity, layer.gravity);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(vertexShaderCode, fragmentShaderCode, draw, shaderParam, enable, xfermode, gravity, x, y, width, height, time);
-    }
 
     public long getStartTime() {
         return startTime;

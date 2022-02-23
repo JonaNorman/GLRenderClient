@@ -41,14 +41,13 @@ public abstract class GLDraw extends GLObject {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof GLDraw)) return false;
-        if (!super.equals(o)) return false;
         GLDraw glDraw = (GLDraw) o;
         return drawMode == glDraw.drawMode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), drawMode);
+        return Objects.hash(drawMode);
     }
 
     public GLDrawMode getDrawMode() {

@@ -71,12 +71,12 @@ public abstract class GLShader extends GLObject {
         if (!(o instanceof GLShader)) return false;
         if (!super.equals(o)) return false;
         GLShader glShader = (GLShader) o;
-        return shaderType == glShader.shaderType;
+        return shaderType == glShader.shaderType && Objects.equals(shaderCode, glShader.shaderCode) && Objects.equals(getCompileCode(), glShader.getCompileCode());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), shaderType);
+        return Objects.hash(shaderType, shaderCode, getCompileCode());
     }
 
     class GLCompileMethod extends GLMethod {

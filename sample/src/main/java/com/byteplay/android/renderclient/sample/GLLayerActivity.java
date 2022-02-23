@@ -12,7 +12,7 @@ import android.view.TextureView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.byteplay.android.renderclient.EGLSurface;
+import com.byteplay.android.renderclient.GLRenderSurface;
 import com.byteplay.android.renderclient.GLRenderClient;
 import com.byteplay.android.renderclient.GLTexture;
 import com.byteplay.android.renderclient.GLTextureLayer;
@@ -33,7 +33,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
     private AtomicBoolean surfaceDestroy = new AtomicBoolean();
 
     private Handler.Callback callback = new Handler.Callback() {
-        EGLSurface eglSurface;
+        GLRenderSurface eglSurface;
         GLRenderClient renderClient;
         GLTextureLayer textureLayer;
         long startTime = System.currentTimeMillis();
@@ -60,7 +60,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         eglSurface.dispose();
                     }
                     SurfaceTexture surfaceTexture = (SurfaceTexture) msg.obj;
-                    eglSurface = renderClient.newWindowSurface(surfaceTexture);
+                    eglSurface = renderClient.obtainWindowSurface(surfaceTexture);
                     handler.sendEmptyMessage(MESSAGE_SURFACE_RENDER);
                     return true;
                 case MESSAGE_SURFACE_DISPOSE:

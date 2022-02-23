@@ -1,8 +1,8 @@
 package com.byteplay.android.renderclient;
 
 
-
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class GLLayerGroup extends GLLayer {
@@ -18,37 +18,33 @@ public class GLLayerGroup extends GLLayer {
     }
 
 
-    public void addLayer(GLLayer layer) {
+    public void add(GLLayer layer) {
         if (layer == null) {
             return;
         }
         layerList.add(layer);
     }
 
-    public void addLayer(int index, GLLayer layer) {
+    public void add(int index, GLLayer layer) {
         if (layer == null) {
             return;
         }
         layerList.add(index, layer);
     }
 
-    public void removeLayer(int index) {
+    public void set(int index, GLLayer layer) {
+        if (layer == null) return;
+        layerList.set(index, layer);
+    }
+
+    public void remove(int index) {
         if (index < 0 || index >= layerList.size()) {
             return;
         }
         layerList.remove(index);
     }
 
-    public int getLayerIndex(GLLayer layer) {
-        return layerList.indexOf(layer);
-    }
-
-    public boolean containLayer(GLLayer layer) {
-        return layerList.contains(layer);
-    }
-
-
-    public void removeLayer(GLLayer layer) {
+    public void remove(GLLayer layer) {
         if (layer == null || !layerList.contains(layer)) {
             return;
         }
@@ -56,7 +52,24 @@ public class GLLayerGroup extends GLLayer {
     }
 
 
-    public int getLayerSize() {
+    public int indexOf(GLLayer layer) {
+        return layerList.indexOf(layer);
+    }
+
+    public boolean contains(GLLayer layer) {
+        return layerList.contains(layer);
+    }
+
+    public void addAll(Collection<GLLayer> layers) {
+        layerList.addAll(layers);
+    }
+
+    public void removeAll(Collection<GLLayer> layers) {
+        layerList.removeAll(layers);
+    }
+
+
+    public int size() {
         return layerList.size();
     }
 
@@ -64,7 +77,7 @@ public class GLLayerGroup extends GLLayer {
         return index < 0 || index >= layerList.size() ? null : layerList.get(index);
     }
 
-    public void setSelfXfermode( GLXfermode selfXfermode) {
+    public void setSelfXfermode(GLXfermode selfXfermode) {
         this.selfXfermode = selfXfermode;
     }
 
@@ -72,12 +85,12 @@ public class GLLayerGroup extends GLLayer {
         return selfXfermode;
     }
 
-    public void clearLayer() {
+    public void clear() {
         layerList.clear();
     }
 
 
-    public void setScale( GLScale scale) {
+    public void setScale(GLScale scale) {
         this.scale = scale;
     }
 

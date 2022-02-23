@@ -15,6 +15,10 @@ public abstract class GLXfermode {
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
 
+        @Override
+        public String toString() {
+            return "CLEAR";
+        }
     };
 
     public static final GLXfermode SRC = new GLXfermode() {
@@ -24,6 +28,10 @@ public abstract class GLXfermode {
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
 
+        @Override
+        public String toString() {
+            return "SRC";
+        }
     };
 
 
@@ -33,7 +41,10 @@ public abstract class GLXfermode {
             blend.setBlendFactor(GLBLendFactor.ZERO, GLBLendFactor.ONE);
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
-
+        @Override
+        public String toString() {
+            return "DST";
+        }
     };
 
     public static final GLXfermode SRC_OVER = new GLXfermode() {
@@ -41,6 +52,11 @@ public abstract class GLXfermode {
         public void apply(GLBlend blend) {
             blend.setBlendFactor(GLBLendFactor.ONE, GLBLendFactor.ONE_MINUS_SRC_ALPHA);
             blend.setBlendEquation(GLBlendEquation.ADD);
+        }
+
+        @Override
+        public String toString() {
+            return "SRC_OVER";
         }
 
     };
@@ -52,6 +68,11 @@ public abstract class GLXfermode {
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
 
+        @Override
+        public String toString() {
+            return "DST_OVER";
+        }
+
     };
 
     public static final GLXfermode SRC_IN = new GLXfermode() {
@@ -59,6 +80,11 @@ public abstract class GLXfermode {
         public void apply(GLBlend blend) {
             blend.setBlendFactor(GLBLendFactor.DST_ALPHA, GLBLendFactor.ZERO);
             blend.setBlendEquation(GLBlendEquation.ADD);
+        }
+
+        @Override
+        public String toString() {
+            return "SRC_IN";
         }
 
     };
@@ -70,6 +96,11 @@ public abstract class GLXfermode {
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
 
+
+        @Override
+        public String toString() {
+            return "DST_IN";
+        }
     };
 
 
@@ -79,6 +110,11 @@ public abstract class GLXfermode {
             blend.setBlendFactor(GLBLendFactor.ONE_MINUS_DST_ALPHA, GLBLendFactor.ZERO);
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
+
+        @Override
+        public String toString() {
+            return "SRC_OUT";
+        }
     };
 
     public static final GLXfermode DST_OUT = new GLXfermode() {
@@ -86,6 +122,11 @@ public abstract class GLXfermode {
         public void apply(GLBlend blend) {
             blend.setBlendFactor(GLBLendFactor.ZERO, GLBLendFactor.ONE_MINUS_SRC_ALPHA);
             blend.setBlendEquation(GLBlendEquation.ADD);
+        }
+
+        @Override
+        public String toString() {
+            return "DST_OUT";
         }
     };
 
@@ -95,6 +136,11 @@ public abstract class GLXfermode {
             blend.setBlendFactor(GLBLendFactor.DST_ALPHA, GLBLendFactor.ONE_MINUS_SRC_ALPHA);
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
+
+        @Override
+        public String toString() {
+            return "SRC_ATOP";
+        }
     };
 
     public static final GLXfermode DST_ATOP = new GLXfermode() {
@@ -103,6 +149,11 @@ public abstract class GLXfermode {
             blend.setBlendFactor(GLBLendFactor.ONE_MINUS_DST_ALPHA, GLBLendFactor.SRC_ALPHA);
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
+
+        @Override
+        public String toString() {
+            return "DST_ATOP";
+        }
     };
 
     public static final GLXfermode XOR = new GLXfermode() {
@@ -110,6 +161,10 @@ public abstract class GLXfermode {
         public void apply(GLBlend blend) {
             blend.setBlendFactor(GLBLendFactor.ONE_MINUS_DST_ALPHA, GLBLendFactor.ONE_MINUS_SRC_ALPHA);
             blend.setBlendEquation(GLBlendEquation.ADD);
+        }
+        @Override
+        public String toString() {
+            return "XOR";
         }
     };
 
@@ -120,6 +175,11 @@ public abstract class GLXfermode {
             blend.setBlendFactor(GLBLendFactor.ONE, GLBLendFactor.ONE);
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
+
+        @Override
+        public String toString() {
+            return "PLUS";
+        }
     };
 
     public static final GLXfermode MULTIPLY = new GLXfermode() {
@@ -128,6 +188,11 @@ public abstract class GLXfermode {
             blend.setBlendFactor(GLBLendFactor.ZERO, GLBLendFactor.SRC_COLOR);
             blend.setBlendEquation(GLBlendEquation.ADD);
         }
+
+        @Override
+        public String toString() {
+            return "MULTIPLY";
+        }
     };
 
     public static final GLXfermode SCREEN = new GLXfermode() {
@@ -135,6 +200,11 @@ public abstract class GLXfermode {
         public void apply(GLBlend blend) {
             blend.setBlendFactor(GLBLendFactor.ONE, GLBLendFactor.ONE_MINUS_SRC_COLOR);
             blend.setBlendEquation(GLBlendEquation.ADD);
+        }
+
+        @Override
+        public String toString() {
+            return "SCREEN";
         }
     };
 
@@ -197,6 +267,11 @@ public abstract class GLXfermode {
         @Override
         public int hashCode() {
             return Objects.hash(blendColor, rgbSrcFactor, alphaSrcFactor, rgbDstFactor, alphaDstFactor, rgbBlendEquation, alphaBlendEquation);
+        }
+
+        @Override
+        public String toString() {
+            return "CUSTOM";
         }
     }
 

@@ -16,13 +16,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.byteplay.android.renderclient.EGLSurface;
-import com.byteplay.android.renderclient.GLFrameLayoutLayer;
 import com.byteplay.android.renderclient.GLGravity;
-import com.byteplay.android.renderclient.GLKeyframes;
+import com.byteplay.android.renderclient.GLKeyframeSet;
 import com.byteplay.android.renderclient.GLLayer;
 import com.byteplay.android.renderclient.GLLayerGroup;
+import com.byteplay.android.renderclient.GLLayoutLayer;
 import com.byteplay.android.renderclient.GLRenderClient;
+import com.byteplay.android.renderclient.GLRenderSurface;
 import com.byteplay.android.renderclient.GLShaderEffect;
 import com.byteplay.android.renderclient.GLTexture;
 import com.byteplay.android.renderclient.GLTextureFilter;
@@ -75,7 +75,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
 
 
     GLLayerGroup frameLayer;
-    EGLSurface eglSurface;
+    GLRenderSurface eglSurface;
 
     @Override
     public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
@@ -87,7 +87,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     done.set(false);
                     object.notifyAll();
                 }
-                eglSurface = renderClient.newWindowSurface(surface);
+                eglSurface = renderClient.obtainWindowSurface(surface);
                 renderClient.attachCurrentThread();
                 frameLayer = renderClient.newLayerGroup();
                 frameLayer.setDuration(10000);
@@ -99,17 +99,18 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     texture.updateBitmap(bitmap);
                     bitmap.recycle();
                     textureLayer.setTexture(texture);
-                    GLKeyframes keyframes = GLKeyframes.ofFloat(5000, 600, 1200);
+                    GLKeyframeSet keyframes = GLKeyframeSet.ofFloat(5000, 600, 1200);
                     textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, keyframes);
-                    keyframes = GLKeyframes.ofFloat(5000, 600, 1200);
+                    keyframes = GLKeyframeSet.ofFloat(5000, 600, 1200);
                     textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, keyframes);
-                    frameLayer.addLayer(textureLayer);
+                    frameLayer.add(textureLayer);
                 }
 
                 {
                     GLTextureLayer textureLayer1 = renderClient.newTextureLayer();
                     GLTexture texture1 = renderClient.newTexture(GLTextureType.TEXTURE_2D);
-                    texture1.setTextureFilter(GLTextureFilter.LINEAR_MIPMAP_LINEAR, GLTextureFilter.LINEAR);
+                    texture1.setMinFilter(GLTextureFilter.LINEAR_MIPMAP_LINEAR);
+                    texture1.setMagFilter(GLTextureFilter.LINEAR);
                     BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         bitmapOptions.inPremultiplied = false;
@@ -118,7 +119,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     texture1.updateBitmap(bitmap);
                     bitmap.recycle();
                     textureLayer1.setTexture(texture1);
-                    frameLayer.addLayer(textureLayer1);
+                    frameLayer.add(textureLayer1);
 
                 }
 
@@ -127,7 +128,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     frameLayer.setWidth(500);
                     frameLayer.setHeight(500);
                     frameLayer.setGravity(GLGravity.TOP_CENTER_HORIZONTAL);
-                    RenderClientActivity.this.frameLayer.addLayer(frameLayer);
+                    RenderClientActivity.this.frameLayer.add(frameLayer);
 
                     {
                         GLTextureLayer textureLayer = renderClient.newTextureLayer();
@@ -136,7 +137,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture.updateBitmap(bitmap);
                         bitmap.recycle();
                         textureLayer.setTexture(texture);
-                        frameLayer.addLayer(textureLayer);
+                        frameLayer.add(textureLayer);
                     }
 
                     {
@@ -146,7 +147,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture1.updateBitmap(bitmap);
                         bitmap.recycle();
                         textureLayer1.setTexture(texture1);
-                        frameLayer.addLayer(textureLayer1);
+                        frameLayer.add(textureLayer1);
                     }
                     GLShaderEffect effect = renderClient.newShaderEffect();
                     effect.setFragmentShaderCode("precision mediump float;\n" +
@@ -189,7 +190,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     frameLayer.setHeight(500);
                     frameLayer.setGravity(GLGravity.BOTTOM_CENTER_HORIZONTAL);
                     frameLayer.setBackgroundColor(Color.GREEN);
-                    RenderClientActivity.this.frameLayer.addLayer(frameLayer);
+                    RenderClientActivity.this.frameLayer.add(frameLayer);
 
                     {
                         GLTextureLayer textureLayer = renderClient.newTextureLayer();
@@ -198,7 +199,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture.updateBitmap(bitmap);
                         textureLayer.setTexture(texture);
                         textureLayer.setBackgroundColor(Color.YELLOW);
-                        frameLayer.addLayer(textureLayer);
+                        frameLayer.add(textureLayer);
                     }
 
                     {
@@ -208,12 +209,12 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture1.updateBitmap(bitmap);
                         bitmap.recycle();
                         textureLayer1.setTexture(texture1);
-                        frameLayer.addLayer(textureLayer1);
+                        frameLayer.add(textureLayer1);
                     }
                 }
                 {
 
-                    GLFrameLayoutLayer viewLayer = renderClient.newFrameLayoutLayer(getApplicationContext());
+                    GLLayoutLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext());
                     viewLayer.setWidth(600);
                     viewLayer.setHeight(600);
 
@@ -226,7 +227,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     textview.setTextSize(40);
                     textview.setBackgroundColor(Color.TRANSPARENT);
                     viewLayer.addView(textview);
-                    frameLayer.addLayer(viewLayer);
+                    frameLayer.add(viewLayer);
                 }
 
 //                frameLayer.addTransform(new GLLayer.LayerTransform<GLFrameLayer>() {

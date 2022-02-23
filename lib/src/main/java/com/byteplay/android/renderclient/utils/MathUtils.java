@@ -1,4 +1,4 @@
-package com.byteplay.android.renderclient.math;
+package com.byteplay.android.renderclient.utils;
 
 public class MathUtils {
     static public float LN2 = (float) Math.log(2);

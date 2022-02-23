@@ -6,7 +6,7 @@ public abstract class GLProgram extends GLObject {
     private GLShader vertexShader;
     private GLShader fragmentShader;
     private GLShaderParam shaderParam;
-    protected GLDraw draw;
+    private GLDraw draw;
 
     public GLProgram(GLRenderClient client) {
         super(client);
@@ -74,12 +74,17 @@ public abstract class GLProgram extends GLObject {
         if (!(o instanceof GLProgram)) return false;
         if (!super.equals(o)) return false;
         GLProgram glProgram = (GLProgram) o;
-        return Objects.equals(vertexShader, glProgram.vertexShader) && Objects.equals(fragmentShader, glProgram.fragmentShader) && Objects.equals(shaderParam, glProgram.shaderParam) && Objects.equals(draw, glProgram.draw);
+        return Objects.equals(vertexShader, glProgram.vertexShader)
+                && Objects.equals(fragmentShader, glProgram.fragmentShader)
+                && Objects.equals(shaderParam, glProgram.shaderParam)
+                && Objects.equals(draw, glProgram.draw)
+                && Objects.equals(isCreated(), glProgram.isCreated())
+                && Objects.equals(isDisposed(), glProgram.isDisposed());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), vertexShader, fragmentShader, shaderParam, draw);
+        return Objects.hash(vertexShader, fragmentShader, shaderParam, draw,isCreated(),isDisposed());
     }
 
     class GLExecuteMethod extends GLMethod {

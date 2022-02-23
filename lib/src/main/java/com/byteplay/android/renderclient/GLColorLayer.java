@@ -4,12 +4,7 @@ import android.graphics.Color;
 
 public class GLColorLayer extends GLLayer {
 
-    private static final float POSITION_COORDINATES[] = {
-            -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
-            1.0f, -1.0f, 0.0f, 1.0f,//right bottom
-            -1.0f, 1.0f, 0.0f, 1.0f, //left top
-            1.0f, 1.0f, 0.0f, 1.0f//right top
-    };
+
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
             "attribute vec4 position;\n" +
@@ -22,7 +17,6 @@ public class GLColorLayer extends GLLayer {
 
 
     private static final String FRAGMENT_SHADER = "precision mediump float;\n" +
-            "varying highp vec2 textureCoordinate;\n" +
             "uniform vec2 viewPortSize;\n" +
             "uniform float renderTime;\n" +
             "uniform vec4 color;\n" +
@@ -55,7 +49,6 @@ public class GLColorLayer extends GLLayer {
     protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
         super.onRenderLayer(layer, renderTimeMs);
         GLShaderParam shaderParam = layer.getDefaultShaderParam();
-        shaderParam.put("position", POSITION_COORDINATES);
         shaderParam.put("color", redColor, greenColor, blueColor, alphaColor);
         return true;
     }

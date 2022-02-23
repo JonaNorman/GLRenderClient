@@ -3,8 +3,8 @@ package com.byteplay.android.renderclient;
 import java.util.Objects;
 
 public abstract class GLDrawArray extends GLDraw {
-    protected int vertexStart;
-    protected int vertexCount = 4;
+    private int vertexStart;
+    private int vertexCount = 4;
 
     public GLDrawArray(GLRenderClient client) {
         super(client);

@@ -564,6 +564,7 @@ class GL20Command extends GL20 {
 
     @Override
     public int glGenRenderbuffer() {
+        tempInts[0] = 0;
         GLES20.glGenRenderbuffers(1, tempInts, 0);
         for (GL20Monitor monitor : monitorList) {
             monitor.glGenRenderbuffer(tempInts[0]);
@@ -589,6 +590,7 @@ class GL20Command extends GL20 {
 
     @Override
     public int glGenTexture() {
+        tempInts[0] = 0;
         GLES20.glGenTextures(1, tempInts, 0);
         for (GL20Monitor monitor : monitorList) {
             monitor.glGenTexture(tempInts[0]);

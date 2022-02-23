@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class EGLComponentChooser implements EGLConfigChooser {
+public class EGLConfigSimpleChooser implements EGLConfigChooser {
 
     private final static Comparator<EGLConfig> CONFIG_COMPARATOR = (o1, o2) -> {
         if (o1.getRedSize() > o2.getRedSize()) {
@@ -82,7 +82,7 @@ public class EGLComponentChooser implements EGLConfigChooser {
     private Boolean recordable;
 
 
-    private EGLComponentChooser() {
+    private EGLConfigSimpleChooser() {
         this.windowSurface = true;
         this.pbufferSurface = true;
     }
@@ -244,8 +244,8 @@ public class EGLComponentChooser implements EGLConfigChooser {
             return this;
         }
 
-        public EGLComponentChooser build() {
-            EGLComponentChooser chooser = new EGLComponentChooser();
+        public EGLConfigSimpleChooser build() {
+            EGLConfigSimpleChooser chooser = new EGLConfigSimpleChooser();
             chooser.setAlphaSize(alphaSize);
             chooser.setBlueSize(blueSize);
             chooser.setGreenSize(greenSize);

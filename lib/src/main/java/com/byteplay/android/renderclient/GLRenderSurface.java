@@ -2,15 +2,13 @@ package com.byteplay.android.renderclient;
 
 import android.graphics.Bitmap;
 
-import java.util.Objects;
-
-public abstract class EGLSurface {
+public abstract class GLRenderSurface {
     private boolean disposed;
     private boolean created;
     protected final GLRenderClient client;
     private final GLFrameBuffer defaultFrameBuffer;
 
-    public EGLSurface(GLRenderClient client) {
+    public GLRenderSurface(GLRenderClient client) {
         this.client = client;
         this.defaultFrameBuffer = client.newFrameBuffer(this);
     }
@@ -24,24 +22,21 @@ public abstract class EGLSurface {
     }
 
 
-    protected void createSurface() {
-        if (created) {
+    protected final void createSurface() {
+        if (created || disposed) {
             return;
-        }
-        if (disposed) {
-            throw new IllegalStateException(getClass() + "it is disposed");
         }
         created = true;
         onCreate();
     }
 
-    protected void disposeSurface() {
+    protected final void disposeSurface() {
+        if (disposed) {
+            return;
+        }
         if (!created) {
             disposed = true;
             created = false;
-            return;
-        }
-        if (disposed) {
             return;
         }
         disposed = true;
@@ -70,17 +65,19 @@ public abstract class EGLSurface {
 
     public abstract int getWidth();
 
-    public abstract android.opengl.EGLSurface getEGLSurface();
+    protected abstract android.opengl.EGLSurface getEGLSurface();
 
-    protected abstract void onSwapBuffers();
 
     public final void makeCurrent() {
         create();
-        client.makeCurrentEGLSurface(this);
+        if (disposed) {
+            throw new IllegalStateException(getClass() + "it is disposed");
+        }
+        client.makeCurrent(this);
     }
 
     public final void makeNoCurrent() {
-        client.makeCurrentEGLSurface(null);
+        client.makeCurrent(null);
     }
 
     public final void readBitmap(Bitmap bitmap) {
@@ -101,13 +98,7 @@ public abstract class EGLSurface {
     }
 
     public final void swapBuffers() {
-        create();
-        onSwapBuffers();
+        client.swapBuffers(this);
     }
 
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(disposed, created, client);
-    }
 }

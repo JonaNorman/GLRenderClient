@@ -22,14 +22,14 @@ public abstract class GLFrameBuffer extends GLObject {
         return findMethod(GLAttachColorTextureMethod.class).getTexture();
     }
 
-    public abstract EGLSurface getEGLSurface();
+    public abstract GLRenderSurface getRenderSurface();
 
     public abstract int getWidth();
 
     public abstract int getHeight();
 
     public final void swapBuffers() {
-        getEGLSurface().swapBuffers();
+        getRenderSurface().swapBuffers();
     }
 
 

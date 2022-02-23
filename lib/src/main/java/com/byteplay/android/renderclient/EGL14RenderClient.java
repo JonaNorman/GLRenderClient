@@ -6,11 +6,15 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
+import android.opengl.EGLExt;
+import android.opengl.EGLSurface;
 import android.opengl.GLException;
 import android.os.Build;
 import android.util.LruCache;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+
+import com.byteplay.android.renderclient.math.Matrix4;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,24 +26,50 @@ import java.util.Queue;
 
 class EGL14RenderClient extends GLRenderClient {
 
+    public static final String KEY_RENDER_TIME = "renderTime";
+    public static final String KEY_VIEW_PORT_SIZE = "viewPortSize";
+    public static final String KEY_POSITION = "position";
+    public static final String KEY_INPUT_TEXTURE_COORDINATE = "inputTextureCoordinate";
+    public static final String KEY_POSITION_MATRIX = "positionMatrix";
+    public static final String KEY_TEXTURE_MATRIX = "textureMatrix";
+
+    private static final float POSITION_COORDINATES[] = {
+            -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
+            1.0f, -1.0f, 0.0f, 1.0f,//right bottom
+            -1.0f, 1.0f, 0.0f, 1.0f, //left top
+            1.0f, 1.0f, 0.0f, 1.0f//right top
+    };
+
+    private static final float TEXTURE_COORDINATES[] = {
+            0.0f, 0.0f, 0.0f, 1.0f,//left bottom
+            1.0f, 0.0f, 0.0f, 1.0f,//right bottom
+            0.0f, 1.0f, 0.0f, 1.0f,//left top
+            1.0f, 1.0f, 0.0f, 1.0f,//right  top
+    };
+
+    private static final float[] DEFAULT_MATRIX = new Matrix4().get();
     private static final int MAX_PROGRAM_SIZE = 20;
     private static final int MAX_EGL_CONFIG_SIZE = 100;
     private static final int MAX_FRAME_BUFFER_CACHE_SIZE = 5;
-    private static final String RENDER_TIME = "renderTime";
-    private static final String VIEW_PORT_SIZE = "viewPortSize";
     private final Queue<GLFrameBuffer> frameBufferCache = new LinkedList<>();
-    private final EGLDisplay eglDisplay;
-    private final EGLContext eglContext;
-    private final android.opengl.EGLConfig eglConfig;
-    private final EGLPbufferSurface defaultBufferSurface;
-    private final GL20 gl20;
     private final List<GLObject> objectList = new ArrayList<>();
     private final Map<String, GLShader> shaderMap = new HashMap<>();
     private final Map<GLShader, Integer> shaderUsingMap = new HashMap<>();
-    private final List<EGLSurface> eglSurfaceList = new ArrayList<>();
-    private final Map<Object, android.opengl.EGLSurface> windowSurfaceCache = new HashMap<>();
-    private final Map<Object, List<EGLWindowSurface>> windowSurfaceUsingMap = new HashMap<>();
-    private final LruCache<Integer, GLProgram> programCache = new LruCache<Integer, GLProgram>(MAX_PROGRAM_SIZE) {
+    private final List<GLRenderSurface> renderSurfaceList = new ArrayList<>();
+    private final Map<Object, GLWindowSurface> windowSurfaceCache = new HashMap<>();
+    private final EGLDisplay eglDisplay;
+    private final EGLContext eglContext;
+    private final android.opengl.EGLConfig eglConfig;
+    private final GLPbufferSurface defaultBufferSurface;
+    private final GL20 gl20;
+    private final GLColorLayer backgroundColorLayer;
+    private final GLTextureLayer outTextureLayer;
+    private final GLViewPort tempViewPort;
+    private final GLBlend blend;
+    private GLRenderSurface currentEGLSurface;
+    private GLFrameBuffer bindFrameBuffer;
+    private GLEnable tempEnable;
+    private LruCache<Integer, GLProgram> programCache = new LruCache<Integer, GLProgram>(MAX_PROGRAM_SIZE) {
         @Override
         protected void entryRemoved(boolean evicted, Integer key, GLProgram oldValue, GLProgram newValue) {
             disposeProgram(oldValue);
@@ -91,11 +121,8 @@ class EGL14RenderClient extends GLRenderClient {
         }
     }
 
-    private final GLColorLayer backgroundColorLayer;
-    private final GLTextureLayer outTextureLayer;
-    private final GLViewPort tempViewPort;
+
     private boolean release;
-    private final GLBlend blend;
     private int maxFrameBufferCacheSize = MAX_FRAME_BUFFER_CACHE_SIZE;
     private final List<GLErrorListener> errorListenerList = new ArrayList<>();
     private boolean throwError = true;
@@ -104,9 +131,7 @@ class EGL14RenderClient extends GLRenderClient {
     private boolean checkEGLError = true;
     private int maxTextureSize;
     private Thread attachThread;
-    private EGLSurface currentEGLSurface;
-    private GLFrameBuffer bindFrameBuffer;
-    private GLEnable tempEnable;
+    private final int[] tempInt = new int[1];
 
 
     public EGL14RenderClient(EGLContext shareContext, EGLConfigChooser configChooser) {
@@ -161,7 +186,7 @@ class EGL14RenderClient extends GLRenderClient {
         eglDisplay = display;
         eglConfig = config;
         eglContext = context;
-        this.defaultBufferSurface = newBufferSurface(1, 1);
+        this.defaultBufferSurface = newPbufferSurface(1, 1);
         this.gl20 = new GL20Command(this);
         this.bindFrameBuffer = newFrameBuffer(defaultBufferSurface);
         this.gl20.addGLMonitor(gl20ErrorMonitor);
@@ -184,7 +209,7 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    public void detachThread() {
+    public void detachCurrentThread() {
         if (attachThread == null) {
             return;
         }
@@ -293,7 +318,7 @@ class EGL14RenderClient extends GLRenderClient {
             tempViewPort.setHeight(currentHeight);
             renderLayer(frameLayer, currentFrameBuffer, tempViewPort, frameLayer.getSelfXfermode(), renderTimeMs);
         }
-        for (int i = 0; i < frameLayer.getLayerSize(); i++) {
+        for (int i = 0; i < frameLayer.size(); i++) {
             GLLayer layer = frameLayer.get(i);
             layer.setRenderDuration(layer.getDuration() == GLLayer.DURATION_MATCH_PARENT ?
                     frameLayer.getRenderDuration() :
@@ -337,15 +362,19 @@ class EGL14RenderClient extends GLRenderClient {
         blend.call();
         program.clearShaderParam();
         GLShaderParam programParam = program.getShaderParam();
-        programParam.put(RENDER_TIME, renderTimeMs / 1000.0f);
-        programParam.put(VIEW_PORT_SIZE, viewPort.getWidth(), viewPort.getHeight());
+        programParam.put(KEY_RENDER_TIME, renderTimeMs / 1000.0f);
+        programParam.put(KEY_VIEW_PORT_SIZE, viewPort.getWidth(), viewPort.getHeight());
+        programParam.put(KEY_POSITION, POSITION_COORDINATES);
+        programParam.put(KEY_INPUT_TEXTURE_COORDINATE, TEXTURE_COORDINATES);
+        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX);
+        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX);
         boolean render = layer.onRenderLayer(layer, renderTimeMs);
         if (!render) {
             return;
         }
         programParam.put(layer.getDefaultShaderParam());
         for (String key : layer.getKeyframeKeySet()) {
-            GLKeyframes keyFrames = layer.getKeyframes(key);
+            GLKeyframeSet keyFrames = layer.getKeyframes(key);
             long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
             if (duration <= 0) {
                 continue;
@@ -358,9 +387,9 @@ class EGL14RenderClient extends GLRenderClient {
         }
         programParam.put(layer.getShaderParam());
         program.execute();
-        EGLSurface eglSurface = outputBuffer.getEGLSurface();
-        if (eglSurface instanceof EGLWindowSurface) {
-            EGLWindowSurface windowSurface = (EGLWindowSurface) eglSurface;
+        GLRenderSurface eglSurface = outputBuffer.getRenderSurface();
+        if (eglSurface instanceof GLWindowSurface) {
+            GLWindowSurface windowSurface = (GLWindowSurface) eglSurface;
             windowSurface.setTime(renderTimeMs * 1000000L);
         }
         old.bind();
@@ -424,12 +453,16 @@ class EGL14RenderClient extends GLRenderClient {
         blend.call();
         program.clearShaderParam();
         GLShaderParam programParam = program.getShaderParam();
-        programParam.put(RENDER_TIME, effectTime / 1000.0f);
-        programParam.put(VIEW_PORT_SIZE, tempViewPort.getWidth(), tempViewPort.getHeight());
+        programParam.put(KEY_RENDER_TIME, effectTime / 1000.0f);
+        programParam.put(KEY_VIEW_PORT_SIZE, tempViewPort.getWidth(), tempViewPort.getHeight());
+        programParam.put(KEY_POSITION, POSITION_COORDINATES);
+        programParam.put(KEY_INPUT_TEXTURE_COORDINATE, TEXTURE_COORDINATES);
+        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX);
+        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX);
         effect.onApplyShaderEffect(effect, input, effectTime);
         programParam.put(effect.getDefaultShaderParam());
-        for (String key : effect.getKeyframeKeySet()) {
-            GLKeyframes keyFrames = effect.getKeyframes(key);
+        for (String key : effect.getFrameKeySet()) {
+            GLKeyframeSet keyFrames = effect.getKeyframes(key);
             long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), effect.getRenderDuration() - keyFrames.getStartTime());
             if (duration <= 0) {
                 continue;
@@ -466,7 +499,9 @@ class EGL14RenderClient extends GLRenderClient {
         if (currentFrameBuffer == null) {
             currentFrameBuffer = newFrameBuffer(currentWidth, currentHeight);
         } else {
-            currentFrameBuffer.setSize(currentWidth, currentHeight);
+            if (currentFrameBuffer.getWidth() != currentWidth || currentFrameBuffer.getHeight() != currentHeight) {
+                currentFrameBuffer.setSize(currentWidth, currentHeight);
+            }
             currentFrameBuffer.clearColor(Color.TRANSPARENT);
         }
         return currentFrameBuffer;
@@ -482,7 +517,7 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     private void onViewPortKeyFrame(GLLayer layer, GLViewPort viewPort, long renderTimeMs) {
-        GLKeyframes keyFrames = layer.getKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_X);
+        GLKeyframeSet keyFrames = layer.getKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_X);
         if (keyFrames != null) {
             long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
             if (duration > 0) {
@@ -586,7 +621,7 @@ class EGL14RenderClient extends GLRenderClient {
 
     @Override
     public GLShaderParam newShaderParam() {
-        return new GLShaderParam(this);
+        return new GLShaderParam();
     }
 
     @Override
@@ -611,23 +646,23 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    public GLFrameBuffer newFrameBuffer(EGLSurface eglSurface) {
+    public GLFrameBuffer newFrameBuffer(GLRenderSurface eglSurface) {
         return new GL20FrameBuffer(this, eglSurface);
     }
 
     @Override
     public GLFrameBuffer newFrameBuffer(Surface surface) {
-        return new GL20FrameBuffer(this, newWindowSurface(surface));
+        return new GL20FrameBuffer(this, obtainWindowSurface(surface));
     }
 
     @Override
     public GLFrameBuffer newFrameBuffer(SurfaceTexture surface) {
-        return new GL20FrameBuffer(this, newWindowSurface(surface));
+        return new GL20FrameBuffer(this, obtainWindowSurface(surface));
     }
 
     @Override
     public GLFrameBuffer newFrameBuffer(SurfaceHolder surface) {
-        return new GL20FrameBuffer(this, newWindowSurface(surface));
+        return new GL20FrameBuffer(this, obtainWindowSurface(surface));
     }
 
     @Override
@@ -659,31 +694,49 @@ class EGL14RenderClient extends GLRenderClient {
 
 
     @Override
-    public EGLWindowSurface newWindowSurface(Surface surface) {
-        return new EGL14WindowSurface(this, surface);
+    public GLWindowSurface obtainWindowSurface(Surface surface) {
+        GLWindowSurface windowSurface = windowSurfaceCache.get(surface);
+        if (windowSurface != null) {
+            return windowSurface;
+        }
+        windowSurface = new GLWindowSurface(this, surface);
+        windowSurfaceCache.put(surface, windowSurface);
+        return windowSurface;
     }
 
 
     @Override
-    public EGLWindowSurface newWindowSurface(SurfaceHolder surface) {
-        return new EGL14WindowSurface(this, surface);
+    public GLWindowSurface obtainWindowSurface(SurfaceHolder surface) {
+        GLWindowSurface windowSurface = windowSurfaceCache.get(surface);
+        if (windowSurface != null) {
+            return windowSurface;
+        }
+        windowSurface = new GLWindowSurface(this, surface);
+        windowSurfaceCache.put(surface, windowSurface);
+        return windowSurface;
     }
 
 
     @Override
-    public EGLWindowSurface newWindowSurface(SurfaceTexture surface) {
-        return new EGL14WindowSurface(this, surface);
+    public GLWindowSurface obtainWindowSurface(SurfaceTexture surface) {
+        GLWindowSurface windowSurface = windowSurfaceCache.get(surface);
+        if (windowSurface != null) {
+            return windowSurface;
+        }
+        windowSurface = new GLWindowSurface(this, surface);
+        windowSurfaceCache.put(surface, windowSurface);
+        return windowSurface;
     }
 
 
     @Override
-    public EGLPbufferSurface newBufferSurface(int width, int height) {
-        return new EGL14PbufferSurface(this, width, height);
+    public GLPbufferSurface newPbufferSurface(int width, int height) {
+        return new GLPbufferSurface(this, width, height);
     }
 
 
     @Override
-    protected EGLPbufferSurface getDefaultEGLBufferSurface() {
+    protected GLPbufferSurface getDefaultPBufferSurface() {
         return defaultBufferSurface;
     }
 
@@ -699,13 +752,13 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    public GLFrameLayoutLayer newFrameLayoutLayer(Context context) {
-        return new GLFrameLayoutLayer(this, context);
+    public GLLayoutLayer newLayoutLayer(Context context) {
+        return new GLLayoutLayer(this, context);
     }
 
     @Override
-    public GLFrameLayoutLayer newFrameLayoutLayer(Context context, int styleRes) {
-        return new GLFrameLayoutLayer(this, context, styleRes);
+    public GLLayoutLayer newLayoutLayer(Context context, int styleRes) {
+        return new GLLayoutLayer(this, context, styleRes);
     }
 
     @Override
@@ -728,6 +781,7 @@ class EGL14RenderClient extends GLRenderClient {
     protected void createObject(GLObject object) {
         checkRelease();
         if (!object.isCreated()) {
+            checkThread();
             objectList.add(object);
             object.createObject();
         }
@@ -744,41 +798,61 @@ class EGL14RenderClient extends GLRenderClient {
 
 
     @Override
-    protected void createEGLSurface(EGLSurface surface) {
+    protected void createEGLSurface(GLRenderSurface surface) {
         checkRelease();
         if (!surface.isCreated()) {
-            eglSurfaceList.add(surface);
+            renderSurfaceList.add(surface);
             surface.createSurface();
         }
     }
 
     @Override
-    protected void disposeEGLSurface(EGLSurface surface) {
+    protected void disposeEGLSurface(GLRenderSurface surface) {
         if (!surface.isDisposed()) {
-            eglSurfaceList.remove(surface);
+            renderSurfaceList.remove(surface);
             surface.disposeSurface();
         }
     }
 
 
     @Override
-    protected void makeCurrentEGLSurface(EGLSurface surface) {
+    protected void makeCurrent(GLRenderSurface renderSurface) {
         checkRelease();
-        if (surface == null) {
+        if (renderSurface == null) {
             currentEGLSurface = null;
             boolean success = EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
             if (!success) {
                 checkEGLError();
             }
-        } else if (!Objects.equals(surface, currentEGLSurface)) {
-            boolean success = EGL14.eglMakeCurrent(eglDisplay, surface.getEGLSurface(), surface.getEGLSurface(), eglContext);
+        } else if (!Objects.equals(renderSurface, currentEGLSurface)) {
+            if (renderSurface instanceof GLWindowSurface) {
+                GLWindowSurface windowSurface = (GLWindowSurface) renderSurface;
+                checkSurfaceObject(windowSurface.getSurface());
+            }
+            boolean success = EGL14.eglMakeCurrent(eglDisplay, renderSurface.getEGLSurface(), renderSurface.getEGLSurface(), eglContext);
             if (!success) {
                 checkEGLError();
             }
-            currentEGLSurface = surface;
+            currentEGLSurface = renderSurface;
         }
     }
 
+    @Override
+    protected void swapBuffers(GLRenderSurface surface) {
+        if (!surface.isDisposed()) {
+            surface.create();
+        }
+        surface.makeCurrent();
+        if (surface instanceof GLWindowSurface) {
+            GLWindowSurface windowSurface = (GLWindowSurface) surface;
+            if (!EGLExt.eglPresentationTimeANDROID(eglDisplay, surface.getEGLSurface(), windowSurface.getTime())) {
+                checkEGLError();
+            }
+        }
+        if (!EGL14.eglSwapBuffers(eglDisplay, surface.getEGLSurface())) {
+            checkEGLError();
+        }
+    }
 
     @Override
     protected GLFrameBuffer onBindFrameBuffer(GLFrameBuffer newFrameBuffer) {
@@ -804,17 +878,16 @@ class EGL14RenderClient extends GLRenderClient {
             object.dispose();
         }
         defaultBufferSurface.makeNoCurrent();
-        List<EGLSurface> disposeSurfaceList = new ArrayList<>();
-        disposeSurfaceList.addAll(eglSurfaceList);
-        for (EGLSurface eglSurface : disposeSurfaceList) {
+        List<GLRenderSurface> disposeSurfaceList = new ArrayList<>();
+        disposeSurfaceList.addAll(renderSurfaceList);
+        for (GLRenderSurface eglSurface : disposeSurfaceList) {
             eglSurface.dispose();
         }
         objectList.clear();
-        eglSurfaceList.clear();
+        renderSurfaceList.clear();
         windowSurfaceCache.clear();
         shaderUsingMap.clear();
         shaderMap.clear();
-        windowSurfaceUsingMap.clear();
         EGL14.eglDestroyContext(eglDisplay, eglContext);
         checkEGLError();
         EGL14.eglReleaseThread();
@@ -822,7 +895,10 @@ class EGL14RenderClient extends GLRenderClient {
         EGL14.eglTerminate(eglDisplay);
         checkEGLError();
         release = true;
-        EGL14.eglMakeCurrent(currentDisplay, currentDrawEGLSurface, currentReadEGLSurface, currentContext);
+        if (!currentContext.equals(eglContext)) {
+            EGL14.eglMakeCurrent(currentDisplay, currentDrawEGLSurface, currentReadEGLSurface, currentContext);
+            checkEGLError();
+        }
     }
 
 
@@ -869,21 +945,21 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    protected android.opengl.EGLSurface createEGLWindowSurface(EGLWindowSurface windowSurface) {
-        Object surfaceObject = windowSurface.getSurface();
+    protected android.opengl.EGLSurface create(GLWindowSurface windowSurface) {
         if (windowSurface.getEGLSurface() != null) {
             return windowSurface.getEGLSurface();
         }
-        List<EGLWindowSurface> usingWindowSurfaceList = windowSurfaceUsingMap.get(surfaceObject);
-        if (usingWindowSurfaceList == null) {
-            usingWindowSurfaceList = new ArrayList<>();
-            windowSurfaceUsingMap.put(surfaceObject, usingWindowSurfaceList);
+        Object surfaceObject = windowSurface.getSurface();
+        checkSurfaceObject(surfaceObject);
+        EGLSurface eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, surfaceObject, new int[]{EGL14.EGL_NONE, 0, EGL14.EGL_NONE}, 0);
+        if (eglSurface == EGL14.EGL_NO_SURFACE || eglSurface == null) {
+            throw new RuntimeException("unable create window surface");
         }
-        usingWindowSurfaceList.add(windowSurface);
-        android.opengl.EGLSurface eglSurface = windowSurfaceCache.get(surfaceObject);
-        if (eglSurface != null) {
-            return eglSurface;
-        }
+        checkEGLError();
+        return eglSurface;
+    }
+
+    private void checkSurfaceObject(Object surfaceObject) {
         if (surfaceObject instanceof Surface) {
             Surface surface = (Surface) surfaceObject;
             if (!surface.isValid()) {
@@ -905,17 +981,10 @@ class EGL14RenderClient extends GLRenderClient {
                 throw new RuntimeException("surface is not valid");
             }
         }
-        eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, surfaceObject, new int[]{EGL14.EGL_NONE, 0, EGL14.EGL_NONE}, 0);
-        if (eglSurface == EGL14.EGL_NO_SURFACE || eglSurface == null) {
-            throw new RuntimeException("unable create window surface");
-        }
-        checkEGLError();
-        windowSurfaceCache.put(surfaceObject, eglSurface);
-        return eglSurface;
     }
 
     @Override
-    protected android.opengl.EGLSurface createEGLPbufferSurface(EGLPbufferSurface bufferSurface) {
+    protected android.opengl.EGLSurface create(GLPbufferSurface bufferSurface) {
         if (bufferSurface.getEGLSurface() != null) {
             return bufferSurface.getEGLSurface();
         }
@@ -931,23 +1000,38 @@ class EGL14RenderClient extends GLRenderClient {
         return eglSurface;
     }
 
+
     @Override
-    protected void destroyEGLSurface(EGLSurface eglSurface) {
-        if (eglSurface instanceof EGLWindowSurface) {
-            Object surfaceObject = ((EGLWindowSurface) eglSurface).getSurface();
-            windowSurfaceUsingMap.get(surfaceObject);
-            List<EGLWindowSurface> usingWindowSurfaceList = windowSurfaceUsingMap.get(surfaceObject);
-            if (usingWindowSurfaceList != null) {
-                usingWindowSurfaceList.remove(surfaceObject);
-            }
-            if (usingWindowSurfaceList == null || usingWindowSurfaceList.size() == 0) {
-                EGL14.eglDestroySurface(eglDisplay, eglSurface.getEGLSurface());
-                checkEGLError();
-            }
-        } else {
-            EGL14.eglDestroySurface(eglDisplay, eglSurface.getEGLSurface());
-            checkEGLError();
+    protected void destroy(GLWindowSurface windowSurface) {
+        EGL14.eglDestroySurface(eglDisplay, windowSurface.getEGLSurface());
+        checkEGLError();
+        windowSurfaceCache.remove(windowSurface.getSurface());
+    }
+
+    @Override
+    protected void destroy(GLPbufferSurface pbufferSurface) {
+        EGL14.eglDestroySurface(eglDisplay, pbufferSurface.getEGLSurface());
+        checkEGLError();
+    }
+
+    @Override
+    protected int queryWidth(GLWindowSurface windowSurface) {
+        if (windowSurface.isDisposed()) {
+            return 0;
         }
+        windowSurface.create();
+        EGL14.eglQuerySurface(eglDisplay, windowSurface.getEGLSurface(), EGL14.EGL_WIDTH, tempInt, 0);
+        return tempInt[0];
+    }
+
+    @Override
+    protected int queryHeight(GLWindowSurface windowSurface) {
+        if (windowSurface.isDisposed()) {
+            return 0;
+        }
+        windowSurface.create();
+        EGL14.eglQuerySurface(eglDisplay, windowSurface.getEGLSurface(), EGL14.EGL_HEIGHT, tempInt, 0);
+        return tempInt[0];
     }
 
 

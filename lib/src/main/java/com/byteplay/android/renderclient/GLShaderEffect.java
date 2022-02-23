@@ -1,29 +1,11 @@
 package com.byteplay.android.renderclient;
 
 
-
-import com.byteplay.android.renderclient.math.Matrix4;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class GLShaderEffect extends GLEffect {
-
-    private static final float POSITION_COORDINATES[] = {
-            -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
-            1.0f, -1.0f, 0.0f, 1.0f,//right bottom
-            -1.0f, 1.0f, 0.0f, 1.0f, //left top
-            1.0f, 1.0f, 0.0f, 1.0f//right top
-    };
-
-    private static final float TEXTURE_COORDINATES[] = {
-            0.0f, 0.0f, 0.0f, 1.0f,//left bottom
-            1.0f, 0.0f, 0.0f, 1.0f,//right bottom
-            0.0f, 1.0f, 0.0f, 1.0f,//left top
-            1.0f, 1.0f, 0.0f, 1.0f,//right  top
-    };
-    private static final float[] DEFAULT_MATRIX = new Matrix4().get();
 
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
@@ -58,9 +40,9 @@ public class GLShaderEffect extends GLEffect {
     private String vertexShaderCode;
     private String fragmentShaderCode;
     private GLDraw draw;
-    private GLShaderParam shaderParam;
-    private GLShaderParam defaultShaderParam;
-    private Map<String, GLKeyframes> keyframesMap = new HashMap<>();
+    private final GLShaderParam shaderParam;
+    private final GLShaderParam defaultShaderParam;
+    private Map<String, GLKeyframeSet> keyframesMap = new HashMap<>();
 
 
     protected GLShaderEffect(GLRenderClient client) {
@@ -84,32 +66,18 @@ public class GLShaderEffect extends GLEffect {
         GLShaderParam shaderParam = effect.getDefaultShaderParam();
         shaderParam.put("inputImageTexture", texture.getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
-        shaderParam.put("position", POSITION_COORDINATES);
-        shaderParam.put("inputTextureCoordinate", TEXTURE_COORDINATES);
-        shaderParam.put("positionMatrix", DEFAULT_MATRIX);
-        shaderParam.put("textureMatrix", DEFAULT_MATRIX);
-    }
-
-    @Override
-    protected void onCreate() {
-
-    }
-
-    @Override
-    protected void onDispose() {
-
     }
 
 
-    public void setKeyframe(String key, GLKeyframes keyframeSet) {
+    public void setKeyframe(String key, GLKeyframeSet keyframeSet) {
         keyframesMap.put(key, keyframeSet);
     }
 
-    public Set<String> getKeyframeKeySet() {
+    public Set<String> getFrameKeySet() {
         return keyframesMap.keySet();
     }
 
-    public GLKeyframes getKeyframes(String key) {
+    public GLKeyframeSet getKeyframes(String key) {
         return keyframesMap.get(key);
     }
 

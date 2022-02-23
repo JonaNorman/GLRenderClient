@@ -5,12 +5,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class GLShaderParam extends GLObject {
+public class GLShaderParam {
 
     private final Map<String, float[]> shaderParam = new HashMap<>();
 
-    protected GLShaderParam(GLRenderClient client) {
-        super(client);
+    protected GLShaderParam() {
+        super();
     }
 
     public Set<String> ketSet() {
@@ -62,16 +62,7 @@ public class GLShaderParam extends GLObject {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), shaderParam);
+        return Objects.hash(shaderParam);
     }
 
-    @Override
-    protected void onCreate() {
-
-    }
-
-    @Override
-    protected void onDispose() {
-
-    }
 }

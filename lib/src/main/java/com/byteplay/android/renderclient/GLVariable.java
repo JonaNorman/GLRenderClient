@@ -69,14 +69,13 @@ public abstract class GLVariable extends GLObject {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof GLVariable)) return false;
-        if (!super.equals(o)) return false;
         GLVariable that = (GLVariable) o;
         return id == that.id && length == that.length && type == that.type && Objects.equals(name, that.name) && Objects.equals(program, that.program);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), id, length, name, type, program);
+        return Objects.hash(id, length, name, type, program);
     }
 
     class GLUpdateMethod extends GLMethod {

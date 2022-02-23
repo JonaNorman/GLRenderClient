@@ -3,6 +3,7 @@ package com.byteplay.android.renderclient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public class GLEffectSet extends GLEffect {
 
@@ -18,15 +19,6 @@ public class GLEffectSet extends GLEffect {
         return client.applyEffect((GLEffectSet) effect, input, timeMs);
     }
 
-    @Override
-    protected void onCreate() {
-
-    }
-
-    @Override
-    protected void onDispose() {
-
-    }
 
     public void add(GLEffect effect) {
         if (effect == null) return;
@@ -36,6 +28,11 @@ public class GLEffectSet extends GLEffect {
     public void add(int index, GLEffect effect) {
         if (effect == null) return;
         effectList.add(index, effect);
+    }
+
+    public void set(int index, GLEffect effect) {
+        if (effect == null) return;
+        effectList.set(index, effect);
     }
 
     public void remove(GLEffect effect) {
@@ -68,4 +65,17 @@ public class GLEffectSet extends GLEffect {
     }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GLEffectSet)) return false;
+        if (!super.equals(o)) return false;
+        GLEffectSet that = (GLEffectSet) o;
+        return Objects.equals(effectList, that.effectList);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), effectList);
+    }
 }

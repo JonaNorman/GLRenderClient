@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class GLKeyframes implements Cloneable {
+public class GLKeyframeSet implements Cloneable {
 
     private static final Comparator<GLKeyframe> GL_KEY_FRAME_COMPARATOR = (o1, o2) -> {
         if (o1.fraction < o2.fraction) {
@@ -34,9 +34,10 @@ public class GLKeyframes implements Cloneable {
             if (startValue.length != endValue.length) {
                 throw new NullPointerException("start and end lengths are not equal");
             }
-            if (values == null || values.length != startValue.length) {
-                values = new float[startValue.length];
-            }
+            values = new float[startValue.length];
+//            if (values == null || values.length != startValue.length) {
+//
+//            }
             for (int i = 0; i < values.length; i++) {
                 float start = startValue[i];
                 float end = endValue[i];
@@ -50,7 +51,7 @@ public class GLKeyframes implements Cloneable {
     long startTime;
     long duration = Long.MAX_VALUE;
 
-    public GLKeyframes() {
+    public GLKeyframeSet() {
     }
 
     public List<GLKeyframe> getKeyframes() {
@@ -74,14 +75,14 @@ public class GLKeyframes implements Cloneable {
 
 
     @Override
-    public GLKeyframes clone() {
+    public GLKeyframeSet clone() {
         List<GLKeyframe> keyframes = this.keyframes;
         int numKeyframes = this.keyframes.size();
         final GLKeyframe[] newKeyframes = new GLKeyframe[numKeyframes];
         for (int i = 0; i < numKeyframes; ++i) {
             newKeyframes[i] = keyframes.get(i).clone();
         }
-        GLKeyframes newSet = new GLKeyframes();
+        GLKeyframeSet newSet = new GLKeyframeSet();
         newSet.addKeyFrame(newKeyframes);
         newSet.setStartTime(startTime);
         newSet.setDuration(duration);
@@ -136,42 +137,42 @@ public class GLKeyframes implements Cloneable {
 
     }
 
-    public static GLKeyframes ofInt(long duration, int... values) {
+    public static GLKeyframeSet ofInt(long duration, int... values) {
         int numKeyframes = values.length;
         GLKeyframe keyframes[] = new GLKeyframe[numKeyframes];
         keyframes[0] = GLKeyframe.ofInt(0f, values[0]);
         for (int i = 1; i < numKeyframes; ++i) {
             keyframes[i] = GLKeyframe.ofInt((float) i / (numKeyframes - 1), values[i]);
         }
-        GLKeyframes newSet = new GLKeyframes();
+        GLKeyframeSet newSet = new GLKeyframeSet();
         newSet.addKeyFrame(keyframes);
         newSet.setDuration(duration);
         return newSet;
     }
 
-    public static GLKeyframes ofInt(int... values) {
+    public static GLKeyframeSet ofInt(int... values) {
         return ofInt(Long.MAX_VALUE, values);
     }
 
 
-    public static GLKeyframes ofFloat(long duration, float... values) {
+    public static GLKeyframeSet ofFloat(long duration, float... values) {
         int numKeyframes = values.length;
         GLKeyframe keyframes[] = new GLKeyframe[numKeyframes];
         keyframes[0] = GLKeyframe.ofFloat(0f, values[0]);
         for (int i = 1; i < numKeyframes; ++i) {
             keyframes[i] = GLKeyframe.ofFloat((float) i / (numKeyframes - 1), values[i]);
         }
-        GLKeyframes newSet = new GLKeyframes();
+        GLKeyframeSet newSet = new GLKeyframeSet();
         newSet.addKeyFrame(keyframes);
         newSet.setDuration(duration);
         return newSet;
     }
 
-    public static GLKeyframes ofFloat(float... values) {
+    public static GLKeyframeSet ofFloat(float... values) {
         return ofFloat(Long.MAX_VALUE, values);
     }
 
-    public static GLKeyframes ofIntArray(long duration, int[][] values) {
+    public static GLKeyframeSet ofIntArray(long duration, int[][] values) {
         if (values.length < 2) {
             throw new IllegalArgumentException("At least 2 values must be supplied");
         }
@@ -193,17 +194,17 @@ public class GLKeyframes implements Cloneable {
         for (int i = 1; i < numKeyframes; ++i) {
             keyframes[i] = GLKeyframe.ofIntArray((float) i / (numKeyframes - 1), values[i]);
         }
-        GLKeyframes newSet = new GLKeyframes();
+        GLKeyframeSet newSet = new GLKeyframeSet();
         newSet.addKeyFrame(keyframes);
         newSet.setDuration(duration);
         return newSet;
     }
 
-    public static GLKeyframes ofIntArray(int[][] values) {
+    public static GLKeyframeSet ofIntArray(int[][] values) {
         return ofIntArray(Long.MAX_VALUE, values);
     }
 
-    public static GLKeyframes ofFloatArray(long duration, float[][] values) {
+    public static GLKeyframeSet ofFloatArray(long duration, float[][] values) {
         int numKeyframes = values.length;
         if (numKeyframes < 2) {
             throw new IllegalArgumentException("At least 2 values must be supplied");
@@ -225,19 +226,19 @@ public class GLKeyframes implements Cloneable {
         for (int i = 1; i < numKeyframes; ++i) {
             keyframes[i] = GLKeyframe.ofFloatArray((float) i / (numKeyframes - 1), values[i]);
         }
-        GLKeyframes newSet = new GLKeyframes();
+        GLKeyframeSet newSet = new GLKeyframeSet();
         newSet.addKeyFrame(keyframes);
         newSet.setDuration(duration);
         return newSet;
     }
 
-    public static GLKeyframes ofFloatArray(float[][] values) {
+    public static GLKeyframeSet ofFloatArray(float[][] values) {
         return ofFloatArray(Long.MAX_VALUE, values);
     }
 
 
-    public static GLKeyframes ofKeyframe(GLKeyframe... frames) {
-        GLKeyframes newSet = new GLKeyframes();
+    public static GLKeyframeSet ofKeyframe(GLKeyframe... frames) {
+        GLKeyframeSet newSet = new GLKeyframeSet();
         newSet.addKeyFrame(frames);
         return newSet;
     }

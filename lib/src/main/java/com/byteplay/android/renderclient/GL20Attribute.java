@@ -10,6 +10,8 @@ import java.util.Objects;
 
 class GL20Attribute extends GLAttribute {
 
+    private static final int STREAM_DRAW_COUNT = 5;
+    private static final int DYNAMIC_DRAW_COUNT = 1;
     private static SparseArray<String> TYPE_NAME_MAP = new SparseArray();
     private static SparseIntArray TYPE_SIZE_MAP = new SparseIntArray();
     private static SparseBooleanArray TYPE_FLOAT_MAP = new SparseBooleanArray();
@@ -84,7 +86,7 @@ class GL20Attribute extends GLAttribute {
     private int changeCount = 0;
 
     GL20Attribute(GLRenderClient client, GLProgram program, int id, int type, String name, int length) {
-        super(client, program,id, type, name, length);
+        super(client, program, id, type, name, length);
         this.typeSize = TYPE_SIZE_MAP.get(type);
         this.typeName = TYPE_NAME_MAP.get(type);
         this.typeFloat = TYPE_FLOAT_MAP.get(type);
@@ -110,9 +112,9 @@ class GL20Attribute extends GLAttribute {
         if (change) {
             changeCount++;
             int usage = GL20.GL_STATIC_DRAW;
-            if (changeCount > 5) {
+            if (changeCount > STREAM_DRAW_COUNT) {
                 usage = GL20.GL_STREAM_DRAW;
-            } else if (changeCount > 1) {
+            } else if (changeCount > DYNAMIC_DRAW_COUNT) {
                 usage = GL20.GL_DYNAMIC_DRAW;
             }
             gl.glBindBuffer(GL20.GL_ARRAY_BUFFER, bufferId);
@@ -121,7 +123,7 @@ class GL20Attribute extends GLAttribute {
         }
         gl.glEnableVertexAttribArray(getId());
         gl.glBindBuffer(GL20.GL_ARRAY_BUFFER, bufferId);
-        gl.glVertexAttribPointer(getId(), getTypeSize(),  GL20.GL_FLOAT, false, 0, 0);// GLES20 only support float attribute
+        gl.glVertexAttribPointer(getId(), getTypeSize(), GL20.GL_FLOAT, false, 0, 0);// GLES20 only support float attribute
         gl.glBindBuffer(GL20.GL_ARRAY_BUFFER, 0);
     }
 

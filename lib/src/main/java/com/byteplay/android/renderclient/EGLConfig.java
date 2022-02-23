@@ -1,83 +1,84 @@
 package com.byteplay.android.renderclient;
 
-public interface EGLConfig {
-    int getBufferSize();
+public abstract class EGLConfig {
 
-    int getAlphaSize();
+    public abstract int getBufferSize();
 
-    int getBlueSize();
+    public abstract int getAlphaSize();
 
-    int getGreenSize();
+    public abstract int getBlueSize();
 
-    int getRedSize();
+    public abstract int getGreenSize();
 
-    int getDepthSize();
+    public abstract int getRedSize();
 
-    int getStencilSize();
+    public abstract int getDepthSize();
 
-    boolean isSlow();
+    public abstract int getStencilSize();
 
-    int getConfigId();
+    public abstract boolean isSlow();
 
-    int getLevel();
+    public abstract int getConfigId();
 
-    int getMaxPBufferHeight();
+    public abstract int getLevel();
 
-    int getMaxPBufferPixels();
+    public abstract int getMaxPBufferHeight();
 
-    int getMaxPBufferWidth();
+    public abstract int getMaxPBufferPixels();
 
-    boolean isNativeRenderable();
+    public abstract int getMaxPBufferWidth();
 
-    int getNativeVisualId();
+    public abstract boolean isNativeRenderable();
 
-    int getNativeVisualType();
+    public abstract int getNativeVisualId();
 
-    int getSamples();
+    public abstract int getNativeVisualType();
 
-    int getSampleBuffers();
+    public abstract int getSamples();
 
-    boolean isWindowSurface();
+    public abstract int getSampleBuffers();
 
-    boolean isPBufferSurface();
+    public abstract boolean isWindowSurface();
 
-    boolean isTransparent();
+    public abstract boolean isPBufferSurface();
 
-    int getTransparentRedValue();
+    public abstract boolean isTransparent();
 
-    int getTransparentGreenValue();
+    public abstract int getTransparentRedValue();
 
-    int getTransparentBlueValue();
+    public abstract int getTransparentGreenValue();
 
-    boolean isBindTextureRgb();
+    public abstract int getTransparentBlueValue();
 
-    boolean isBindToTextureRgba();
+    public abstract boolean isBindTextureRgb();
 
-    int getMinSwapInterval();
+    public abstract boolean isBindToTextureRgba();
 
-    int getMaxSwapInterval();
+    public abstract int getMinSwapInterval();
 
-    int getLuminanceSize();
+    public abstract int getMaxSwapInterval();
 
-    int getAlphaMaskSize();
+    public abstract int getLuminanceSize();
 
-    boolean isRgbColor();
+    public abstract int getAlphaMaskSize();
 
-    boolean isLuminanceColor();
+    public abstract boolean isRgbColor();
 
-    boolean isRenderGL30();
+    public abstract boolean isLuminanceColor();
 
-    boolean isRenderGL20();
+    public abstract boolean isRenderGL30();
 
-    boolean isRenderGL10();
+    public abstract boolean isRenderGL20();
 
-    boolean isConformantGL30();
+    public abstract boolean isRenderGL10();
 
-    boolean isConformantGL20();
+    public abstract boolean isConformantGL30();
 
-    boolean isConformantGL10();
+    public abstract boolean isConformantGL20();
 
-    boolean isRecordable();
+    public abstract boolean isConformantGL10();
 
-    android.opengl.EGLConfig getEGLConfig();
+    public abstract boolean isRecordable();
+
+    protected abstract android.opengl.EGLConfig getEGLConfig();
 }

@@ -90,12 +90,12 @@ class GL20Shader extends GLShader {
         if (!(o instanceof GL20Shader)) return false;
         if (!super.equals(o)) return false;
         GL20Shader that = (GL20Shader) o;
-        return Objects.equals(compileCode, that.compileCode);
+        return Objects.equals(compiled, that.compiled);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), compileCode);
+        return Objects.hash(super.hashCode(), compiled);
     }
 
 }

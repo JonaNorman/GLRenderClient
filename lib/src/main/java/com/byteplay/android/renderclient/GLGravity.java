@@ -20,6 +20,11 @@ public abstract class GLGravity {
         public float getY(float y, float height, float outHeight) {
             return outHeight - height - y;
         }
+
+        @Override
+        public String toString() {
+            return "LEFT_TOP";
+        }
     };
     public static final GLGravity LEFT_BOTTOM = new GLGravity() {
         @Override
@@ -31,6 +36,11 @@ public abstract class GLGravity {
         public float getY(float y, float height, float outHeight) {
             return -y;
         }
+        @Override
+        public String toString() {
+            return "LEFT_BOTTOM";
+        }
+
     };
     public static final GLGravity RIGHT_TOP = new GLGravity() {
         @Override
@@ -41,6 +51,11 @@ public abstract class GLGravity {
         @Override
         public float getY(float y, float height, float outHeight) {
             return outHeight - height - y;
+        }
+
+        @Override
+        public String toString() {
+            return "RIGHT_TOP";
         }
     };
     public static final GLGravity RIGHT_BOTTOM = new GLGravity() {
@@ -53,6 +68,11 @@ public abstract class GLGravity {
         public float getY(float y, float height, float outHeight) {
             return -y;
         }
+
+        @Override
+        public String toString() {
+            return "RIGHT_BOTTOM";
+        }
     };
     public static final GLGravity LEFT_CENTER_VERTICAL = new GLGravity() {
         @Override
@@ -63,6 +83,11 @@ public abstract class GLGravity {
         @Override
         public float getY(float y, float height, float outHeight) {
             return (outHeight - height) / 2 - y;
+        }
+
+        @Override
+        public String toString() {
+            return "LEFT_CENTER_VERTICAL";
         }
     };
 
@@ -76,6 +101,11 @@ public abstract class GLGravity {
         public float getY(float y, float height, float outHeight) {
             return (outHeight - height) / 2 - y;
         }
+
+        @Override
+        public String toString() {
+            return "RIGHT_CENTER_VERTICAL";
+        }
     };
 
     public static final GLGravity TOP_CENTER_HORIZONTAL = new GLGravity() {
@@ -87,6 +117,11 @@ public abstract class GLGravity {
         @Override
         public float getY(float y, float height, float outHeight) {
             return outHeight - height - y;
+        }
+
+        @Override
+        public String toString() {
+            return "TOP_CENTER_HORIZONTAL";
         }
     };
 
@@ -100,6 +135,11 @@ public abstract class GLGravity {
         public float getY(float y, float height, float outHeight) {
             return -y;
         }
+
+        @Override
+        public String toString() {
+            return "BOTTOM_CENTER_HORIZONTAL";
+        }
     };
     public static final GLGravity CENTER = new GLGravity() {
         @Override
@@ -110,6 +150,11 @@ public abstract class GLGravity {
         @Override
         public float getY(float y, float height, float outHeight) {
             return (outHeight - height) / 2 - y;
+        }
+
+        @Override
+        public String toString() {
+            return "CENTER";
         }
     };
 
