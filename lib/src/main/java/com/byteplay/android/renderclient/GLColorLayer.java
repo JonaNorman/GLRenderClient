@@ -8,11 +8,13 @@ public class GLColorLayer extends GLLayer {
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
             "attribute vec4 position;\n" +
+            "uniform mat4 positionMatrix;\n" +
+            "uniform mat4 viewPortMatrix;\n" +
             "\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
-            "    gl_Position = position;\n" +
+            "    gl_Position = viewPortMatrix*positionMatrix*position;\n" +
             "}";
 
 

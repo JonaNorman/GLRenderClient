@@ -11,13 +11,14 @@ public class GLTextureLayer extends GLLayer {
             "attribute vec4 position;\n" +
             "attribute vec4 inputTextureCoordinate;\n" +
             "uniform mat4 positionMatrix;\n" +
+            "uniform mat4 viewPortMatrix;\n" +
             "uniform mat4 textureMatrix;\n" +
             "\n" +
             "varying vec2 textureCoordinate;\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
-            "    gl_Position = positionMatrix*position;\n" +
+            "    gl_Position =viewPortMatrix* positionMatrix*position;\n" +
             "    textureCoordinate =(textureMatrix*inputTextureCoordinate).xy;\n" +
             "}";
 
@@ -71,22 +72,23 @@ public class GLTextureLayer extends GLLayer {
         return scale;
     }
 
-    protected void onViewPort(GLViewPort viewPort, int frameWidth, int frameHeight) {
+
+    protected void onRenderViewPortMatrix(int frameWidth, int frameHeight) {
         int textureWidth = getTextureWidth();
         int textureHeight = getTextureHeight();
         if (textureWidth == 0 || textureHeight == 0) {
-            super.onViewPort(viewPort, frameWidth, frameHeight);
+            super.onRenderViewPortMatrix(frameWidth, frameHeight);
             return;
         }
         if (scale != null) {
-            int renderWidth = viewPort.getWidth();
-            int renderHeight = viewPort.getHeight();
-            int viewportWidth = (int) scale.getWidth(textureWidth, textureHeight, renderWidth, renderHeight);
-            int viewportHeight = (int) scale.getHeight(textureWidth, textureHeight, renderWidth, renderHeight);
-            viewPort.setWidth(viewportWidth);
-            viewPort.setHeight(viewportHeight);
+            int renderWidth = getRenderWidth();
+            int renderHeight = getRenderHeight();
+            float viewportWidth = scale.getWidth(textureWidth, textureHeight, renderWidth, renderHeight);
+            float viewportHeight = scale.getHeight(textureWidth, textureHeight, renderWidth, renderHeight);
+            setRenderWidth((int) (viewportWidth + 0.5));
+            setRenderHeight((int) (viewportHeight + 0.5));
         }
-        super.onViewPort(viewPort, frameWidth, frameHeight);
+        super.onRenderViewPortMatrix(frameWidth, frameHeight);
     }
 
     @Override

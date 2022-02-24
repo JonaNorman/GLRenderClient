@@ -2,15 +2,13 @@
 a lightweight rendering library that makes people forget the technical details of Opengl
 
 # task
+- [ ] scale rotate offset
+- [ ] touch  
 - [ ] demo
 - [ ] article
 - [ ] readme
-- [ ] scale rotate offset
-- [ ] width height measure
-- [ ] duration measure
-- [ ] upload maven   
-- [ ] touch
-- [ ] render to cache
-- [ ] attach loop thread 
+- [ ] upload maven
+  
+# TODO
 - [ ] opengl 3.0
-- [ ] Learn other libraries
+- [ ] shader lib

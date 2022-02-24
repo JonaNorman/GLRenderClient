@@ -12,6 +12,8 @@ import android.view.TextureView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.byteplay.android.renderclient.GLKeyframeSet;
+import com.byteplay.android.renderclient.GLLayer;
 import com.byteplay.android.renderclient.GLRenderClient;
 import com.byteplay.android.renderclient.GLRenderSurface;
 import com.byteplay.android.renderclient.GLTexture;
@@ -49,11 +51,20 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     renderClient.attachCurrentThread();
                     textureLayer = renderClient.newTextureLayer();
                     textureLayer.setDuration(10000);
-                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic1);
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inScaled = false;
+                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic1, options);
                     GLTexture texture = renderClient.newTexture(GLTextureType.TEXTURE_2D);
                     texture.updateBitmap(bitmap);
                     bitmap.recycle();
+                    textureLayer.setWidth(400);
+                    textureLayer.setHeight(400);
+                    textureLayer.setRotation(45);
                     textureLayer.setTexture(texture);
+                    GLKeyframeSet keyframeSet = GLKeyframeSet.ofFloat(5000, 1, 3, 1);
+                    keyframeSet.setStartTime(3000);
+                    textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_X, keyframeSet);
+                    textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_Y, keyframeSet);
                     return true;
 
                 case MESSAGE_SURFACE_CREATE:
@@ -102,7 +113,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_render_client);
+        setContentView(R.layout.activity_gl_layer);
         TextureView textureView = findViewById(R.id.textureView);
         textureView.setSurfaceTextureListener(this);
         textureView.setOpaque(false);

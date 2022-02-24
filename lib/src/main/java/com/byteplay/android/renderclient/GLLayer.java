@@ -3,12 +3,13 @@ package com.byteplay.android.renderclient;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
+import com.byteplay.android.renderclient.math.Matrix4;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 public class GLLayer extends GLObject {
@@ -20,6 +21,12 @@ public class GLLayer extends GLObject {
     public static final String KEY_FRAMES_KEY_LAYER_Y = "layer_y";
     public static final String KEY_FRAMES_KEY_LAYER_WIDTH = "layer_width";
     public static final String KEY_FRAMES_KEY_LAYER_HEIGHT = "layer_height";
+    public static final String KEY_FRAMES_KEY_LAYER_SCALE_X = "layer_scaleX";
+    public static final String KEY_FRAMES_KEY_LAYER_SCALE_Y = "layer_scaleY";
+    public static final String KEY_FRAMES_KEY_LAYER_ROTATION= "layer_rotation";
+    public static final String KEY_FRAMES_KEY_LAYER_TRANSLATE_X = "layer_translateX";
+    public static final String KEY_FRAMES_KEY_LAYER_TRANSLATE_Y = "layer_translateY";
+
 
 
     private String vertexShaderCode;
@@ -27,7 +34,6 @@ public class GLLayer extends GLObject {
     private GLDraw draw;
     private GLShaderParam shaderParam;
     private GLShaderParam defaultShaderParam;
-    private GLViewPort viewPort;
     private GLEnable enable;
     private GLXfermode xfermode;
     private GLGravity gravity = GLGravity.CENTER;
@@ -36,8 +42,20 @@ public class GLLayer extends GLObject {
     private int width = SIZE_MATCH_PARENT;
     private int height = SIZE_MATCH_PARENT;
     private long timeMs;
+    private int renderX;
+    private int renderY;
     private int renderWidth;
     private int renderHeight;
+    private float renderScaleX = 1;
+    private float renderScaleY = 1;
+    private float renderRotation = 0;
+    private float renderTranslateX = 0;
+    private float renderTranslateY = 0;
+    private float scaleX = 1;
+    private float scaleY = 1;
+    private float rotation = 0;
+    private float translateX = 0;
+    private float translateY = 0;
     private GLRenderSurface outEGLSurface;
     private GLFrameBuffer ownFrameBuffer;
     private int backgroundColor;
@@ -47,7 +65,7 @@ public class GLLayer extends GLObject {
     private long renderDuration = DURATION_MATCH_PARENT;
     private Map<String, GLKeyframeSet> keyframesMap = new HashMap<>();
     private GLEffectSet effectSet;
-
+    private final Matrix4 viewPortMatrix = new Matrix4();
 
     protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode, GLDraw draw) {
         super(client);
@@ -58,7 +76,6 @@ public class GLLayer extends GLObject {
         this.fragmentShaderCode = fragmentShaderCode;
         this.shaderParam = client.newShaderParam();
         this.defaultShaderParam = client.newShaderParam();
-        this.viewPort = client.newViewPort();
         this.effectSet = client.newEffectSet();
     }
 
@@ -126,21 +143,50 @@ public class GLLayer extends GLObject {
         this.height = height;
     }
 
-    protected void setRenderWidth(int viewWidth) {
-        this.renderWidth = viewWidth;
+
+
+    public float getRotation() {
+        return rotation;
     }
 
-    protected void setRenderHeight(int renderHeight) {
-        this.renderHeight = renderHeight;
+    public void setRotation(float rotation) {
+        this.rotation = rotation;
     }
 
-    public int getRenderWidth() {
-        return renderWidth;
+
+    public void setTranslateX(float translateX) {
+        this.translateX = translateX;
     }
 
-    public int getRenderHeight() {
-        return renderHeight;
+    public void setTranslateY(float translateY) {
+        this.translateY = translateY;
     }
+
+    public void setScaleX(float scaleX) {
+        this.scaleX = scaleX;
+    }
+
+    public void setScaleY(float scaleY) {
+        this.scaleY = scaleY;
+    }
+
+    public float getScaleX() {
+        return scaleX;
+    }
+
+    public float getScaleY() {
+        return scaleY;
+    }
+
+
+    public float getTranslateX() {
+        return translateX;
+    }
+
+    public float getTranslateY() {
+        return translateY;
+    }
+
 
     public int getX() {
         return x;
@@ -324,9 +370,6 @@ public class GLLayer extends GLObject {
         return draw;
     }
 
-    public GLViewPort getViewPort() {
-        return viewPort;
-    }
 
     public void setGravity(GLGravity gravity) {
         this.gravity = gravity;
@@ -336,20 +379,19 @@ public class GLLayer extends GLObject {
         return gravity;
     }
 
-    protected void onViewPort(GLViewPort viewPort, int frameWidth, int frameHeight) {
-        setGravityViewPort(viewPort, frameWidth, frameHeight);
-        setRenderWidth(viewPort.getWidth());
-        setRenderHeight(viewPort.getHeight());
+    protected void onRenderViewPortMatrix(int frameWidth, int frameHeight) {
+        viewPortMatrix.setIdentity();
+
+        float x = gravity.getX(renderX, renderWidth, frameWidth);
+        float y = gravity.getY(renderY, renderHeight, frameHeight);
+        viewPortMatrix.scale(renderScaleX * renderWidth / 2, renderScaleY * renderHeight / 2, 1);
+        viewPortMatrix.rotate(renderRotation, 0, 0, 1);
+        viewPortMatrix.translate(renderTranslateX + x - (frameWidth / 2.0f - renderWidth / 2.0f), -(renderTranslateY + y - (frameHeight / 2.0f - renderHeight / 2.0f)), 0);
+        viewPortMatrix.scale(2.0f / frameWidth, 2.0f / frameHeight, 1);
     }
 
-
-    protected final void setGravityViewPort(GLViewPort viewPort, int frameWidth, int frameHeight) {
-        int renderWidth = viewPort.getWidth();
-        int renderHeight = viewPort.getHeight();
-        viewPort.set((int) gravity.getX(viewPort.getX(), renderWidth, frameWidth),
-                (int) gravity.getY(viewPort.getY(), renderHeight, frameHeight),
-                renderWidth,
-                renderHeight);
+    public Matrix4 getViewPortMatrix() {
+        return viewPortMatrix;
     }
 
     protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
@@ -374,7 +416,6 @@ public class GLLayer extends GLObject {
     }
 
 
-
     public long getStartTime() {
         return startTime;
     }
@@ -389,6 +430,79 @@ public class GLLayer extends GLObject {
 
     public long getDuration() {
         return duration;
+    }
+
+    public float getRenderX() {
+        return renderX;
+    }
+
+    protected void setRenderX(int renderX) {
+        this.renderX = renderX;
+    }
+
+    public float getRenderY() {
+        return renderY;
+    }
+
+    protected void setRenderY(int renderY) {
+        this.renderY = renderY;
+    }
+
+    public int getRenderWidth() {
+        return renderWidth;
+    }
+
+    protected void setRenderWidth(int renderWidth) {
+        this.renderWidth = renderWidth;
+    }
+
+    public int getRenderHeight() {
+        return renderHeight;
+    }
+
+    protected void setRenderHeight(int renderHeight) {
+        this.renderHeight = renderHeight;
+    }
+
+
+    public float getRenderScaleX() {
+        return renderScaleX;
+    }
+
+    protected void setRenderScaleX(float renderScaleX) {
+        this.renderScaleX = renderScaleX;
+    }
+
+    public float getRenderScaleY() {
+        return renderScaleY;
+    }
+
+    protected void setRenderScaleY(float renderScaleY) {
+        this.renderScaleY = renderScaleY;
+    }
+
+    public float getRenderRotation() {
+        return renderRotation;
+    }
+
+    protected void setRenderRotation(float renderRotation) {
+        this.renderRotation = renderRotation;
+    }
+
+    public float getRenderTranslateX() {
+        return renderTranslateX;
+    }
+
+    public void setRenderTranslateX(float renderTranslateX) {
+        this.renderTranslateX = renderTranslateX;
+    }
+
+    public float getRenderTranslateY() {
+        return renderTranslateY;
+    }
+
+    public void setRenderTranslateY(float renderTranslateY) {
+        this.renderTranslateY = renderTranslateY;
     }
 
     public static abstract class SurfaceReadBitmapCallback {

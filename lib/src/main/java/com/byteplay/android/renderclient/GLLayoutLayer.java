@@ -35,12 +35,13 @@ public class GLLayoutLayer extends GLLayer {
             "attribute vec4 inputTextureCoordinate;\n" +
             "uniform mat4 positionMatrix;\n" +
             "uniform mat4 textureMatrix;\n" +
+            "uniform mat4 viewPortMatrix;\n" +
             "\n" +
             "varying vec2 textureCoordinate;\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
-            "    gl_Position = positionMatrix*position;\n" +
+            "    gl_Position = viewPortMatrix*positionMatrix*position;\n" +
             "    textureCoordinate =(textureMatrix*inputTextureCoordinate).xy;\n" +
             "}";
 

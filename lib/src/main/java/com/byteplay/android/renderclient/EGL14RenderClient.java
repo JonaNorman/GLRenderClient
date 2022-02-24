@@ -32,6 +32,7 @@ class EGL14RenderClient extends GLRenderClient {
     public static final String KEY_INPUT_TEXTURE_COORDINATE = "inputTextureCoordinate";
     public static final String KEY_POSITION_MATRIX = "positionMatrix";
     public static final String KEY_TEXTURE_MATRIX = "textureMatrix";
+    public static final String KEY_VIEW_PORT_MATRIX_MATRIX = "viewPortMatrix";
 
     private static final float POSITION_COORDINATES[] = {
             -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
@@ -46,29 +47,8 @@ class EGL14RenderClient extends GLRenderClient {
             0.0f, 1.0f, 0.0f, 1.0f,//left top
             1.0f, 1.0f, 0.0f, 1.0f,//right  top
     };
-
-    private static final float[] DEFAULT_MATRIX = new Matrix4().get();
     private static final int MAX_PROGRAM_SIZE = 20;
-    private static final int MAX_EGL_CONFIG_SIZE = 100;
-    private static final int MAX_FRAME_BUFFER_CACHE_SIZE = 5;
-    private final Queue<GLFrameBuffer> frameBufferCache = new LinkedList<>();
-    private final List<GLObject> objectList = new ArrayList<>();
-    private final Map<String, GLShader> shaderMap = new HashMap<>();
-    private final Map<GLShader, Integer> shaderUsingMap = new HashMap<>();
-    private final List<GLRenderSurface> renderSurfaceList = new ArrayList<>();
-    private final Map<Object, GLWindowSurface> windowSurfaceCache = new HashMap<>();
-    private final EGLDisplay eglDisplay;
-    private final EGLContext eglContext;
-    private final android.opengl.EGLConfig eglConfig;
-    private final GLPbufferSurface defaultBufferSurface;
-    private final GL20 gl20;
-    private final GLColorLayer backgroundColorLayer;
-    private final GLTextureLayer outTextureLayer;
-    private final GLViewPort tempViewPort;
-    private final GLBlend blend;
-    private GLRenderSurface currentEGLSurface;
-    private GLFrameBuffer bindFrameBuffer;
-    private GLEnable tempEnable;
+
     private LruCache<Integer, GLProgram> programCache = new LruCache<Integer, GLProgram>(MAX_PROGRAM_SIZE) {
         @Override
         protected void entryRemoved(boolean evicted, Integer key, GLProgram oldValue, GLProgram newValue) {
@@ -100,9 +80,30 @@ class EGL14RenderClient extends GLRenderClient {
             }
         }
     };
+
+    private static final Matrix4 DEFAULT_MATRIX = new Matrix4();
+    private static final int MAX_EGL_CONFIG_SIZE = 100;
+    private static final int MAX_FRAME_BUFFER_CACHE_SIZE = 5;
+    private final Queue<GLFrameBuffer> frameBufferCache = new LinkedList<>();
+    private final List<GLObject> objectList = new ArrayList<>();
+    private final Map<String, GLShader> shaderMap = new HashMap<>();
+    private final Map<GLShader, Integer> shaderUsingMap = new HashMap<>();
+    private final List<GLRenderSurface> renderSurfaceList = new ArrayList<>();
+    private final Map<Object, GLWindowSurface> windowSurfaceCache = new HashMap<>();
+    private final EGLDisplay eglDisplay;
+    private final EGLContext eglContext;
+    private final android.opengl.EGLConfig eglConfig;
+    private final GLPbufferSurface defaultBufferSurface;
+    private final GL20 gl20;
+    private final GLColorLayer backgroundColorLayer;
+    private final GLTextureLayer outTextureLayer;
+    private final GLBlend blend;
+    private GLRenderSurface currentEGLSurface;
+    private GLFrameBuffer bindFrameBuffer;
+    private GLEnable glEnable;
+    private GLViewPort glViewPort;
     private EGLSurface attachRecordReadEGLSurface;
     private EGLSurface attachRecordDrawEGLSurface;
-    private EGLDisplay attachRecordDisplay;
     private EGLContext attachRecordContext;
 
     @Override
@@ -200,9 +201,9 @@ class EGL14RenderClient extends GLRenderClient {
         this.gl20.addGLMonitor(gl20ErrorMonitor);
         backgroundColorLayer = newColorLayer();
         outTextureLayer = newTextureLayer();
-        tempViewPort = newViewPort();
-        tempEnable = newEnable();
         blend = newBlend();
+        glEnable = newEnable();
+        glViewPort = newViewPort();
     }
 
     @Override
@@ -258,21 +259,25 @@ class EGL14RenderClient extends GLRenderClient {
         }
         int frameWidth = outputBuffer.getWidth();
         int frameHeight = outputBuffer.getHeight();
-        GLViewPort viewPort = layer.getViewPort();
         int renderWidth = layer.getWidth() == GLLayer.SIZE_MATCH_PARENT ? frameWidth : Math.max(layer.getWidth(), 0);
         int renderHeight = layer.getWidth() == GLLayer.SIZE_MATCH_PARENT ? frameHeight : Math.max(layer.getHeight(), 0);
-        viewPort.set(layer.getX(),
-                layer.getY(),
-                renderWidth,
-                renderHeight);
-        onViewPortKeyFrame(layer, viewPort, renderTimeMs);
-        layer.onViewPort(viewPort, frameWidth, frameHeight);
+        layer.setRenderX(layer.getX());
+        layer.setRenderX(layer.getY());
+        layer.setRenderWidth(renderWidth);
+        layer.setRenderHeight(renderHeight);
+        layer.setRenderScaleX(layer.getScaleX());
+        layer.setRenderScaleY(layer.getScaleY());
+        layer.setRenderRotation(layer.getRotation());
+        layer.setRenderTranslateX(layer.getRenderTranslateX());
+        layer.setRenderTranslateY(layer.getRenderTranslateY());
+        completeLayerRenderKeyFrame(layer, renderTimeMs);
+        layer.onRenderViewPortMatrix(frameWidth, frameHeight);
         int transformSize = layer.getTransformSize();
         for (int i = 0; i < transformSize; i++) {
             GLLayer.LayerTransform transform = layer.getTransform(i);
             transform.onLayerTransform(layer, layerTimeMs);
         }
-        if (viewPort.getWidth() <= 0 || viewPort.getHeight() <= 0) {
+        if (layer.getRenderWidth() <= 0 || layer.getRenderHeight() <= 0) {
             return;
         }
         if (layer instanceof GLLayerGroup) {
@@ -282,16 +287,14 @@ class EGL14RenderClient extends GLRenderClient {
 
         if (layer.getBackgroundColor() != Color.TRANSPARENT) {
             backgroundColorLayer.setColor(layer.getBackgroundColor());
-            renderLayer(backgroundColorLayer, outputBuffer, viewPort, backgroundColorLayer.getXfermode(), layerTimeMs);
+            renderLayer(backgroundColorLayer, outputBuffer, layer.getViewPortMatrix(), backgroundColorLayer.getXfermode(), layerTimeMs);
         }
         int effectCount = layer.getEffectSize();
         if (effectCount > 0) {
-            int effectWidth = viewPort.getWidth();
-            int effectHeight = viewPort.getHeight();
+            int effectWidth = layer.getRenderWidth();
+            int effectHeight = layer.getRenderHeight();
             GLFrameBuffer inBuffer = obtainFrameBuffer(effectWidth, effectHeight);
-            tempViewPort.setWidth(effectWidth);
-            tempViewPort.setHeight(effectHeight);
-            renderLayer(layer, inBuffer, tempViewPort, GLXfermode.SRC, layerTimeMs);
+            renderLayer(layer, inBuffer, DEFAULT_MATRIX, GLXfermode.SRC, layerTimeMs);
             GLEffectSet effectSet = layer.getEffectSet();
             effectSet.setRenderDuration(effectSet.getDuration() == GLLayer.DURATION_MATCH_PARENT ?
                     layer.getRenderDuration() :
@@ -302,10 +305,10 @@ class EGL14RenderClient extends GLRenderClient {
             }
             GLTexture effectTexture = effectBuffer.getColorTexture();
             outTextureLayer.setTexture(effectTexture);
-            renderLayer(outTextureLayer, outputBuffer, viewPort, layer.getXfermode(), layerTimeMs);
+            renderLayer(outTextureLayer, outputBuffer, layer.getViewPortMatrix(), layer.getXfermode(), layerTimeMs);
             cacheFrameBuffer(effectBuffer);
         } else {
-            renderLayer(layer, outputBuffer, viewPort, layer.getXfermode(), layerTimeMs);
+            renderLayer(layer, outputBuffer, layer.getViewPortMatrix(), layer.getXfermode(), layerTimeMs);
         }
     }
 
@@ -314,21 +317,18 @@ class EGL14RenderClient extends GLRenderClient {
         if (outputBuffer == null) {
             throw new IllegalArgumentException("outputBuffer is null");
         }
-        GLViewPort viewPort = frameLayer.getViewPort();
-        int currentWidth = viewPort.getWidth();
-        int currentHeight = viewPort.getHeight();
+        int currentWidth = frameLayer.getRenderWidth();
+        int currentHeight = frameLayer.getRenderHeight();
         GLFrameBuffer currentFrameBuffer = obtainFrameBuffer(currentWidth, currentHeight);
         if (frameLayer.getBackgroundColor() != Color.TRANSPARENT) {
             backgroundColorLayer.setColor(frameLayer.getBackgroundColor());
-            renderLayer(backgroundColorLayer, outputBuffer, viewPort, backgroundColorLayer.getXfermode(), renderTimeMs);
+            renderLayer(backgroundColorLayer, outputBuffer, frameLayer.getViewPortMatrix(), backgroundColorLayer.getXfermode(), renderTimeMs);
         }
         String vertexCode = frameLayer.getVertexShaderCode();
         String fragmentCode = frameLayer.getFragmentShaderCode();
         if (vertexCode != null &&
                 fragmentCode != null) {
-            tempViewPort.setWidth(currentWidth);
-            tempViewPort.setHeight(currentHeight);
-            renderLayer(frameLayer, currentFrameBuffer, tempViewPort, frameLayer.getSelfXfermode(), renderTimeMs);
+            renderLayer(frameLayer, currentFrameBuffer, DEFAULT_MATRIX, frameLayer.getSelfXfermode(), renderTimeMs);
         }
         for (int i = 0; i < frameLayer.size(); i++) {
             GLLayer layer = frameLayer.get(i);
@@ -353,21 +353,22 @@ class EGL14RenderClient extends GLRenderClient {
             }
             GLTexture effectTexture = effectBuffer.getColorTexture();
             outTextureLayer.setTexture(effectTexture);
-            renderLayer(outTextureLayer, outputBuffer, viewPort, frameLayer.getXfermode(), renderTimeMs);
+            renderLayer(outTextureLayer, outputBuffer, frameLayer.getViewPortMatrix(), frameLayer.getXfermode(), renderTimeMs);
             cacheFrameBuffer(effectBuffer);
         } else {
             GLTexture currentTexture = currentFrameBuffer.getColorTexture();
             outTextureLayer.setTexture(currentTexture);
-            renderLayer(outTextureLayer, outputBuffer, viewPort, frameLayer.getXfermode(), renderTimeMs);
+            renderLayer(outTextureLayer, outputBuffer, frameLayer.getViewPortMatrix(), frameLayer.getXfermode(), renderTimeMs);
             cacheFrameBuffer(currentFrameBuffer);
         }
     }
 
-    private void renderLayer(GLLayer layer, GLFrameBuffer outputBuffer, GLViewPort viewPort, GLXfermode xfermode, long renderTimeMs) {
+    private void renderLayer(GLLayer layer, GLFrameBuffer outputBuffer, Matrix4 viewPortMatrix, GLXfermode xfermode, long renderTimeMs) {
         GLProgram program = getGlProgram(layer.getVertexShaderCode(), layer.getFragmentShaderCode());
         program.setDraw(layer.getDraw());
         GLFrameBuffer old = outputBuffer.bind();
-        viewPort.call();
+        glViewPort.set(0, 0, outputBuffer.getWidth(), outputBuffer.getHeight());
+        glViewPort.call();
         GLEnable enable = layer.getEnable();
         enable.call();
         xfermode.apply(blend);
@@ -375,27 +376,22 @@ class EGL14RenderClient extends GLRenderClient {
         program.clearShaderParam();
         GLShaderParam programParam = program.getShaderParam();
         programParam.put(KEY_RENDER_TIME, renderTimeMs / 1000.0f);
-        programParam.put(KEY_VIEW_PORT_SIZE, viewPort.getWidth(), viewPort.getHeight());
+        programParam.put(KEY_VIEW_PORT_SIZE, glViewPort.getWidth(), glViewPort.getHeight());
         programParam.put(KEY_POSITION, POSITION_COORDINATES);
         programParam.put(KEY_INPUT_TEXTURE_COORDINATE, TEXTURE_COORDINATES);
-        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX);
-        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX);
+        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX.get());
+        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX.get());
+        programParam.put(KEY_VIEW_PORT_MATRIX_MATRIX, viewPortMatrix.get());
         boolean render = layer.onRenderLayer(layer, renderTimeMs);
         if (!render) {
             return;
         }
         programParam.put(layer.getDefaultShaderParam());
         for (String key : layer.getKeyframeKeySet()) {
-            GLKeyframeSet keyFrames = layer.getKeyframes(key);
-            long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
-            if (duration <= 0) {
-                continue;
+            float[] keyValue = getKeyFrameValue(layer, key, renderTimeMs);
+            if (keyValue != null) {
+                programParam.put(key, keyValue);
             }
-            float fraction = (renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration;
-            if (fraction < 0 || fraction > 1) {
-                continue;
-            }
-            programParam.put(key, keyFrames.getValue(fraction));
         }
         programParam.put(layer.getShaderParam());
         program.execute();
@@ -453,37 +449,30 @@ class EGL14RenderClient extends GLRenderClient {
             return input;
         }
         GLFrameBuffer outputBuffer = obtainFrameBuffer(input.getWidth(), input.getHeight());
-        tempViewPort.setWidth(input.getWidth());
-        tempViewPort.setHeight(input.getHeight());
+        glViewPort.set(0, 0, input.getWidth(), input.getHeight());
         long effectTime = renderTimeMs - startTime;
         GLProgram program = getGlProgram(effect.getVertexShaderCode(), effect.getFragmentShaderCode());
         program.setDraw(effect.getDraw());
         GLFrameBuffer old = outputBuffer.bind();
-        tempViewPort.call();
-        tempEnable.call();
+        glViewPort.call();
+        glEnable.call();
         GLXfermode.SRC.apply(blend);
         blend.call();
         program.clearShaderParam();
         GLShaderParam programParam = program.getShaderParam();
         programParam.put(KEY_RENDER_TIME, effectTime / 1000.0f);
-        programParam.put(KEY_VIEW_PORT_SIZE, tempViewPort.getWidth(), tempViewPort.getHeight());
+        programParam.put(KEY_VIEW_PORT_SIZE, glViewPort.getWidth(), glViewPort.getHeight());
         programParam.put(KEY_POSITION, POSITION_COORDINATES);
         programParam.put(KEY_INPUT_TEXTURE_COORDINATE, TEXTURE_COORDINATES);
-        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX);
-        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX);
+        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX.get());
+        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX.get());
         effect.onApplyShaderEffect(effect, input, effectTime);
         programParam.put(effect.getDefaultShaderParam());
         for (String key : effect.getFrameKeySet()) {
-            GLKeyframeSet keyFrames = effect.getKeyframes(key);
-            long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), effect.getRenderDuration() - keyFrames.getStartTime());
-            if (duration <= 0) {
-                continue;
+            float[] keyValue = getKeyFrameValue(effect, key, effectTime);
+            if (keyValue != null) {
+                programParam.put(key, keyValue);
             }
-            float fraction = (effectTime - keyFrames.getStartTime()) * 1.0f / duration;
-            if (fraction < 0 || fraction > 1) {
-                continue;
-            }
-            programParam.put(key, keyFrames.getValue(fraction));
         }
         programParam.put(effect.getShaderParam());
         program.execute();
@@ -528,35 +517,74 @@ class EGL14RenderClient extends GLRenderClient {
         }
     }
 
-    private void onViewPortKeyFrame(GLLayer layer, GLViewPort viewPort, long renderTimeMs) {
-        GLKeyframeSet keyFrames = layer.getKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_X);
-        if (keyFrames != null) {
-            long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
-            if (duration > 0) {
-                viewPort.setX((int) (keyFrames.getValue((renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration)[0] + 0.5f));
-            }
+    private void completeLayerRenderKeyFrame(GLLayer layer, long renderTimeMs) {
+        float[] keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_X, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderX((int) (keyValue[0] + 0.5));
         }
-        keyFrames = layer.getKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_Y);
-        if (keyFrames != null) {
-            long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
-            if (duration > 0) {
-                viewPort.setY((int) (keyFrames.getValue((renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration)[0] + 0.5f));
-            }
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_Y, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderY((int) (keyValue[0] + 0.5));
         }
-        keyFrames = layer.getKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH);
-        if (keyFrames != null) {
-            long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
-            if (duration > 0) {
-                viewPort.setWidth((int) (keyFrames.getValue((renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration)[0] + 0.5f));
-            }
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderWidth((int) (keyValue[0] + 0.5));
         }
-        keyFrames = layer.getKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT);
-        if (keyFrames != null) {
-            long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
-            if (duration > 0) {
-                viewPort.setHeight((int) (keyFrames.getValue((renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration)[0] + 0.5f));
-            }
+
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderHeight((int) (keyValue[0] + 0.5));
         }
+
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_X, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderScaleX(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_Y, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderScaleY(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_X, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderTranslateX(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_Y, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRenderTranslateY(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(layer, GLLayer.KEY_FRAMES_KEY_LAYER_ROTATION, renderTimeMs);
+        if (keyValue != null) {
+            layer.setRotation(keyValue[0]);
+        }
+
+
+    }
+
+
+    private float[] getKeyFrameValue(GLLayer layer, String key, long renderTimeMs) {
+        GLKeyframeSet keyFrames = layer.getKeyframes(key);
+        if (keyFrames == null) {
+            return null;
+        }
+        long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
+        float fraction = (renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration;
+        if (fraction < 0 || fraction > 1) {
+            return null;
+        }
+        return keyFrames.getValue(fraction);
+    }
+
+    private float[] getKeyFrameValue(GLShaderEffect shaderEffect, String key, long renderTimeMs) {
+        GLKeyframeSet keyFrames = shaderEffect.getKeyframes(key);
+        if (keyFrames == null) {
+            return null;
+        }
+        long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), shaderEffect.getRenderDuration() - keyFrames.getStartTime());
+        float fraction = (renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration;
+        if (fraction < 0 || fraction > 1) {
+            return null;
+        }
+        return keyFrames.getValue(fraction);
     }
 
 

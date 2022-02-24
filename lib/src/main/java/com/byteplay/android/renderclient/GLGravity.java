@@ -18,7 +18,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return outHeight - height - y;
+            return y;
         }
 
         @Override
@@ -34,8 +34,9 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return -y;
+            return outHeight - height + y;
         }
+
         @Override
         public String toString() {
             return "LEFT_BOTTOM";
@@ -50,7 +51,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return outHeight - height - y;
+            return y;
         }
 
         @Override
@@ -66,7 +67,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return -y;
+            return outHeight - height + y;
         }
 
         @Override
@@ -82,7 +83,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return (outHeight - height) / 2 - y;
+            return (outHeight - height) / 2 + y;
         }
 
         @Override
@@ -99,7 +100,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return (outHeight - height) / 2 - y;
+            return (outHeight - height) / 2 + y;
         }
 
         @Override
@@ -116,7 +117,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return outHeight - height - y;
+            return y;
         }
 
         @Override
@@ -133,7 +134,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return -y;
+            return outHeight - height + y;
         }
 
         @Override
@@ -149,7 +150,7 @@ public abstract class GLGravity {
 
         @Override
         public float getY(float y, float height, float outHeight) {
-            return (outHeight - height) / 2 - y;
+            return (outHeight - height) / 2 + y;
         }
 
         @Override
