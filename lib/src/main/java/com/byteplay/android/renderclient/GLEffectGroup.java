@@ -5,20 +5,29 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class GLEffectSet extends GLEffect {
+public class GLEffectGroup extends GLEffect {
 
     private List<GLEffect> effectList = new ArrayList<>();
 
-    public GLEffectSet(GLRenderClient client) {
+    public GLEffectGroup(GLRenderClient client) {
         super(client);
     }
 
 
     @Override
-    protected GLFrameBuffer actualApplyEffect(GLEffect effect, GLFrameBuffer input, long timeMs) {
-        return client.applyEffect((GLEffectSet) effect, input, timeMs);
+    protected void computeEffect(long parentEffectTimeMs, long parentDurationMs) {
+        super.computeEffect(parentEffectTimeMs, parentDurationMs);
+        setRenderEnable(getEffectSize() > 0 ? true : false);
+        for (int i = 0; i < getEffectSize(); i++) {
+            GLEffect child = getEffect(i);
+            child.computeEffect(getRenderTime(), getRenderDuration());
+        }
     }
 
+    @Override
+    protected GLFrameBuffer renderEffect(GLFrameBuffer input) {
+        return client.renderEffect(this, input);
+    }
 
     public void add(GLEffect effect) {
         if (effect == null) return;
@@ -56,21 +65,21 @@ public class GLEffectSet extends GLEffect {
         effectList.removeAll(effects);
     }
 
-    public int size() {
+    public int getEffectSize() {
         return effectList.size();
     }
 
-    public GLEffect get(int index) {
-        return index < 0 || index >= size() ? null : effectList.get(index);
+    public GLEffect getEffect(int index) {
+        return index < 0 || index >= getEffectSize() ? null : effectList.get(index);
     }
 
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof GLEffectSet)) return false;
+        if (!(o instanceof GLEffectGroup)) return false;
         if (!super.equals(o)) return false;
-        GLEffectSet that = (GLEffectSet) o;
+        GLEffectGroup that = (GLEffectGroup) o;
         return Objects.equals(effectList, that.effectList);
     }
 

@@ -1,6 +1,8 @@
 package com.byteplay.android.renderclient;
 
 
+import android.view.MotionEvent;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -11,6 +13,8 @@ public class GLLayerGroup extends GLLayer {
 
     private GLScale scale = GLScale.FIT;
     private GLXfermode selfXfermode;
+    private GLLayer mFirstTouchLayer;
+    private final float[] tempPoint = new float[4];
 
     public GLLayerGroup(GLRenderClient client) {
         super(client, null, null, client.newDrawArray());
@@ -69,11 +73,11 @@ public class GLLayerGroup extends GLLayer {
     }
 
 
-    public int size() {
+    public int getLayerSize() {
         return layerList.size();
     }
 
-    public GLLayer get(int index) {
+    public GLLayer getLayer(int index) {
         return index < 0 || index >= layerList.size() ? null : layerList.get(index);
     }
 
@@ -97,4 +101,122 @@ public class GLLayerGroup extends GLLayer {
     public GLScale getScale() {
         return scale;
     }
+
+    @Override
+    protected void computeLayer(long parentRenderTimeMs, long parentDurationMs) {
+        super.computeLayer(parentRenderTimeMs, parentDurationMs);
+        for (int i = 0; i < getLayerSize(); i++) {
+            GLLayer child = getLayer(i);
+            child.setParentRenderWidth(getRenderWidth());
+            child.setParentRenderHeight(getRenderHeight());
+            child.computeLayer(getRenderTime(), getRenderDuration());
+        }
+    }
+
+    protected boolean onInterceptTouchEvent(MotionEvent ev) {
+        return false;
+    }
+
+    protected boolean dispatchTouchEvent(MotionEvent ev) {
+        boolean intercepted;
+        boolean handled = false;
+        int action = ev.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            mFirstTouchLayer = null;
+        }
+        if (action == MotionEvent.ACTION_DOWN || mFirstTouchLayer != null) {
+            intercepted = onInterceptTouchEvent(ev);
+        } else {
+            intercepted = true;
+        }
+        boolean canceled = action == MotionEvent.ACTION_CANCEL;
+        boolean alreadyDispatchedToNewTouchTarget = false;
+        if (!intercepted) {
+            if (action == MotionEvent.ACTION_DOWN) {
+                int size = getLayerSize();
+                for (int i = size - 1; i >= 0; i--) {
+                    GLLayer child = getLayer(i);
+                    int actionIndex = ev.getActionIndex();
+                    final float x = ev.getX(actionIndex);
+                    final float y = ev.getY(actionIndex);
+                    if (pointInView(x, y, child)) {
+                        if (dispatchTransformedTouchEvent(ev, false, child)) {
+                            mFirstTouchLayer = child;
+                            alreadyDispatchedToNewTouchTarget = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        if (mFirstTouchLayer == null) {
+            handled = dispatchTransformedTouchEvent(ev, canceled, null);
+        } else {
+            if (alreadyDispatchedToNewTouchTarget) {
+                handled = true;
+            } else {
+                boolean cancelChild = canceled || intercepted;
+                if (dispatchTransformedTouchEvent(ev, cancelChild, mFirstTouchLayer)) {
+                    handled = true;
+                }
+                if (cancelChild) {
+                    mFirstTouchLayer = null;
+                }
+            }
+        }
+        if (canceled || action == MotionEvent.ACTION_UP) {
+            mFirstTouchLayer = null;
+        }
+        return handled;
+    }
+
+
+    private boolean dispatchTransformedTouchEvent(MotionEvent ev, boolean cancel, GLLayer child) {
+        if (cancel) {
+            ev.setAction(MotionEvent.ACTION_CANCEL);
+        }
+        int oldAction = ev.getAction();
+        boolean handled;
+        if (child == null) {
+            handled = super.dispatchTouchEvent(ev);
+        } else {
+            final MotionEvent transformedEvent = MotionEvent.obtain(ev);
+            int actionIndex = ev.getActionIndex();
+            final float x = ev.getX(actionIndex);
+            final float y = ev.getY(actionIndex);
+            final float[] point = tempPoint;
+            point[0] = x;
+            point[1] = y;
+            point[2] = 0;
+            point[3] = 1;
+            point[0] = point[0] / getRenderWidth() * 2.0f - 1.0f;
+            point[1] = point[1] / getRenderHeight() * 2.0f - 1.0f;
+            child.getViewPortInvertMatrix().mapPoints(point);
+            point[0] = (point[0] + 1.0f) / 2.0f * child.getRenderWidth();
+            point[1] = (point[1] + 1.0f) / 2.0f * child.getRenderHeight();
+
+
+            transformedEvent.setLocation(point[0], point[1]);
+            handled = child.dispatchTouchEvent(transformedEvent);
+            transformedEvent.recycle();
+        }
+        ev.setAction(oldAction);
+        return handled;
+    }
+
+    protected boolean pointInView(float x, float y, GLLayer child) {
+        final float[] point = tempPoint;
+        point[0] = x;
+        point[1] = y;
+        point[2] = 0;
+        point[3] = 1;
+        point[0] = point[0] / getRenderWidth() * 2.0f - 1.0f;
+        point[1] = point[1] / getRenderHeight() * 2.0f - 1.0f;
+        child.getViewPortInvertMatrix().mapPoints(point);
+        point[0] = (point[0] + 1.0f) / 2.0f * child.getRenderWidth();
+        point[1] = (point[1] + 1.0f) / 2.0f * child.getRenderHeight();
+        final boolean isInView = child.pointInView(point[0], point[1]);
+        return isInView;
+    }
+
 }

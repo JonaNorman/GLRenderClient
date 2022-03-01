@@ -22,7 +22,7 @@ public abstract class GLRenderClient {
 
     public abstract GLShaderEffect newShaderEffect();
 
-    public abstract GLEffectSet newEffectSet();
+    public abstract GLEffectGroup newEffectSet();
 
     public abstract GLShaderParam newShaderParam();
 
@@ -100,15 +100,9 @@ public abstract class GLRenderClient {
 
     public abstract Thread getAttachThread();
 
-    protected abstract void render(GLLayer layer, GLFrameBuffer frameBuffer, long renderTimeMs);
+    protected abstract void renderLayer(GLLayer layer, GLFrameBuffer frameBuffer);
 
-    protected abstract void render(GLLayerGroup layer, GLFrameBuffer frameBuffer, long renderTimeMs);
-
-    protected abstract GLFrameBuffer applyEffect(GLEffect effect, GLFrameBuffer input, long timeMs);
-
-    protected abstract GLFrameBuffer applyEffect(GLShaderEffect effect, GLFrameBuffer input, long timeMs);
-
-    protected abstract GLFrameBuffer applyEffect(GLEffectSet effect, GLFrameBuffer input, long timeMs);
+    protected abstract GLFrameBuffer renderEffect(GLEffect effect, GLFrameBuffer input);
 
     protected abstract void createObject(GLObject object);
 

@@ -11,6 +11,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -251,6 +252,15 @@ public class GLLayoutLayer extends GLLayer {
         do {
             rootLayout.layout(0, 0, rootLayout.getMeasuredWidth(), rootLayout.getMeasuredHeight());
         } while (rootLayout.isLayoutRequested());
+    }
+
+    @Override
+    protected boolean dispatchTouchEvent(MotionEvent event) {
+        boolean result = rootLayout.dispatchTouchEvent(event);
+        if (result) {
+            return true;
+        }
+        return super.dispatchTouchEvent(event);
     }
 
     private void dispatchOnGlobalLayout(View view) {

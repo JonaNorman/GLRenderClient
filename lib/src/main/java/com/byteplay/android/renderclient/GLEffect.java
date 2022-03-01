@@ -7,6 +7,8 @@ public abstract class GLEffect {
     private long renderDuration = GLEffect.DURATION_MATCH_PARENT;
     private long startTime;
     private long duration = GLEffect.DURATION_MATCH_PARENT;
+    private long renderTime;
+    private boolean renderEnable;
     protected GLRenderClient client;
 
     public GLEffect(GLRenderClient client) {
@@ -14,11 +16,19 @@ public abstract class GLEffect {
     }
 
 
-    protected final GLFrameBuffer apply(GLFrameBuffer input, long timeMs) {
-        return client.applyEffect(GLEffect.this, input, timeMs);
+    protected void computeEffect(long timeMs, long parentDurationMs) {
+        setRenderEnable(false);
+        long renderDurationMs = getDuration() == DURATION_MATCH_PARENT ? parentDurationMs : Math.max(getDuration(), 0);
+        long startTime = getStartTime();
+        long renderTime = timeMs - startTime;
+        setRenderDuration(renderDurationMs);
+        if (renderTime > getRenderDuration() || renderTime < 0) {
+            return;
+        }
+        setRenderEnable(true);
     }
 
-    protected abstract GLFrameBuffer actualApplyEffect(GLEffect effect, GLFrameBuffer input, long timeMs);
+    protected abstract GLFrameBuffer renderEffect(GLFrameBuffer input);
 
     public long getStartTime() {
         return startTime;
@@ -44,6 +54,22 @@ public abstract class GLEffect {
         return renderDuration;
     }
 
+
+    protected void setRenderTime(long renderTime) {
+        this.renderTime = renderTime;
+    }
+
+    public long getRenderTime() {
+        return renderTime;
+    }
+
+    public boolean isRenderEnable() {
+        return renderEnable;
+    }
+
+    protected void setRenderEnable(boolean renderEnable) {
+        this.renderEnable = renderEnable;
+    }
 
     @Override
     public boolean equals(Object o) {

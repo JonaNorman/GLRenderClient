@@ -2,18 +2,28 @@ package com.byteplay.android.renderclient.sample;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.TextureView;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.byteplay.android.renderclient.GLKeyframeSet;
 import com.byteplay.android.renderclient.GLLayer;
+import com.byteplay.android.renderclient.GLLayerGroup;
+import com.byteplay.android.renderclient.GLLayoutLayer;
 import com.byteplay.android.renderclient.GLRenderClient;
 import com.byteplay.android.renderclient.GLRenderSurface;
 import com.byteplay.android.renderclient.GLTexture;
@@ -29,6 +39,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
     private static final int MESSAGE_SURFACE_CREATE = 3;
     private static final int MESSAGE_SURFACE_DISPOSE = 4;
     private static final int MESSAGE_SURFACE_RENDER = 5;
+    private static final int MESSAGE_SURFACE_MOTION_EVENT = 6;
 
     private Handler handler;
 
@@ -40,6 +51,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
         GLRenderClient renderClient;
         GLTextureLayer textureLayer;
         long startTime = System.currentTimeMillis();
+        GLLayerGroup layerGroup;
 
 
         @Override
@@ -50,7 +62,9 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     renderClient = new GLRenderClient.Builder().build();
                     renderClient.attachCurrentThread();
                     textureLayer = renderClient.newTextureLayer();
-                    textureLayer.setDuration(10000);
+                    layerGroup = renderClient.newLayerGroup();
+                    layerGroup.setDuration(10000);
+                    layerGroup.add(textureLayer);
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inScaled = false;
                     Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic1, options);
@@ -59,12 +73,44 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     bitmap.recycle();
                     textureLayer.setWidth(400);
                     textureLayer.setHeight(400);
-                    textureLayer.setRotation(45);
+                    textureLayer.setScaleX(2.0f);
+                    textureLayer.setScaleY(2.0f);
+//                    textureLayer.setRotation(45);
                     textureLayer.setTexture(texture);
-                    GLKeyframeSet keyframeSet = GLKeyframeSet.ofFloat(5000, 1, 3, 1);
-                    keyframeSet.setStartTime(3000);
-                    textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_X, keyframeSet);
-                    textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_Y, keyframeSet);
+                    textureLayer.setOnTouchListener(new GLLayer.OnTouchListener() {
+                        @Override
+                        public boolean onTouch(GLLayer layer, MotionEvent event) {
+                            Log.v("sdasdas", "x:" + event.getX() + "y:" + event.getY());
+                            return true;
+                        }
+                    });
+
+                    GLLayoutLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext());
+                    viewLayer.setWidth(600);
+                    viewLayer.setHeight(600);
+
+                    ImageView imageView = new ImageView(getApplicationContext());
+                    imageView.setImageResource(R.drawable.pic4);
+                    viewLayer.addView(imageView, new FrameLayout.LayoutParams(500, 500));
+
+                    TextView textview = new TextView(getApplicationContext());
+                    textview.setText("123\nabc");
+                    textview.setTextSize(40);
+                    textview.setBackgroundColor(Color.TRANSPARENT);
+                    viewLayer.addView(textview);
+                    imageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Toast.makeText(v.getContext(),"toas",Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    textview.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Toast.makeText(v.getContext(),"abc",Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    layerGroup.add(viewLayer);
                     return true;
 
                 case MESSAGE_SURFACE_CREATE:
@@ -94,15 +140,19 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         surfaceDestroy.notifyAll();
                     }
                     return true;
+                case MESSAGE_SURFACE_MOTION_EVENT:
+                    MotionEvent motionEvent = (MotionEvent) msg.obj;
+                    layerGroup.updateMotionEvent(motionEvent);
+                    return true;
                 case MESSAGE_SURFACE_RENDER:
                     handler.removeMessages(MESSAGE_SURFACE_RENDER);
                     long time = System.currentTimeMillis() - startTime;
-                    if (time > textureLayer.getDuration()) {
+                    if (time > layerGroup.getDuration()) {
                         startTime = System.currentTimeMillis();
                         time = 0;
                     }
-                    textureLayer.setTime(time);
-                    textureLayer.render(eglSurface);
+                    layerGroup.setTime(time);
+                    layerGroup.render(eglSurface);
                     handler.sendEmptyMessageDelayed(MESSAGE_SURFACE_RENDER, 40);
                     return true;
             }
@@ -117,6 +167,19 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
         TextureView textureView = findViewById(R.id.textureView);
         textureView.setSurfaceTextureListener(this);
         textureView.setOpaque(false);
+
+        textureView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                Message message = Message.obtain();
+                message.what = MESSAGE_SURFACE_MOTION_EVENT;
+                MotionEvent motionEvent = MotionEvent.obtain(event);
+                message.obj = motionEvent;
+                handler.sendMessage(message);
+
+                return true;
+            }
+        });
         HandlerThread handlerThread = new HandlerThread("TextureView");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper(), callback);

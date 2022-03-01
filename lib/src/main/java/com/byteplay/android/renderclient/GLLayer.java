@@ -2,6 +2,7 @@ package com.byteplay.android.renderclient;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.view.MotionEvent;
 
 import com.byteplay.android.renderclient.math.Matrix4;
 
@@ -23,10 +24,10 @@ public class GLLayer extends GLObject {
     public static final String KEY_FRAMES_KEY_LAYER_HEIGHT = "layer_height";
     public static final String KEY_FRAMES_KEY_LAYER_SCALE_X = "layer_scaleX";
     public static final String KEY_FRAMES_KEY_LAYER_SCALE_Y = "layer_scaleY";
-    public static final String KEY_FRAMES_KEY_LAYER_ROTATION= "layer_rotation";
+    public static final String KEY_FRAMES_KEY_LAYER_ROTATION = "layer_rotation";
     public static final String KEY_FRAMES_KEY_LAYER_TRANSLATE_X = "layer_translateX";
     public static final String KEY_FRAMES_KEY_LAYER_TRANSLATE_Y = "layer_translateY";
-
+    public static final int TOUCH_SLOP = 8;
 
 
     private String vertexShaderCode;
@@ -46,11 +47,16 @@ public class GLLayer extends GLObject {
     private int renderY;
     private int renderWidth;
     private int renderHeight;
+    private int parentRenderWidth;
+    private int parentRenderHeight;
     private float renderScaleX = 1;
     private float renderScaleY = 1;
     private float renderRotation = 0;
     private float renderTranslateX = 0;
     private float renderTranslateY = 0;
+    private long renderDuration;
+    private long renderTime;
+    private boolean renderEnable = true;
     private float scaleX = 1;
     private float scaleY = 1;
     private float rotation = 0;
@@ -62,10 +68,17 @@ public class GLLayer extends GLObject {
     private List<LayerTransform> layerTransforms = new ArrayList<>();
     private long startTime;
     private long duration = DURATION_MATCH_PARENT;
-    private long renderDuration = DURATION_MATCH_PARENT;
+
     private Map<String, GLKeyframeSet> keyframesMap = new HashMap<>();
-    private GLEffectSet effectSet;
+    private GLEffectGroup effectGroup;
     private final Matrix4 viewPortMatrix = new Matrix4();
+    private final Matrix4 viewPortInvertMatrix = new Matrix4();
+    private OnTouchListener onTouchListener;
+    private OnClickListener onClickListener;
+    private boolean downed = false;
+    private int touchSlop = TOUCH_SLOP;
+    private MotionEvent motionEvent;
+
 
     protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode, GLDraw draw) {
         super(client);
@@ -76,7 +89,7 @@ public class GLLayer extends GLObject {
         this.fragmentShaderCode = fragmentShaderCode;
         this.shaderParam = client.newShaderParam();
         this.defaultShaderParam = client.newShaderParam();
-        this.effectSet = client.newEffectSet();
+        this.effectGroup = client.newEffectSet();
     }
 
     @Override
@@ -93,7 +106,16 @@ public class GLLayer extends GLObject {
     }
 
     public void render(GLFrameBuffer frameBuffer) {
-        render(frameBuffer, getTime());
+        long duration = getDuration() == DURATION_MATCH_PARENT ? Long.MAX_VALUE : getDuration();
+        setParentRenderWidth(frameBuffer.getWidth());
+        setParentRenderHeight(frameBuffer.getHeight());
+        computeLayer(getTime(), duration);
+        if (motionEvent != null) {
+            dispatchTouchEvent(motionEvent);
+            motionEvent.recycle();
+            motionEvent = null;
+        }
+        renderLayer(frameBuffer);
     }
 
     public void render(GLRenderSurface eglSurface, SurfaceReadBitmapCallback callback) {
@@ -123,8 +145,159 @@ public class GLLayer extends GLObject {
     }
 
 
-    protected void render(GLFrameBuffer frameBuffer, long timeMs) {
-        client.render(this, frameBuffer, timeMs);
+    protected void computeLayer(long parentRenderTimeMs, long parentDurationMs) {
+        setRenderEnable(false);
+        long renderDurationMs = getDuration() == DURATION_MATCH_PARENT ? parentDurationMs : Math.max(getDuration(), 0);
+        long startTime = getStartTime();
+        long renderTime = parentRenderTimeMs - startTime;
+        setRenderDuration(renderDurationMs);
+        if (renderTime > getRenderDuration() || renderTime < 0) {
+            return;
+        }
+        int parentRenderWidth = getParentRenderWidth();
+        int parentRenderHeight = getParentRenderHeight();
+        setRenderTime(renderTime);
+        int renderWidth = getWidth() == SIZE_MATCH_PARENT ? parentRenderWidth : Math.max(getWidth(), 0);
+        int renderHeight = getWidth() == SIZE_MATCH_PARENT ? parentRenderHeight : Math.max(getHeight(), 0);
+        setRenderX(getX());
+        setRenderY(getY());
+        setRenderWidth(renderWidth);
+        setRenderHeight(renderHeight);
+        setRenderScaleX(getScaleX());
+        setRenderScaleY(getScaleY());
+        setRenderRotation(getRotation());
+        setRenderTranslateX(getTranslateX());
+        setRenderTranslateY(getTranslateY());
+        generateLayerKeyFrame();
+        computeViewPortMatrix(parentRenderWidth, parentRenderHeight);
+        if (getRenderWidth() <= 0 || getRenderHeight() <= 0) {
+            return;
+        }
+        setRenderEnable(true);
+        effectGroup.computeEffect(getRenderTime(), getRenderDuration());
+    }
+
+    private void generateLayerKeyFrame() {
+        long renderTimeMs = getRenderTime();
+        float[] keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_X, renderTimeMs);
+        if (keyValue != null) {
+            setRenderX((int) (keyValue[0] + 0.5));
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_Y, renderTimeMs);
+        if (keyValue != null) {
+            setRenderY((int) (keyValue[0] + 0.5));
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, renderTimeMs);
+        if (keyValue != null) {
+            setRenderWidth((int) (keyValue[0] + 0.5));
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, renderTimeMs);
+        if (keyValue != null) {
+            setRenderHeight((int) (keyValue[0] + 0.5));
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_X, renderTimeMs);
+        if (keyValue != null) {
+            setRenderScaleX(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_Y, renderTimeMs);
+        if (keyValue != null) {
+            setRenderScaleY(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_X, renderTimeMs);
+        if (keyValue != null) {
+            setRenderTranslateX(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_Y, renderTimeMs);
+        if (keyValue != null) {
+            setRenderTranslateY(keyValue[0]);
+        }
+        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_ROTATION, renderTimeMs);
+        if (keyValue != null) {
+            setRotation(keyValue[0]);
+        }
+    }
+
+    private float[] getKeyFrameValue(String key, long renderTimeMs) {
+        GLKeyframeSet keyFrames = getKeyframes(key);
+        if (keyFrames == null) {
+            return null;
+        }
+        long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), getRenderDuration() - keyFrames.getStartTime());
+        float fraction = (renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration;
+        if (fraction < 0 || fraction > 1) {
+            return null;
+        }
+        return keyFrames.getValue(fraction);
+    }
+
+    protected void computeViewPortMatrix(int frameWidth, int frameHeight) {
+        viewPortMatrix.setIdentity();
+        float x = gravity.getX(renderX, renderWidth, frameWidth);
+        float y = gravity.getY(renderY, renderHeight, frameHeight);
+        viewPortMatrix.scale(renderScaleX * renderWidth / 2, renderScaleY * renderHeight / 2, 1);
+        viewPortMatrix.rotate(renderRotation, 0, 0, 1);
+        viewPortMatrix.translate(renderTranslateX + x - (frameWidth / 2.0f - renderWidth / 2.0f), -(renderTranslateY + y - (frameHeight / 2.0f - renderHeight / 2.0f)), 0);
+        viewPortMatrix.scale(2.0f / frameWidth, 2.0f / frameHeight, 1);
+        viewPortMatrix.getInvertMatrix(viewPortInvertMatrix);
+        setRenderX((int) (x + 0.5));
+        setRenderY((int) (y + 0.5));
+    }
+
+    protected boolean dispatchTouchEvent(MotionEvent event) {
+        if (!isRenderEnable()) {
+            return false;
+        }
+        if (onTouchListener != null && onTouchListener.onTouch(this, event)) {
+            return true;
+        }
+        if (onTouchEvent(event)) {
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean onTouchEvent(MotionEvent ev) {
+        final float localX = ev.getX();
+        final float localY = ev.getY();
+        int action = ev.getActionMasked();
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                downed = true;
+                break;
+            case MotionEvent.ACTION_UP:
+                if (downed && pointInView(localX, localY, touchSlop)) {
+                    downed = false;
+                    if (onClickListener != null) {
+                        onClickListener.onClick(this);
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (!pointInView(localX, localY, touchSlop)) {
+                    downed = false;
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                downed = false;
+                break;
+        }
+        return true;
+    }
+
+    boolean pointInView(float localX, float localY) {
+        return pointInView(localX, localY, 0);
+    }
+
+
+    boolean pointInView(float localX, float localY, float slop) {
+        return localX >= -slop && localY >= -slop && localX < (renderWidth + slop) &&
+                localY < (renderHeight + slop);
+    }
+
+
+
+    protected void renderLayer(GLFrameBuffer frameBuffer) {
+        client.renderLayer(this, frameBuffer);
     }
 
     public void setX(int x) {
@@ -142,7 +315,6 @@ public class GLLayer extends GLObject {
     public void setHeight(int height) {
         this.height = height;
     }
-
 
 
     public float getRotation() {
@@ -209,37 +381,37 @@ public class GLLayer extends GLObject {
 
     public void addEffect(GLEffect effect) {
         if (effect == null) return;
-        effectSet.add(effect);
+        effectGroup.add(effect);
     }
 
     public void removeEffect(GLEffect effect) {
-        if (effect == null || !effectSet.contains(effect)) return;
-        effectSet.remove(effect);
+        if (effect == null || !effectGroup.contains(effect)) return;
+        effectGroup.remove(effect);
     }
 
     public int getEffectIndex(GLEffect effect) {
-        return effectSet.indexOf(effect);
+        return effectGroup.indexOf(effect);
     }
 
     public void addEffect(Collection<GLEffect> effects) {
-        effectSet.addAll(effects);
+        effectGroup.addAll(effects);
     }
 
     public void removeEffect(Collection<GLEffect> effects) {
-        effectSet.removeAll(effects);
+        effectGroup.removeAll(effects);
     }
 
 
     public int getEffectSize() {
-        return effectSet.size();
+        return effectGroup.getEffectSize();
     }
 
-    public GLEffectSet getEffectSet() {
-        return effectSet;
+    public GLEffectGroup getEffectGroup() {
+        return effectGroup;
     }
 
     public GLEffect getEffect(int index) {
-        return index < 0 || index >= getEffectSize() ? null : effectSet.get(index);
+        return index < 0 || index >= getEffectSize() ? null : effectGroup.getEffect(index);
     }
 
 
@@ -379,19 +551,13 @@ public class GLLayer extends GLObject {
         return gravity;
     }
 
-    protected void onRenderViewPortMatrix(int frameWidth, int frameHeight) {
-        viewPortMatrix.setIdentity();
 
-        float x = gravity.getX(renderX, renderWidth, frameWidth);
-        float y = gravity.getY(renderY, renderHeight, frameHeight);
-        viewPortMatrix.scale(renderScaleX * renderWidth / 2, renderScaleY * renderHeight / 2, 1);
-        viewPortMatrix.rotate(renderRotation, 0, 0, 1);
-        viewPortMatrix.translate(renderTranslateX + x - (frameWidth / 2.0f - renderWidth / 2.0f), -(renderTranslateY + y - (frameHeight / 2.0f - renderHeight / 2.0f)), 0);
-        viewPortMatrix.scale(2.0f / frameWidth, 2.0f / frameHeight, 1);
+    Matrix4 getViewPortMatrix() {
+        return viewPortMatrix;
     }
 
-    public Matrix4 getViewPortMatrix() {
-        return viewPortMatrix;
+    Matrix4 getViewPortInvertMatrix() {
+        return viewPortInvertMatrix;
     }
 
     protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
@@ -415,6 +581,22 @@ public class GLLayer extends GLObject {
         return renderDuration;
     }
 
+
+    protected void setRenderEnable(boolean renderEnable) {
+        this.renderEnable = renderEnable;
+    }
+
+    public boolean isRenderEnable() {
+        return renderEnable;
+    }
+
+    protected void setRenderTime(long renderTime) {
+        this.renderTime = renderTime;
+    }
+
+    public long getRenderTime() {
+        return renderTime;
+    }
 
     public long getStartTime() {
         return startTime;
@@ -464,7 +646,6 @@ public class GLLayer extends GLObject {
         this.renderHeight = renderHeight;
     }
 
-
     public float getRenderScaleX() {
         return renderScaleX;
     }
@@ -505,6 +686,43 @@ public class GLLayer extends GLObject {
         this.renderTranslateY = renderTranslateY;
     }
 
+    public int getParentRenderWidth() {
+        return parentRenderWidth;
+    }
+
+    protected void setParentRenderWidth(int parentRenderWidth) {
+        this.parentRenderWidth = parentRenderWidth;
+    }
+
+    public int getParentRenderHeight() {
+        return parentRenderHeight;
+    }
+
+    protected void setParentRenderHeight(int parentRenderHeight) {
+        this.parentRenderHeight = parentRenderHeight;
+    }
+
+
+    public void setOnTouchListener(OnTouchListener onTouchListener) {
+        this.onTouchListener = onTouchListener;
+    }
+
+    public void setOnClickListener(OnClickListener onClickListener) {
+        this.onClickListener = onClickListener;
+    }
+
+    public void updateMotionEvent(MotionEvent motionEvent) {
+        if (this.motionEvent != null) {
+            this.motionEvent.recycle();
+        }
+        this.motionEvent = MotionEvent.obtain(motionEvent);
+    }
+
+    public MotionEvent getMotionEvent() {
+        return motionEvent;
+    }
+
+
     public static abstract class SurfaceReadBitmapCallback {
         private Bitmap bitmap;
 
@@ -520,5 +738,13 @@ public class GLLayer extends GLObject {
 
     public interface LayerTransform<L extends GLLayer> {
         void onLayerTransform(L layer, long renderTimeMs);
+    }
+
+    public interface OnTouchListener {
+        boolean onTouch(GLLayer layer, MotionEvent event);
+    }
+
+    public interface OnClickListener {
+        void onClick(GLLayer layer);
     }
 }

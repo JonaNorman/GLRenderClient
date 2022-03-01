@@ -54,20 +54,20 @@ public class GLShaderEffect extends GLEffect {
         this.defaultShaderParam = client.newShaderParam();
     }
 
+
     @Override
-    protected GLFrameBuffer actualApplyEffect(GLEffect effect, GLFrameBuffer input, long timeMs) {
-        return client.applyEffect((GLShaderEffect) effect, input, timeMs);
+    protected GLFrameBuffer renderEffect(GLFrameBuffer input) {
+        return client.renderEffect(this, input);
     }
 
-    protected void onApplyShaderEffect(GLShaderEffect effect, GLFrameBuffer input, long timeMs) {
+    protected void onRenderShaderEffect(GLFrameBuffer input) {
         int textureWidth = input.getWidth();
         int textureHeight = input.getHeight();
         GLTexture texture = input.getColorTexture();
-        GLShaderParam shaderParam = effect.getDefaultShaderParam();
+        GLShaderParam shaderParam = getDefaultShaderParam();
         shaderParam.put("inputImageTexture", texture.getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
     }
-
 
     public void setKeyframe(String key, GLKeyframeSet keyframeSet) {
         keyframesMap.put(key, keyframeSet);

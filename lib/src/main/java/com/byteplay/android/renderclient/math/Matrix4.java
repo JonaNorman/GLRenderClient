@@ -7,6 +7,7 @@ import java.util.Stack;
 
 public class Matrix4 implements Cloneable {
     private static final float[] MULTIPLY_MM_TEMP = new float[16];
+    private static final float[] POINT_TEMP = new float[4];
     private final Stack<float[]> matrixStack = new Stack<>();
     private float[] val = new float[16];
     private final float[] mTemp = new float[16];
@@ -180,6 +181,21 @@ public class Matrix4 implements Cloneable {
         return this;
     }
 
+    public void getInvertMatrix(Matrix4 matrix4) {
+        boolean success = Matrix.invertM(matrix4.get(), 0, val, 0);
+        if (!success) {
+            matrix4.setIdentity();
+        }
+    }
+
+    public void mapPoints(float[] point) {
+        multiplyMV(point, val, point);
+    }
+
+    public void mapPoints(float[] resultPoint, float[] point) {
+        multiplyMV(resultPoint, val, point);
+    }
+
     @Override
     public Matrix4 clone() {
         Matrix4 matrix4 = new Matrix4(val);
@@ -195,6 +211,18 @@ public class Matrix4 implements Cloneable {
         synchronized (MULTIPLY_MM_TEMP) {
             Matrix.multiplyMM(MULTIPLY_MM_TEMP, 0, left, 0, right, 0);
             System.arraycopy(MULTIPLY_MM_TEMP, 0, result, 0, 16);
+        }
+    }
+
+    static void multiplyMV(float[] resultPoint, float[] matrix, float[] point) {
+        boolean useTemp = resultPoint == point;
+        if (!useTemp) {
+            Matrix.multiplyMV(resultPoint, 0, matrix, 0, point, 0);
+            return;
+        }
+        synchronized (POINT_TEMP) {
+            Matrix.multiplyMV(POINT_TEMP, 0, matrix, 0, point, 0);
+            System.arraycopy(POINT_TEMP, 0, resultPoint, 0, 4);
         }
     }
 
