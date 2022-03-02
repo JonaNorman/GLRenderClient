@@ -10,8 +10,8 @@ import java.util.Objects;
 
 class GL20Attribute extends GLAttribute {
 
-    private static final int STREAM_DRAW_COUNT = 5;
-    private static final int DYNAMIC_DRAW_COUNT = 1;
+    private static final int STREAM_DRAW_COUNT = 6;
+    private static final int DYNAMIC_DRAW_COUNT = 2;
     private static SparseArray<String> TYPE_NAME_MAP = new SparseArray();
     private static SparseIntArray TYPE_SIZE_MAP = new SparseIntArray();
     private static SparseBooleanArray TYPE_FLOAT_MAP = new SparseBooleanArray();

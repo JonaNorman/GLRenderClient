@@ -9,8 +9,8 @@ public class Matrix4 implements Cloneable {
     private static final float[] MULTIPLY_MM_TEMP = new float[16];
     private static final float[] POINT_TEMP = new float[4];
     private final Stack<float[]> matrixStack = new Stack<>();
+    private final float[] temp = new float[16];
     private float[] val = new float[16];
-    private final float[] mTemp = new float[16];
 
     public Matrix4(float[] matrix) {
         set(matrix);
@@ -19,7 +19,6 @@ public class Matrix4 implements Cloneable {
 
     public Matrix4(Matrix4 matrix) {
         set(matrix.get());
-        matrixStack.addAll(matrix.matrixStack);
     }
 
 
@@ -47,26 +46,26 @@ public class Matrix4 implements Cloneable {
     public Matrix4 lookAt(float eyeX, float eyeY, float eyeZ,
                           float centerX, float centerY, float centerZ, float upX, float upY,
                           float upZ) {
-        Matrix.setLookAtM(mTemp, 0, eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
-        postMul(mTemp);
+        Matrix.setLookAtM(temp, 0, eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
+        postMul(temp);
         return this;
     }
 
     public Matrix4 frustum(float left, float right, float bottom, float top, float near, float far) {
-        Matrix.frustumM(mTemp, 0, left, right, bottom, top, near, far);
-        postMul(mTemp);
+        Matrix.frustumM(temp, 0, left, right, bottom, top, near, far);
+        postMul(temp);
         return this;
     }
 
     public Matrix4 perspective(float fovy, float aspect, float zNear, float zFar) {
-        Matrix.perspectiveM(mTemp, 0, fovy, aspect, zNear, zFar);
-        postMul(mTemp);
+        Matrix.perspectiveM(temp, 0, fovy, aspect, zNear, zFar);
+        postMul(temp);
         return this;
     }
 
     public Matrix4 ortho(float left, float right, float bottom, float top, float near, float far) {
-        Matrix.orthoM(mTemp, 0, left, right, bottom, top, near, far);
-        postMul(mTemp);
+        Matrix.orthoM(temp, 0, left, right, bottom, top, near, far);
+        postMul(temp);
         return this;
 
     }
@@ -78,8 +77,8 @@ public class Matrix4 implements Cloneable {
         while (angle <= -360.0f) {
             angle += 360.0f;
         }
-        Matrix.setRotateM(mTemp, 0, angle, x, y, z);
-        postMul(mTemp);
+        Matrix.setRotateM(temp, 0, angle, x, y, z);
+        postMul(temp);
         return this;
     }
 
@@ -88,9 +87,9 @@ public class Matrix4 implements Cloneable {
     }
 
     public Matrix4 translate(float x, float y, float z) {
-        Matrix.setIdentityM(mTemp, 0);
-        Matrix.translateM(mTemp, 0, x, y, z);
-        postMul(mTemp);
+        Matrix.setIdentityM(temp, 0);
+        Matrix.translateM(temp, 0, x, y, z);
+        postMul(temp);
         return this;
     }
 
@@ -117,10 +116,23 @@ public class Matrix4 implements Cloneable {
         return scale(scale.getX(), scale.getY(), scale.getZ());
     }
 
+
+    public Matrix4 scaleX(float scale) {
+        return scale(scale, 1, 1);
+    }
+
+    public Matrix4 scaleY(float scale) {
+        return scale(1, scale, 1);
+    }
+
+    public Matrix4 scaleZ(float scale) {
+        return scale(1, 1, scale);
+    }
+
     public Matrix4 scale(float x, float y, float z) {
-        Matrix.setIdentityM(mTemp, 0);
-        Matrix.scaleM(mTemp, 0, x, y, z);
-        postMul(mTemp);
+        Matrix.setIdentityM(temp, 0);
+        Matrix.scaleM(temp, 0, x, y, z);
+        postMul(temp);
         return this;
     }
 

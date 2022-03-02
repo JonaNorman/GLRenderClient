@@ -37,6 +37,7 @@ class GL20Blend extends GLBlend {
         gl = client.getGL20();
     }
 
+
     @Override
     protected void onBlendFunc(GLBLendFactor srcMode, GLBLendFactor dstMode) {
         Integer src = BLEND_MAP.get(srcMode);

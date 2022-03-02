@@ -4,7 +4,7 @@ import android.graphics.Color;
 
 import java.util.Objects;
 
-public abstract class GLBlend extends GLObject {
+public abstract class GLBlend extends GLFunction {
 
 
     private float redColor;
@@ -18,29 +18,23 @@ public abstract class GLBlend extends GLObject {
     private GLBLendFactor alphaDstFactor = GLBLendFactor.ZERO;
     private GLBlendEquation rgbBlendEquation = GLBlendEquation.ADD;
     private GLBlendEquation alphaBlendEquation = GLBlendEquation.ADD;
+    private final GLBlendFuncSeparateMethod blendFuncSeparateMethod;
+    private final GLBlendEquationSeparateMethod blendEquationSeparateMethod;
+    private final GLBlendColorMethod blendColorMethod;
 
-    protected GLBlend(GLRenderClient GLRenderClient) {
-        super(GLRenderClient);
-        registerMethod(GLBlendFuncSeparateMethod.class, new GLBlendFuncSeparateMethod());
-        registerMethod(GLBlendEquationSeparateMethod.class, new GLBlendEquationSeparateMethod());
-        registerMethod(GLBlendColorMethod.class, new GLBlendColorMethod());
+    protected GLBlend(GLRenderClient renderClient) {
+        super(renderClient);
+        blendFuncSeparateMethod = new GLBlendFuncSeparateMethod();
+        blendEquationSeparateMethod = new GLBlendEquationSeparateMethod();
+        blendColorMethod = new GLBlendColorMethod();
     }
+
 
     @Override
-    protected void onCreate() {
-
-    }
-
-    @Override
-    protected void onDispose() {
-
-    }
-
-
-    public void call() {
-        findMethod(GLBlendFuncSeparateMethod.class).call();
-        findMethod(GLBlendEquationSeparateMethod.class).call();
-        findMethod(GLBlendColorMethod.class).call();
+    protected void onCall() {
+        blendFuncSeparateMethod.call();
+        blendEquationSeparateMethod.call();
+        blendColorMethod.call();
     }
 
     protected abstract void onBlendFunc(GLBLendFactor srcMode, GLBLendFactor dstMode);
@@ -139,47 +133,44 @@ public abstract class GLBlend extends GLObject {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), color, rgbSrcFactor, alphaSrcFactor, rgbDstFactor, alphaDstFactor, rgbBlendEquation, alphaBlendEquation);
+        return Objects.hash(color, rgbSrcFactor, alphaSrcFactor, rgbDstFactor, alphaDstFactor, rgbBlendEquation, alphaBlendEquation);
     }
 
-    class GLBlendFuncSeparateMethod extends GLMethod {
+    class GLBlendFuncSeparateMethod extends GLFunction {
 
 
         public GLBlendFuncSeparateMethod() {
-            super();
+            super(GLBlend.this.client);
         }
 
         @Override
-        protected void onCallMethod() {
+        protected void onCall() {
             onBlendFuncSeparate(rgbSrcFactor, rgbDstFactor, alphaSrcFactor, alphaDstFactor);
         }
     }
 
-    class GLBlendEquationSeparateMethod extends GLMethod {
+    class GLBlendEquationSeparateMethod extends GLFunction {
 
 
         public GLBlendEquationSeparateMethod() {
-            super();
+            super(GLBlend.this.client);
         }
 
         @Override
-        protected void onCallMethod() {
-
+        protected void onCall() {
             onBlendEquationSeparate(rgbBlendEquation, alphaBlendEquation);
-
         }
-
     }
 
-    class GLBlendColorMethod extends GLMethod {
+    class GLBlendColorMethod extends GLFunction {
 
 
         public GLBlendColorMethod() {
-            super();
+            super(GLBlend.this.client);
         }
 
         @Override
-        protected void onCallMethod() {
+        protected void onCall() {
             onBlendColor(redColor, greenColor, blueColor, alphaColor);
         }
     }
