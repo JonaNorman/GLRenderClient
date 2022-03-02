@@ -1,6 +1,7 @@
 package com.byteplay.android.renderclient;
 
 
+import com.byteplay.android.renderclient.math.ScaleMode;
 import com.byteplay.android.renderclient.utils.MathUtils;
 
 
@@ -41,7 +42,7 @@ public class GLTextureLayer extends GLLayer {
             "}";
 
     private GLTexture texture;
-    private GLScale scale = GLScale.FIT;
+    private ScaleMode scale = ScaleMode.FIT;
 
     protected GLTextureLayer(GLRenderClient client) {
         super(client, VERTEX_SHADER, FRAGMENT_SHADER, client.newDrawArray());
@@ -64,11 +65,11 @@ public class GLTextureLayer extends GLLayer {
         return texture == null ? 0 : texture.getTextureId();
     }
 
-    public void setScale(GLScale scale) {
+    public void setScale(ScaleMode scale) {
         this.scale = scale;
     }
 
-    public GLScale getScale() {
+    public ScaleMode getScale() {
         return scale;
     }
 
@@ -110,7 +111,7 @@ public class GLTextureLayer extends GLLayer {
         shaderParam.put("mipmapLevel", mipMapLevel);
         shaderParam.put("inputImageTexture", getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
-        shaderParam.put("inputTexturePreMul", texture == null ? true : texture.isPremult());
+        shaderParam.put("inputTexturePreMul", texture == null ? true : texture.isPremultiplied());
         if (texture != null) {
             shaderParam.put("textureMatrix", texture.getTextureMatrix().get());
         }

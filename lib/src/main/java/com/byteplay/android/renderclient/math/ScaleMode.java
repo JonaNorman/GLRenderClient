@@ -1,6 +1,6 @@
-package com.byteplay.android.renderclient;
+package com.byteplay.android.renderclient.math;
 
-public abstract class GLScale {
+public abstract class ScaleMode {
 
 
     public abstract float getWidth(float sourceWidth, float sourceHeight,
@@ -10,7 +10,7 @@ public abstract class GLScale {
                                     float targetWidth, float targetHeight);
 
 
-    public static final GLScale FIT = new GLScale() {
+    public static final ScaleMode FIT = new ScaleMode() {
 
 
         @Override
@@ -30,7 +30,7 @@ public abstract class GLScale {
         }
     };
 
-    public static final GLScale CONTAIN = new GLScale() {
+    public static final ScaleMode CONTAIN = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             float targetRatio = targetHeight / targetWidth;
@@ -50,7 +50,7 @@ public abstract class GLScale {
         }
     };
 
-    public static final GLScale FILL = new GLScale() {
+    public static final ScaleMode FILL = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             float targetRatio = targetHeight / targetWidth;
@@ -69,7 +69,7 @@ public abstract class GLScale {
     };
 
 
-    public static final GLScale FILL_X = new GLScale() {
+    public static final ScaleMode FILL_X = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             float scale = targetWidth / sourceWidth;
@@ -83,7 +83,7 @@ public abstract class GLScale {
         }
     };
 
-    public static final GLScale FILL_Y = new GLScale() {
+    public static final ScaleMode FILL_Y = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             float scale = targetHeight / sourceHeight;
@@ -97,7 +97,7 @@ public abstract class GLScale {
         }
     };
 
-    public static final GLScale STRETCH = new GLScale() {
+    public static final ScaleMode STRETCH = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             return targetWidth;
@@ -110,7 +110,7 @@ public abstract class GLScale {
     };
 
 
-    public static final GLScale STRETCH_X = new GLScale() {
+    public static final ScaleMode STRETCH_X = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             return targetWidth;
@@ -122,7 +122,7 @@ public abstract class GLScale {
         }
     };
 
-    public static final GLScale STRETCH_Y = new GLScale() {
+    public static final ScaleMode STRETCH_Y = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             return sourceWidth;
@@ -135,7 +135,7 @@ public abstract class GLScale {
     };
 
 
-    public static final GLScale NONE = new GLScale() {
+    public static final ScaleMode NONE = new ScaleMode() {
         @Override
         public float getWidth(float sourceWidth, float sourceHeight, float targetWidth, float targetHeight) {
             return sourceWidth;

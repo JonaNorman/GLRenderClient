@@ -1,6 +1,6 @@
-package com.byteplay.android.renderclient;
+package com.byteplay.android.renderclient.math;
 
-public abstract class GLGravity {
+public abstract class GravityMode {
 
 
     public abstract float getX(float x,
@@ -10,7 +10,7 @@ public abstract class GLGravity {
     public abstract float getY(float y,
                                float height, float outHeight);
 
-    public static final GLGravity LEFT_TOP = new GLGravity() {
+    public static final GravityMode LEFT_TOP = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return x;
@@ -26,7 +26,7 @@ public abstract class GLGravity {
             return "LEFT_TOP";
         }
     };
-    public static final GLGravity LEFT_BOTTOM = new GLGravity() {
+    public static final GravityMode LEFT_BOTTOM = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return x;
@@ -43,7 +43,7 @@ public abstract class GLGravity {
         }
 
     };
-    public static final GLGravity RIGHT_TOP = new GLGravity() {
+    public static final GravityMode RIGHT_TOP = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return outWidth - width + x;
@@ -59,7 +59,7 @@ public abstract class GLGravity {
             return "RIGHT_TOP";
         }
     };
-    public static final GLGravity RIGHT_BOTTOM = new GLGravity() {
+    public static final GravityMode RIGHT_BOTTOM = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return outWidth - width + x;
@@ -75,7 +75,7 @@ public abstract class GLGravity {
             return "RIGHT_BOTTOM";
         }
     };
-    public static final GLGravity LEFT_CENTER_VERTICAL = new GLGravity() {
+    public static final GravityMode LEFT_CENTER_VERTICAL = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return x;
@@ -92,7 +92,7 @@ public abstract class GLGravity {
         }
     };
 
-    public static final GLGravity RIGHT_CENTER_VERTICAL = new GLGravity() {
+    public static final GravityMode RIGHT_CENTER_VERTICAL = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return outWidth - width + x;
@@ -109,7 +109,7 @@ public abstract class GLGravity {
         }
     };
 
-    public static final GLGravity TOP_CENTER_HORIZONTAL = new GLGravity() {
+    public static final GravityMode TOP_CENTER_HORIZONTAL = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return (outWidth - width) / 2 + x;
@@ -126,7 +126,7 @@ public abstract class GLGravity {
         }
     };
 
-    public static final GLGravity BOTTOM_CENTER_HORIZONTAL = new GLGravity() {
+    public static final GravityMode BOTTOM_CENTER_HORIZONTAL = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return (outWidth - width) / 2 + x;
@@ -142,7 +142,7 @@ public abstract class GLGravity {
             return "BOTTOM_CENTER_HORIZONTAL";
         }
     };
-    public static final GLGravity CENTER = new GLGravity() {
+    public static final GravityMode CENTER = new GravityMode() {
         @Override
         public float getX(float x, float width, float outWidth) {
             return (outWidth - width) / 2 + x;

@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.view.MotionEvent;
 
+import com.byteplay.android.renderclient.math.GravityMode;
 import com.byteplay.android.renderclient.math.Matrix4;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class GLLayer extends GLObject {
     private GLShaderParam defaultShaderParam;
     private GLEnable enable;
     private GLXfermode xfermode;
-    private GLGravity gravity = GLGravity.CENTER;
+    private GravityMode gravity = GravityMode.CENTER;
     private int x;
     private int y;
     private int width = SIZE_MATCH_PARENT;
@@ -543,11 +544,11 @@ public class GLLayer extends GLObject {
     }
 
 
-    public void setGravity(GLGravity gravity) {
+    public void setGravity(GravityMode gravity) {
         this.gravity = gravity;
     }
 
-    public GLGravity getGravity() {
+    public GravityMode getGravity() {
         return gravity;
     }
 

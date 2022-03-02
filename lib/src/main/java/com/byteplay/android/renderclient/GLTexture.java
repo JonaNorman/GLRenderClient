@@ -17,7 +17,7 @@ public abstract class GLTexture extends GLObject {
 
     private int width;
     private int height;
-    private boolean premult = true;
+    private boolean premultiplied = true;
     private int maxMipmapLevel;
     private Matrix4 textureMatrix = new Matrix4();
 
@@ -92,12 +92,12 @@ public abstract class GLTexture extends GLObject {
         return textureMatrix;
     }
 
-    public boolean isPremult() {
-        return premult;
+    public boolean isPremultiplied() {
+        return premultiplied;
     }
 
-    public void setPremult(boolean premult) {
-        this.premult = premult;
+    public void setPremultiplied(boolean premultiplied) {
+        this.premultiplied = premultiplied;
     }
 
     public void setMinFilter(GLTextureFilter minFilter) {
@@ -247,7 +247,7 @@ public abstract class GLTexture extends GLObject {
             onConfigTextureSize(textureWidth, textureHeight);
             width = textureWidth;
             height = textureHeight;
-            premult = true;
+            premultiplied = true;
             textureMatrix.setIdentity();
             maxMipmapLevel = 0;
         }
@@ -280,7 +280,7 @@ public abstract class GLTexture extends GLObject {
             onUpdateBitmap(mipmap, bitmap);
             width = bitmap.getWidth();
             height = bitmap.getHeight();
-            premult = bitmap.isPremultiplied();
+            premultiplied = bitmap.isPremultiplied();
             textureMatrix.set(TEXTURE_FLIP_Y_MATRIX);
             if (mipmap) {
                 generateMipmap();

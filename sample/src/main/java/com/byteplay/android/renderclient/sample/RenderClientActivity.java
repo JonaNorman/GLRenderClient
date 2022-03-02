@@ -16,7 +16,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.byteplay.android.renderclient.GLGravity;
+import com.byteplay.android.renderclient.math.GravityMode;
 import com.byteplay.android.renderclient.GLKeyframeSet;
 import com.byteplay.android.renderclient.GLLayer;
 import com.byteplay.android.renderclient.GLLayerGroup;
@@ -127,7 +127,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     GLLayerGroup frameLayer = renderClient.newLayerGroup();
                     frameLayer.setWidth(500);
                     frameLayer.setHeight(500);
-                    frameLayer.setGravity(GLGravity.TOP_CENTER_HORIZONTAL);
+                    frameLayer.setGravity(GravityMode.TOP_CENTER_HORIZONTAL);
                     RenderClientActivity.this.frameLayer.add(frameLayer);
 
                     {
@@ -188,7 +188,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     GLLayerGroup frameLayer = renderClient.newLayerGroup();
                     frameLayer.setWidth(600);
                     frameLayer.setHeight(500);
-                    frameLayer.setGravity(GLGravity.BOTTOM_CENTER_HORIZONTAL);
+                    frameLayer.setGravity(GravityMode.BOTTOM_CENTER_HORIZONTAL);
                     frameLayer.setBackgroundColor(Color.GREEN);
                     RenderClientActivity.this.frameLayer.add(frameLayer);
 

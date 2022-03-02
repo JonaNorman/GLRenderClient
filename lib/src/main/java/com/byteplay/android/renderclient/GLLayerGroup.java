@@ -3,6 +3,8 @@ package com.byteplay.android.renderclient;
 
 import android.view.MotionEvent;
 
+import com.byteplay.android.renderclient.math.ScaleMode;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -11,7 +13,7 @@ public class GLLayerGroup extends GLLayer {
 
     private final List<GLLayer> layerList = new ArrayList<>();
 
-    private GLScale scale = GLScale.FIT;
+    private ScaleMode scale = ScaleMode.FIT;
     private GLXfermode selfXfermode;
     private GLLayer mFirstTouchLayer;
     private final float[] tempPoint = new float[4];
@@ -94,11 +96,11 @@ public class GLLayerGroup extends GLLayer {
     }
 
 
-    public void setScale(GLScale scale) {
+    public void setScale(ScaleMode scale) {
         this.scale = scale;
     }
 
-    public GLScale getScale() {
+    public ScaleMode getScale() {
         return scale;
     }
 
