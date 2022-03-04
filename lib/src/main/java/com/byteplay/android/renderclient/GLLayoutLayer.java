@@ -34,16 +34,15 @@ public class GLLayoutLayer extends GLLayer {
     private static final String VERTEX_SHADER = "precision highp float;\n" +
             "attribute vec4 position;\n" +
             "attribute vec4 inputTextureCoordinate;\n" +
-            "uniform mat4 positionMatrix;\n" +
-            "uniform mat4 textureMatrix;\n" +
+            "uniform mat4 inputTextureMatrix;\n" +
             "uniform mat4 viewPortMatrix;\n" +
             "\n" +
             "varying vec2 textureCoordinate;\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
-            "    gl_Position = viewPortMatrix*positionMatrix*position;\n" +
-            "    textureCoordinate =(textureMatrix*inputTextureCoordinate).xy;\n" +
+            "    gl_Position = viewPortMatrix*position;\n" +
+            "    textureCoordinate =(inputTextureMatrix*inputTextureCoordinate).xy;\n" +
             "}";
 
 
@@ -169,7 +168,7 @@ public class GLLayoutLayer extends GLLayer {
         viewTexture.setHeight(viewHeight);
         renderView(viewWidth, viewHeight);
         surfaceTexture.getTransformMatrix(textureMatrix.get());
-        shaderParam.put("textureMatrix", textureMatrix.get());//todo
+        shaderParam.put("inputTextureMatrix", textureMatrix.get());
         return true;
     }
 

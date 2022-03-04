@@ -11,16 +11,15 @@ public class GLTextureLayer extends GLLayer {
     private static final String VERTEX_SHADER = "precision highp float;\n" +
             "attribute vec4 position;\n" +
             "attribute vec4 inputTextureCoordinate;\n" +
-            "uniform mat4 positionMatrix;\n" +
             "uniform mat4 viewPortMatrix;\n" +
-            "uniform mat4 textureMatrix;\n" +
+            "uniform mat4 inputTextureMatrix;\n" +
             "\n" +
             "varying vec2 textureCoordinate;\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
-            "    gl_Position =viewPortMatrix* positionMatrix*position;\n" +
-            "    textureCoordinate =(textureMatrix*inputTextureCoordinate).xy;\n" +
+            "    gl_Position =viewPortMatrix*position;\n" +
+            "    textureCoordinate =(inputTextureMatrix*inputTextureCoordinate).xy;\n" +
             "}";
 
 
@@ -113,7 +112,7 @@ public class GLTextureLayer extends GLLayer {
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
         shaderParam.put("inputTexturePreMul", texture == null ? true : texture.isPremultiplied());
         if (texture != null) {
-            shaderParam.put("textureMatrix", texture.getTextureMatrix().get());//todo
+            shaderParam.put("inputTextureMatrix", texture.getTextureMatrix().get());
         }
         return true;
     }
