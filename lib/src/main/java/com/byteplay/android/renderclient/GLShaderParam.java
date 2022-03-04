@@ -18,7 +18,23 @@ public class GLShaderParam {
     }
 
     public void put(String key, float... data) {
-        shaderParam.put(key, data);
+        float[] floats = shaderParam.get(key);
+        if (floats == null || floats.length != data.length) {
+            floats = new float[data.length];
+        }
+        System.arraycopy(data, 0, floats, 0, data.length);
+        shaderParam.put(key, floats);
+    }
+
+    public void put(String key, int... data) {
+        float[] floats = shaderParam.get(key);
+        if (floats == null || floats.length != data.length) {
+            floats = new float[data.length];
+        }
+        for (int i = 0; i < data.length; i++) {
+            floats[i] = data[i];
+        }
+        shaderParam.put(key, floats);
     }
 
     public void put(String key, boolean data) {
@@ -26,13 +42,23 @@ public class GLShaderParam {
     }
 
 
-    public Map<String, float[]> get() {
-        return shaderParam;
+    public void put(String key, boolean... data) {
+        float[] floats = shaderParam.get(key);
+        if (floats == null || floats.length != data.length) {
+            floats = new float[data.length];
+        }
+        for (int i = 0; i < data.length; i++) {
+            floats[i] = data[i] ? 1 : 0;
+        }
+        put(key, floats);
     }
-
 
     public float[] get(String key) {
         return shaderParam.get(key);
+    }
+
+    public void remove(String key) {
+        shaderParam.remove(key);
     }
 
     public void put(Map<String, float[]> param) {

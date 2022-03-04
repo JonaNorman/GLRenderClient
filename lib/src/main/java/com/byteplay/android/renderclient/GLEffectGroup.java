@@ -15,12 +15,14 @@ public class GLEffectGroup extends GLEffect {
 
 
     @Override
-    protected void computeEffect(long parentEffectTimeMs, long parentDurationMs) {
-        super.computeEffect(parentEffectTimeMs, parentDurationMs);
-        setRenderEnable(getEffectSize() > 0 ? true : false);
+    protected void calculateEffect(long parentEffectTimeMs, long parentDurationMs) {
+        super.calculateEffect(parentEffectTimeMs, parentDurationMs);
         for (int i = 0; i < getEffectSize(); i++) {
             GLEffect child = getEffect(i);
-            child.computeEffect(getRenderTime(), getRenderDuration());
+            child.calculateEffect(getRenderTime(), getRenderDuration());
+            if (!isRenderEnable() && child.isRenderEnable()) {
+                setRenderEnable(true);
+            }
         }
     }
 

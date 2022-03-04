@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.view.MotionEvent;
 
 import com.byteplay.android.renderclient.math.GravityMode;
+import com.byteplay.android.renderclient.math.KeyframeSet;
 import com.byteplay.android.renderclient.math.Matrix4;
 
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class GLLayer extends GLObject {
     private long startTime;
     private long duration = DURATION_MATCH_PARENT;
 
-    private Map<String, GLKeyframeSet> keyframesMap = new HashMap<>();
+    private Map<String, KeyframeSet> keyframesMap = new HashMap<>();
     private GLEffectGroup effectGroup;
     private final Matrix4 viewPortMatrix = new Matrix4();
     private final Matrix4 viewPortInvertMatrix = new Matrix4();
@@ -79,6 +80,7 @@ public class GLLayer extends GLObject {
     private boolean downed = false;
     private int touchSlop = TOUCH_SLOP;
     private MotionEvent motionEvent;
+    private float[] floatTemp = new float[1];
 
 
     protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode, GLDraw draw) {
@@ -175,60 +177,63 @@ public class GLLayer extends GLObject {
             return;
         }
         setRenderEnable(true);
-        effectGroup.computeEffect(getRenderTime(), getRenderDuration());
+        effectGroup.calculateEffect(getRenderTime(), getRenderDuration());
     }
 
     private void generateLayerKeyFrame() {
         long renderTimeMs = getRenderTime();
-        float[] keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_X, renderTimeMs);
-        if (keyValue != null) {
-            setRenderX((int) (keyValue[0] + 0.5));
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_X, renderTimeMs, floatTemp)) {
+            setRenderX((int) (floatTemp[0] + 0.5));
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_Y, renderTimeMs);
-        if (keyValue != null) {
-            setRenderY((int) (keyValue[0] + 0.5));
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_Y, renderTimeMs, floatTemp)) {
+            setRenderY((int) (floatTemp[0] + 0.5));
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, renderTimeMs);
-        if (keyValue != null) {
-            setRenderWidth((int) (keyValue[0] + 0.5));
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, renderTimeMs, floatTemp)) {
+            setRenderWidth((int) (floatTemp[0] + 0.5));
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, renderTimeMs);
-        if (keyValue != null) {
-            setRenderHeight((int) (keyValue[0] + 0.5));
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, renderTimeMs, floatTemp)) {
+            setRenderHeight((int) (floatTemp[0] + 0.5));
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_X, renderTimeMs);
-        if (keyValue != null) {
-            setRenderScaleX(keyValue[0]);
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_X, renderTimeMs, floatTemp)) {
+            setRenderScaleX(floatTemp[0]);
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_Y, renderTimeMs);
-        if (keyValue != null) {
-            setRenderScaleY(keyValue[0]);
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_Y, renderTimeMs, floatTemp)) {
+            setRenderScaleY(floatTemp[0]);
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_X, renderTimeMs);
-        if (keyValue != null) {
-            setRenderTranslateX(keyValue[0]);
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_X, renderTimeMs, floatTemp)) {
+            setRenderTranslateX(floatTemp[0]);
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_Y, renderTimeMs);
-        if (keyValue != null) {
-            setRenderTranslateY(keyValue[0]);
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_TRANSLATE_Y, renderTimeMs, floatTemp)) {
+            setRenderTranslateY(floatTemp[0]);
         }
-        keyValue = getKeyFrameValue(GLLayer.KEY_FRAMES_KEY_LAYER_ROTATION, renderTimeMs);
-        if (keyValue != null) {
-            setRotation(keyValue[0]);
+        if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_ROTATION, renderTimeMs, floatTemp)) {
+            setRotation(floatTemp[0]);
         }
     }
 
-    private float[] getKeyFrameValue(String key, long renderTimeMs) {
-        GLKeyframeSet keyFrames = getKeyframes(key);
+    private boolean loadKeyFrameFloat(String key, long renderTimeMs, float[] floatTemp) {
+        KeyframeSet keyFrames = getKeyFrames(key);
         if (keyFrames == null) {
-            return null;
+            return false;
         }
-        long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), getRenderDuration() - keyFrames.getStartTime());
-        float fraction = (renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration;
-        if (fraction < 0 || fraction > 1) {
-            return null;
+        Class valueType = keyFrames.getValueType();
+        Object value = keyFrames.getValueByTime(renderTimeMs, getRenderDuration());
+        if (value == null) {
+            return false;
         }
-        return keyFrames.getValue(fraction);
+        if (valueType == int.class
+                || valueType == float.class) {
+            floatTemp[0] = (float) value;
+        } else if (valueType == int[].class) {
+            int[] arr = (int[]) value;
+            floatTemp[0] = (float) arr[0];
+        } else if (valueType == float[].class) {
+            float[] arr = (float[]) value;
+            floatTemp[0] = (float) arr[0];
+        } else {
+            return false;
+        }
+        return true;
     }
 
     protected void computeViewPortMatrix(int frameWidth, int frameHeight) {
@@ -294,7 +299,6 @@ public class GLLayer extends GLObject {
         return localX >= -slop && localY >= -slop && localX < (renderWidth + slop) &&
                 localY < (renderHeight + slop);
     }
-
 
 
     protected void renderLayer(GLFrameBuffer frameBuffer) {
@@ -439,15 +443,22 @@ public class GLLayer extends GLObject {
         layerTransforms.add(index, transform);
     }
 
-    public void setKeyframe(String key, GLKeyframeSet keyframeSet) {
+    public void setKeyframes(String key, KeyframeSet keyframeSet) {
+        Class valueType = keyframeSet.getValueType();
+        if (valueType != int.class
+                && valueType != float.class
+                && valueType != float[].class
+                && valueType != int[].class) {
+            throw new RuntimeException("key frame set not support class " + valueType);
+        }
         keyframesMap.put(key, keyframeSet);
     }
 
-    public Set<String> getKeyframeKeySet() {
+    public Set<String> getKeyNames() {
         return keyframesMap.keySet();
     }
 
-    public GLKeyframeSet getKeyframes(String key) {
+    public KeyframeSet getKeyFrames(String key) {
         return keyframesMap.get(key);
     }
 

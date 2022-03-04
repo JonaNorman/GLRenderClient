@@ -1,6 +1,8 @@
 package com.byteplay.android.renderclient;
 
 
+import com.byteplay.android.renderclient.math.KeyframeSet;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -40,9 +42,10 @@ public class GLShaderEffect extends GLEffect {
     private String vertexShaderCode;
     private String fragmentShaderCode;
     private GLDraw draw;
+    private GLDraw selfDraw;
     private final GLShaderParam shaderParam;
     private final GLShaderParam defaultShaderParam;
-    private Map<String, GLKeyframeSet> keyframesMap = new HashMap<>();
+    private Map<String, KeyframeSet> keyframesMap = new HashMap<>();
 
 
     protected GLShaderEffect(GLRenderClient client) {
@@ -52,8 +55,15 @@ public class GLShaderEffect extends GLEffect {
         this.fragmentShaderCode = FRAGMENT_SHADER;
         this.shaderParam = client.newShaderParam();
         this.defaultShaderParam = client.newShaderParam();
+        this.selfDraw = this.draw;
     }
 
+
+    @Override
+    protected void onDispose() {
+        super.onDispose();
+        selfDraw.dispose();
+    }
 
     @Override
     protected GLFrameBuffer renderEffect(GLFrameBuffer input) {
@@ -69,15 +79,22 @@ public class GLShaderEffect extends GLEffect {
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
     }
 
-    public void setKeyframe(String key, GLKeyframeSet keyframeSet) {
+    public void setKeyframes(String key, KeyframeSet keyframeSet) {
+        Class valueType = keyframeSet.getValueType();
+        if (valueType != int.class
+                && valueType != float.class
+                && valueType != float[].class
+                && valueType != int[].class) {
+            throw new RuntimeException("key frame set not support class " + valueType);
+        }
         keyframesMap.put(key, keyframeSet);
     }
 
-    public Set<String> getFrameKeySet() {
+    public Set<String> getKeyNames() {
         return keyframesMap.keySet();
     }
 
-    public GLKeyframeSet getKeyframes(String key) {
+    public KeyframeSet getKeyframes(String key) {
         return keyframesMap.get(key);
     }
 

@@ -14,6 +14,7 @@ import android.util.LruCache;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.byteplay.android.renderclient.math.KeyframeSet;
 import com.byteplay.android.renderclient.math.Matrix4;
 
 import java.util.ArrayList;
@@ -330,10 +331,22 @@ class EGL14RenderClient extends GLRenderClient {
             return;
         }
         programParam.put(layer.getDefaultShaderParam());
-        for (String key : layer.getKeyframeKeySet()) {
-            float[] keyValue = getKeyFrameValue(layer, key, renderTimeMs);
-            if (keyValue != null) {
-                programParam.put(key, keyValue);
+        for (String key : layer.getKeyNames()) {
+            KeyframeSet keyFrames = layer.getKeyFrames(key);
+            if (keyFrames != null) {
+                Object keyValue = keyFrames.getValueByTime(renderTimeMs, layer.getRenderDuration());
+                if (keyValue != null) {
+                    Class valueType = keyFrames.getValueType();
+                    if (valueType == int.class) {
+                        programParam.put(key, (int) keyValue);
+                    } else if (valueType == float.class) {
+                        programParam.put(key, (float) keyValue);
+                    } else if (valueType == int[].class) {
+                        programParam.put(key, (float) keyValue);
+                    } else if (valueType == float[].class) {
+                        programParam.put(key, (float[]) keyValue);
+                    }
+                }
             }
         }
         programParam.put(layer.getShaderParam());
@@ -386,10 +399,22 @@ class EGL14RenderClient extends GLRenderClient {
             programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX.get());
             shaderEffect.onRenderShaderEffect(input);
             programParam.put(shaderEffect.getDefaultShaderParam());
-            for (String key : shaderEffect.getFrameKeySet()) {
-                float[] keyValue = getKeyFrameValue(shaderEffect, key, effectTime);
-                if (keyValue != null) {
-                    programParam.put(key, keyValue);
+            for (String key : shaderEffect.getKeyNames()) {
+                KeyframeSet keyFrames = shaderEffect.getKeyframes(key);
+                if (keyFrames != null) {
+                    Object keyValue = keyFrames.getValueByTime(effectTime, shaderEffect.getRenderDuration());
+                    if (keyValue != null) {
+                        Class valueType = keyFrames.getValueType();
+                        if (valueType == int.class) {
+                            programParam.put(key, (int) keyValue);
+                        } else if (valueType == float.class) {
+                            programParam.put(key, (float) keyValue);
+                        } else if (valueType == int[].class) {
+                            programParam.put(key, (float) keyValue);
+                        } else if (valueType == float[].class) {
+                            programParam.put(key, (float[]) keyValue);
+                        }
+                    }
                 }
             }
             programParam.put(shaderEffect.getShaderParam());
@@ -435,33 +460,6 @@ class EGL14RenderClient extends GLRenderClient {
             GLFrameBuffer frameBuffer = frameBufferCache.poll();
             frameBuffer.dispose();
         }
-    }
-
-
-    private float[] getKeyFrameValue(GLLayer layer, String key, long renderTimeMs) {
-        GLKeyframeSet keyFrames = layer.getKeyframes(key);
-        if (keyFrames == null) {
-            return null;
-        }
-        long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), layer.getRenderDuration() - keyFrames.getStartTime());
-        float fraction = (renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration;
-        if (fraction < 0 || fraction > 1) {
-            return null;
-        }
-        return keyFrames.getValue(fraction);
-    }
-
-    private float[] getKeyFrameValue(GLShaderEffect shaderEffect, String key, long renderTimeMs) {
-        GLKeyframeSet keyFrames = shaderEffect.getKeyframes(key);
-        if (keyFrames == null) {
-            return null;
-        }
-        long duration = Math.min(keyFrames.getDuration() - keyFrames.getStartTime(), shaderEffect.getRenderDuration() - keyFrames.getStartTime());
-        float fraction = (renderTimeMs - keyFrames.getStartTime()) * 1.0f / duration;
-        if (fraction < 0 || fraction > 1) {
-            return null;
-        }
-        return keyFrames.getValue(fraction);
     }
 
 

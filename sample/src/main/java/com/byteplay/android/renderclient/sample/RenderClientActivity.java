@@ -17,7 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.byteplay.android.renderclient.math.GravityMode;
-import com.byteplay.android.renderclient.GLKeyframeSet;
+import com.byteplay.android.renderclient.math.KeyframeSet;
 import com.byteplay.android.renderclient.GLLayer;
 import com.byteplay.android.renderclient.GLLayerGroup;
 import com.byteplay.android.renderclient.GLLayoutLayer;
@@ -99,10 +99,10 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     texture.updateBitmap(bitmap);
                     bitmap.recycle();
                     textureLayer.setTexture(texture);
-                    GLKeyframeSet keyframes = GLKeyframeSet.ofFloat(5000, 600, 1200);
-                    textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, keyframes);
-                    keyframes = GLKeyframeSet.ofFloat(5000, 600, 1200);
-                    textureLayer.setKeyframe(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, keyframes);
+                    KeyframeSet keyframes = KeyframeSet.ofFloat(5000, 600, 1200);
+                    textureLayer.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, keyframes);
+                    keyframes = KeyframeSet.ofFloat(5000, 600, 1200);
+                    textureLayer.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, keyframes);
                     frameLayer.add(textureLayer);
                 }
 

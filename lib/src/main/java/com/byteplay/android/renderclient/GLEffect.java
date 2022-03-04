@@ -2,21 +2,29 @@ package com.byteplay.android.renderclient;
 
 import java.util.Objects;
 
-public abstract class GLEffect {
+public abstract class GLEffect extends GLObject {
     public static final long DURATION_MATCH_PARENT = -1;
-    private long renderDuration = GLEffect.DURATION_MATCH_PARENT;
+    private long renderDuration;
     private long startTime;
     private long duration = GLEffect.DURATION_MATCH_PARENT;
     private long renderTime;
     private boolean renderEnable;
-    protected GLRenderClient client;
 
     public GLEffect(GLRenderClient client) {
-        this.client = client;
+        super(client);
     }
 
+    @Override
+    protected void onCreate() {
 
-    protected void computeEffect(long timeMs, long parentDurationMs) {
+    }
+
+    @Override
+    protected void onDispose() {
+
+    }
+
+    protected void calculateEffect(long timeMs, long parentDurationMs) {
         setRenderEnable(false);
         long renderDurationMs = getDuration() == DURATION_MATCH_PARENT ? parentDurationMs : Math.max(getDuration(), 0);
         long startTime = getStartTime();

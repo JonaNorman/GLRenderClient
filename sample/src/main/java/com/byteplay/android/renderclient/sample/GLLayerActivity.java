@@ -20,7 +20,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.byteplay.android.renderclient.GLKeyframeSet;
 import com.byteplay.android.renderclient.GLLayer;
 import com.byteplay.android.renderclient.GLLayerGroup;
 import com.byteplay.android.renderclient.GLLayoutLayer;
