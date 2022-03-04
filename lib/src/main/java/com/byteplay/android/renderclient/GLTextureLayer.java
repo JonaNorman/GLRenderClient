@@ -74,11 +74,11 @@ public class GLTextureLayer extends GLLayer {
     }
 
 
-    protected void computeViewPortMatrix(int frameWidth, int frameHeight) {
+    protected void calculateViewPortMatrix(int frameWidth, int frameHeight) {
         int textureWidth = getTextureWidth();
         int textureHeight = getTextureHeight();
         if (textureWidth == 0 || textureHeight == 0) {
-            super.computeViewPortMatrix(frameWidth, frameHeight);
+            super.calculateViewPortMatrix(frameWidth, frameHeight);
             return;
         }
         if (scale != null) {
@@ -89,7 +89,7 @@ public class GLTextureLayer extends GLLayer {
             setRenderWidth((int) (viewportWidth + 0.5));
             setRenderHeight((int) (viewportHeight + 0.5));
         }
-        super.computeViewPortMatrix(frameWidth, frameHeight);
+        super.calculateViewPortMatrix(frameWidth, frameHeight);
     }
 
     @Override
@@ -113,7 +113,7 @@ public class GLTextureLayer extends GLLayer {
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
         shaderParam.put("inputTexturePreMul", texture == null ? true : texture.isPremultiplied());
         if (texture != null) {
-            shaderParam.put("textureMatrix", texture.getTextureMatrix().get());
+            shaderParam.put("textureMatrix", texture.getTextureMatrix().get());//todo
         }
         return true;
     }

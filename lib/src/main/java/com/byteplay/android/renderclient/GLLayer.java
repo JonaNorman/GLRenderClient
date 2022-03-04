@@ -78,7 +78,6 @@ public class GLLayer extends GLObject {
     private OnClickListener onClickListener;
     private boolean downed = false;
     private int touchSlop = TOUCH_SLOP;
-    private MotionEvent motionEvent;
     private float[] floatTemp = new float[1];
 
     private GLDrawType drawType = GLDrawType.DRAW_ARRAY;
@@ -112,20 +111,24 @@ public class GLLayer extends GLObject {
         }
     }
 
-    public void render(GLFrameBuffer frameBuffer) {
+    public void render(GLFrameBuffer frameBuffer, MotionEvent motionEvent) {
         long duration = getDuration() == DURATION_MATCH_PARENT ? Long.MAX_VALUE : getDuration();
         setParentRenderWidth(frameBuffer.getWidth());
         setParentRenderHeight(frameBuffer.getHeight());
-        computeLayer(getTime(), duration);
-        if (motionEvent != null) {
-            dispatchTouchEvent(motionEvent);
-            motionEvent.recycle();
-            motionEvent = null;
-        }
+        calculateLayer(getTime(), duration);
+        dispatchTouchEvent(motionEvent);
         renderLayer(frameBuffer);
     }
 
+    public void render(GLFrameBuffer frameBuffer) {
+        render(frameBuffer, null);
+    }
+
     public void render(GLRenderSurface eglSurface, SurfaceReadBitmapCallback callback) {
+        render(eglSurface, null, callback);
+    }
+
+    public void render(GLRenderSurface eglSurface, MotionEvent event, SurfaceReadBitmapCallback callback) {
         if (outEGLSurface != eglSurface) {
             outEGLSurface = eglSurface;
             if (ownFrameBuffer != null) {
@@ -134,7 +137,7 @@ public class GLLayer extends GLObject {
             ownFrameBuffer = client.newFrameBuffer(eglSurface);
         }
         ownFrameBuffer.clearColor(Color.TRANSPARENT);
-        render(ownFrameBuffer);
+        render(ownFrameBuffer, event);
         if (callback != null) {
             Bitmap bitmap = callback.bitmap;
             if (bitmap != null) {
@@ -148,11 +151,15 @@ public class GLLayer extends GLObject {
     }
 
     public void render(GLRenderSurface eglSurface) {
-        render(eglSurface, null);
+        render(eglSurface, null, null);
+    }
+
+    public void render(GLRenderSurface eglSurface, MotionEvent motionEvent) {
+        render(eglSurface, motionEvent, null);
     }
 
 
-    protected void computeLayer(long parentRenderTimeMs, long parentDurationMs) {
+    protected void calculateLayer(long parentRenderTimeMs, long parentDurationMs) {
         setRenderEnable(false);
         long renderDurationMs = getDuration() == DURATION_MATCH_PARENT ? parentDurationMs : Math.max(getDuration(), 0);
         long startTime = getStartTime();
@@ -176,7 +183,7 @@ public class GLLayer extends GLObject {
         setRenderTranslateX(getTranslateX());
         setRenderTranslateY(getTranslateY());
         generateLayerKeyFrame();
-        computeViewPortMatrix(parentRenderWidth, parentRenderHeight);
+        calculateViewPortMatrix(parentRenderWidth, parentRenderHeight);
         if (getRenderWidth() <= 0 || getRenderHeight() <= 0) {
             return;
         }
@@ -240,10 +247,10 @@ public class GLLayer extends GLObject {
         return true;
     }
 
-    protected void computeViewPortMatrix(int frameWidth, int frameHeight) {
+    protected void calculateViewPortMatrix(int frameWidth, int frameHeight) {
         viewPortMatrix.setIdentity();
         float x = gravity.getX(renderX, renderWidth, frameWidth);
-        float y = gravity.getY(renderY, renderHeight, frameHeight);
+        float y = gravity.getY(renderY, renderHeight, frameHeight);// TODO: 2022/3/4  
         viewPortMatrix.scale(renderScaleX * renderWidth / 2, renderScaleY * renderHeight / 2, 1);
         viewPortMatrix.rotate(renderRotation, 0, 0, 1);
         viewPortMatrix.translate(renderTranslateX + x - (frameWidth / 2.0f - renderWidth / 2.0f), -(renderTranslateY + y - (frameHeight / 2.0f - renderHeight / 2.0f)), 0);
@@ -254,6 +261,9 @@ public class GLLayer extends GLObject {
     }
 
     protected boolean dispatchTouchEvent(MotionEvent event) {
+        if (event == null) {
+            return false;
+        }
         if (!isRenderEnable()) {
             return false;
         }
@@ -301,7 +311,7 @@ public class GLLayer extends GLObject {
 
     boolean pointInView(float localX, float localY, float slop) {
         return localX >= -slop && localY >= -slop && localX < (renderWidth + slop) &&
-                localY < (renderHeight + slop);
+                localY < (renderHeight + slop);// TODO: 2022/3/4
     }
 
 
@@ -757,17 +767,6 @@ public class GLLayer extends GLObject {
 
     public void setOnClickListener(OnClickListener onClickListener) {
         this.onClickListener = onClickListener;
-    }
-
-    public void updateMotionEvent(MotionEvent motionEvent) {
-        if (this.motionEvent != null) {
-            this.motionEvent.recycle();
-        }
-        this.motionEvent = MotionEvent.obtain(motionEvent);
-    }
-
-    public MotionEvent getMotionEvent() {
-        return motionEvent;
     }
 
 

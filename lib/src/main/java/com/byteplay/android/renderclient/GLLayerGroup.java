@@ -14,13 +14,12 @@ public class GLLayerGroup extends GLLayer {
     private final List<GLLayer> layerList = new ArrayList<>();
 
     private ScaleMode scale = ScaleMode.FIT;
-    private GLXfermode selfXfermode;
+    private GLXfermode selfXfermode = GLXfermode.SRC_OVER;
     private GLLayer mFirstTouchLayer;
     private final float[] tempPoint = new float[4];
 
     public GLLayerGroup(GLRenderClient client) {
         super(client, null, null);
-        selfXfermode = GLXfermode.SRC_OVER;
     }
 
 
@@ -105,13 +104,13 @@ public class GLLayerGroup extends GLLayer {
     }
 
     @Override
-    protected void computeLayer(long parentRenderTimeMs, long parentDurationMs) {
-        super.computeLayer(parentRenderTimeMs, parentDurationMs);
+    protected void calculateLayer(long parentRenderTimeMs, long parentDurationMs) {
+        super.calculateLayer(parentRenderTimeMs, parentDurationMs);
         for (int i = 0; i < getLayerSize(); i++) {
             GLLayer child = getLayer(i);
             child.setParentRenderWidth(getRenderWidth());
             child.setParentRenderHeight(getRenderHeight());
-            child.computeLayer(getRenderTime(), getRenderDuration());
+            child.calculateLayer(getRenderTime(), getRenderDuration());
         }
     }
 
@@ -120,6 +119,9 @@ public class GLLayerGroup extends GLLayer {
     }
 
     protected boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev == null) {
+            return false;
+        }
         boolean intercepted;
         boolean handled = false;
         int action = ev.getActionMasked();
@@ -141,8 +143,8 @@ public class GLLayerGroup extends GLLayer {
                     int actionIndex = ev.getActionIndex();
                     final float x = ev.getX(actionIndex);
                     final float y = ev.getY(actionIndex);
-                    if (pointInView(x, y, child)) {
-                        if (dispatchTransformedTouchEvent(ev, false, child)) {
+                    if (pointInView(x, y, child)) {//todo
+                        if (dispatchTransformedTouchEvent(ev, false, child)) {//todo
                             mFirstTouchLayer = child;
                             alreadyDispatchedToNewTouchTarget = true;
                         }
@@ -186,7 +188,7 @@ public class GLLayerGroup extends GLLayer {
             int actionIndex = ev.getActionIndex();
             final float x = ev.getX(actionIndex);
             final float y = ev.getY(actionIndex);
-            final float[] point = tempPoint;
+            final float[] point = tempPoint;//todo
             point[0] = x;
             point[1] = y;
             point[2] = 0;
@@ -206,7 +208,7 @@ public class GLLayerGroup extends GLLayer {
         return handled;
     }
 
-    protected boolean pointInView(float x, float y, GLLayer child) {
+    protected boolean pointInView(float x, float y, GLLayer child) {// TODO: 2022/3/4  
         final float[] point = tempPoint;
         point[0] = x;
         point[1] = y;

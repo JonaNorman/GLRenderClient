@@ -29,6 +29,8 @@ import com.byteplay.android.renderclient.GLTexture;
 import com.byteplay.android.renderclient.GLTextureLayer;
 import com.byteplay.android.renderclient.GLTextureType;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GLLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
@@ -51,6 +53,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
         GLTextureLayer textureLayer;
         long startTime = System.currentTimeMillis();
         GLLayerGroup layerGroup;
+        Queue<MotionEvent> motionEventQueue = new LinkedList<>();
 
 
         @Override
@@ -100,13 +103,13 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     imageView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            Toast.makeText(v.getContext(),"toas",Toast.LENGTH_LONG).show();
+                            Toast.makeText(v.getContext(), "toas", Toast.LENGTH_LONG).show();
                         }
                     });
                     textview.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            Toast.makeText(v.getContext(),"abc",Toast.LENGTH_LONG).show();
+                            Toast.makeText(v.getContext(), "abc", Toast.LENGTH_LONG).show();
                         }
                     });
                     layerGroup.add(viewLayer);
@@ -139,10 +142,11 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         surfaceDestroy.notifyAll();
                     }
                     return true;
-                case MESSAGE_SURFACE_MOTION_EVENT:
+                case MESSAGE_SURFACE_MOTION_EVENT: {
                     MotionEvent motionEvent = (MotionEvent) msg.obj;
-                    layerGroup.updateMotionEvent(motionEvent);
+                    motionEventQueue.offer(motionEvent);
                     return true;
+                }
                 case MESSAGE_SURFACE_RENDER:
                     handler.removeMessages(MESSAGE_SURFACE_RENDER);
                     long time = System.currentTimeMillis() - startTime;
@@ -151,7 +155,11 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         time = 0;
                     }
                     layerGroup.setTime(time);
-                    layerGroup.render(eglSurface);
+                    MotionEvent motionEvent = motionEventQueue.poll();
+                    layerGroup.render(eglSurface, motionEvent);
+                    if (motionEvent != null) {
+                        motionEvent.recycle();
+                    }
                     handler.sendEmptyMessageDelayed(MESSAGE_SURFACE_RENDER, 40);
                     return true;
             }

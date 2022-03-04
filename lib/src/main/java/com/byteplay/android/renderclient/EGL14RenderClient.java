@@ -205,6 +205,8 @@ class EGL14RenderClient extends GLRenderClient {
         blend = newBlend();
         glEnable = newEnable();
         glViewPort = newViewPort();
+        // TODO: 2022/3/4 thread
+        //  todo 不变换就保存纹理，不需要更新
     }
 
     @Override

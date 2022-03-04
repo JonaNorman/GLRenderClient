@@ -86,8 +86,8 @@ public class GLLayoutLayer extends GLLayer {
 
     protected GLLayoutLayer(GLRenderClient client, Context context, int style) {
         super(client, VERTEX_SHADER, FRAGMENT_SHADER);
-        context = new ContextThemeWrapper(context.getApplicationContext(), style);
-        rootLayout = new FrameLayout(context);
+        this.context = new ContextThemeWrapper(context.getApplicationContext(), style);
+        rootLayout = new FrameLayout(this.context);
         ReflectionLimitUtils.clearLimit();
     }
 
@@ -169,7 +169,7 @@ public class GLLayoutLayer extends GLLayer {
         viewTexture.setHeight(viewHeight);
         renderView(viewWidth, viewHeight);
         surfaceTexture.getTransformMatrix(textureMatrix.get());
-        shaderParam.put("textureMatrix", textureMatrix.get());
+        shaderParam.put("textureMatrix", textureMatrix.get());//todo
         return true;
     }
 
@@ -204,8 +204,6 @@ public class GLLayoutLayer extends GLLayer {
 
 
     void renderView(int viewWidth, int viewHeight) {
-        //  todo 不变换就保存纹理，不需要更新
-        // todo  点击事件传递q
         if (handler == null) {
             handler = new Handler();
         } else if (!handler.getLooper().equals(Looper.myLooper())) {
