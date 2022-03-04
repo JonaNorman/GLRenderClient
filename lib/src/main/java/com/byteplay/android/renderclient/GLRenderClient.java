@@ -80,7 +80,7 @@ public abstract class GLRenderClient {
     public abstract GLTextureLayer newTextureLayer();
 
 
-    public abstract GLLayer newLayer(String vertexCode, String fragmentCode, GLDraw draw);
+    public abstract GLLayer newLayer(String vertexCode, String fragmentCode);
 
     public abstract GLColorLayer newColorLayer();
 

@@ -31,22 +31,22 @@ public class GLEffectGroup extends GLEffect {
         return client.renderEffect(this, input);
     }
 
-    public void add(GLEffect effect) {
+    public void addEffect(GLEffect effect) {
         if (effect == null) return;
         effectList.add(effect);
     }
 
-    public void add(int index, GLEffect effect) {
+    public void addEffect(int index, GLEffect effect) {
         if (effect == null) return;
         effectList.add(index, effect);
     }
 
-    public void set(int index, GLEffect effect) {
+    public void setEffect(int index, GLEffect effect) {
         if (effect == null) return;
         effectList.set(index, effect);
     }
 
-    public void remove(GLEffect effect) {
+    public void removeEffect(GLEffect effect) {
         if (effect == null || !effectList.contains(effect)) return;
         effectList.remove(effect);
     }
@@ -55,15 +55,15 @@ public class GLEffectGroup extends GLEffect {
         return effectList.indexOf(effect);
     }
 
-    public void addAll(Collection<GLEffect> effects) {
+    public void addAllEffect(Collection<GLEffect> effects) {
         effectList.addAll(effects);
     }
 
-    public boolean contains(GLEffect effect) {
+    public boolean containEffect(GLEffect effect) {
         return effectList.contains(effect);
     }
 
-    public void removeAll(Collection<GLEffect> effects) {
+    public void removeAllEffect(Collection<GLEffect> effects) {
         effectList.removeAll(effects);
     }
 

@@ -19,7 +19,7 @@ public class GLLayerGroup extends GLLayer {
     private final float[] tempPoint = new float[4];
 
     public GLLayerGroup(GLRenderClient client) {
-        super(client, null, null, client.newDrawArray());
+        super(client, null, null);
         selfXfermode = GLXfermode.SRC_OVER;
     }
 

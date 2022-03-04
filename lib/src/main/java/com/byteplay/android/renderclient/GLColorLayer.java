@@ -35,7 +35,7 @@ public class GLColorLayer extends GLLayer {
     private float alphaColor;
 
     protected GLColorLayer(GLRenderClient client) {
-        super(client, VERTEX_SHADER, FRAGMENT_SHADER, client.newDrawArray());
+        super(client, VERTEX_SHADER, FRAGMENT_SHADER);
     }
 
 

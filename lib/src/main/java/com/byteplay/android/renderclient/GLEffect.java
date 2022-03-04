@@ -2,27 +2,19 @@ package com.byteplay.android.renderclient;
 
 import java.util.Objects;
 
-public abstract class GLEffect extends GLObject {
+public abstract class GLEffect {
     public static final long DURATION_MATCH_PARENT = -1;
     private long renderDuration;
     private long startTime;
     private long duration = GLEffect.DURATION_MATCH_PARENT;
     private long renderTime;
     private boolean renderEnable;
+    protected GLRenderClient client;
 
     public GLEffect(GLRenderClient client) {
-        super(client);
+        this.client = client;
     }
 
-    @Override
-    protected void onCreate() {
-
-    }
-
-    @Override
-    protected void onDispose() {
-
-    }
 
     protected void calculateEffect(long timeMs, long parentDurationMs) {
         setRenderEnable(false);
@@ -84,11 +76,11 @@ public abstract class GLEffect extends GLObject {
         if (this == o) return true;
         if (!(o instanceof GLEffect)) return false;
         GLEffect glEffect = (GLEffect) o;
-        return renderDuration == glEffect.renderDuration && startTime == glEffect.startTime && duration == glEffect.duration;
+        return startTime == glEffect.startTime && duration == glEffect.duration;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(renderDuration, startTime, duration);
+        return Objects.hash(startTime, duration);
     }
 }

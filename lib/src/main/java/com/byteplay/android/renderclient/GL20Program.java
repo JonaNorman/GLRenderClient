@@ -63,7 +63,11 @@ class GL20Program extends GLProgram {
     protected void onExecute(int programId) {
         GLShader vertexShader = getVertexShader();
         GLShader fragmentShader = getFragmentShader();
-        GLDraw draw = getDraw();
+        GLDrawType drawType = getDrawType();
+        if (drawType == null) {
+            throw new NullPointerException("drawType is null");
+        }
+        GLDraw draw = drawType == GLDrawType.DRAW_ARRAY ? getDrawArray() : getDrawElement();
         if (draw == null) {
             throw new NullPointerException("draw is null");
         }

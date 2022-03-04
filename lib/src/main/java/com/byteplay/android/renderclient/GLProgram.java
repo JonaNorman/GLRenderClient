@@ -6,7 +6,9 @@ public abstract class GLProgram extends GLObject {
     private GLShader vertexShader;
     private GLShader fragmentShader;
     private GLShaderParam shaderParam;
-    private GLDraw draw;
+    private GLDrawArray drawArray;
+    private GLDrawElement drawElement;
+    private GLDrawType drawType;
 
     public GLProgram(GLRenderClient client) {
         super(client);
@@ -29,6 +31,32 @@ public abstract class GLProgram extends GLObject {
         this.fragmentShader = fragmentShader;
     }
 
+    public void setDrawArray(GLDrawArray drawArray) {
+        this.drawArray = drawArray;
+    }
+
+
+    public GLDrawArray getDrawArray() {
+        return drawArray;
+    }
+
+    public GLDrawElement getDrawElement() {
+        return drawElement;
+    }
+
+    public void setDrawElement(GLDrawElement drawElement) {
+        this.drawElement = drawElement;
+    }
+
+
+    public void setDrawType(GLDrawType drawType) {
+        this.drawType = drawType;
+    }
+
+    public GLDrawType getDrawType() {
+        return drawType;
+    }
+
     public GLShader getVertexShader() {
         return vertexShader;
     }
@@ -37,13 +65,6 @@ public abstract class GLProgram extends GLObject {
         return fragmentShader;
     }
 
-    public GLDraw getDraw() {
-        return draw;
-    }
-
-    public void setDraw(GLDraw draw) {
-        this.draw = draw;
-    }
 
     public final void execute() {
         findMethod(GLExecuteMethod.class).call();
@@ -77,14 +98,16 @@ public abstract class GLProgram extends GLObject {
         return Objects.equals(vertexShader, glProgram.vertexShader)
                 && Objects.equals(fragmentShader, glProgram.fragmentShader)
                 && Objects.equals(shaderParam, glProgram.shaderParam)
-                && Objects.equals(draw, glProgram.draw)
+                && Objects.equals(drawType, glProgram.drawType)
+                && Objects.equals(drawElement, glProgram.drawElement)
+                && Objects.equals(drawArray, glProgram.drawArray)
                 && Objects.equals(isCreated(), glProgram.isCreated())
                 && Objects.equals(isDisposed(), glProgram.isDisposed());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(vertexShader, fragmentShader, shaderParam, draw,isCreated(),isDisposed());
+        return Objects.hash(vertexShader, fragmentShader, shaderParam, drawType, drawArray, drawElement, isCreated(), isDisposed());
     }
 
     class GLExecuteMethod extends GLMethod {

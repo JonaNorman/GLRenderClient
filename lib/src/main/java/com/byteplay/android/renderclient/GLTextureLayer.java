@@ -45,7 +45,7 @@ public class GLTextureLayer extends GLLayer {
     private ScaleMode scale = ScaleMode.FIT;
 
     protected GLTextureLayer(GLRenderClient client) {
-        super(client, VERTEX_SHADER, FRAGMENT_SHADER, client.newDrawArray());
+        super(client, VERTEX_SHADER, FRAGMENT_SHADER);
     }
 
     public void setTexture(GLTexture texture) {

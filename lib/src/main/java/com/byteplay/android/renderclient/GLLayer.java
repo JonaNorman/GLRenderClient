@@ -34,7 +34,6 @@ public class GLLayer extends GLObject {
 
     private String vertexShaderCode;
     private String fragmentShaderCode;
-    private GLDraw draw;
     private GLShaderParam shaderParam;
     private GLShaderParam defaultShaderParam;
     private GLEnable enable;
@@ -82,12 +81,17 @@ public class GLLayer extends GLObject {
     private MotionEvent motionEvent;
     private float[] floatTemp = new float[1];
 
+    private GLDrawType drawType = GLDrawType.DRAW_ARRAY;
+    private GLDrawMode drawMode = GLDrawMode.TRIANGLE_STRIP;
+    private int drawArrayStart;
+    private int drawArrayCount = 4;
+    private int[] drawElementIndices;
 
-    protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode, GLDraw draw) {
+
+    protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode) {
         super(client);
         this.enable = client.newEnable();
         this.xfermode = GLXfermode.SRC_OVER;
-        this.draw = draw;
         this.vertexShaderCode = vertexShaderCode;
         this.fragmentShaderCode = fragmentShaderCode;
         this.shaderParam = client.newShaderParam();
@@ -386,12 +390,12 @@ public class GLLayer extends GLObject {
 
     public void addEffect(GLEffect effect) {
         if (effect == null) return;
-        effectGroup.add(effect);
+        effectGroup.addEffect(effect);
     }
 
     public void removeEffect(GLEffect effect) {
-        if (effect == null || !effectGroup.contains(effect)) return;
-        effectGroup.remove(effect);
+        if (effect == null || !effectGroup.containEffect(effect)) return;
+        effectGroup.removeEffect(effect);
     }
 
     public int getEffectIndex(GLEffect effect) {
@@ -399,11 +403,11 @@ public class GLLayer extends GLObject {
     }
 
     public void addEffect(Collection<GLEffect> effects) {
-        effectGroup.addAll(effects);
+        effectGroup.addAllEffect(effects);
     }
 
     public void removeEffect(Collection<GLEffect> effects) {
-        effectGroup.removeAll(effects);
+        effectGroup.removeAllEffect(effects);
     }
 
 
@@ -500,6 +504,46 @@ public class GLLayer extends GLObject {
     }
 
 
+    public GLDrawType getDrawType() {
+        return drawType;
+    }
+
+    public void setDrawType(GLDrawType drawType) {
+        this.drawType = drawType;
+    }
+
+    public GLDrawMode getDrawMode() {
+        return drawMode;
+    }
+
+    public void setDrawMode(GLDrawMode drawMode) {
+        this.drawMode = drawMode;
+    }
+
+    public int getDrawArrayStart() {
+        return drawArrayStart;
+    }
+
+    public void setDrawArrayStart(int drawArrayStart) {
+        this.drawArrayStart = drawArrayStart;
+    }
+
+    public int getDrawArrayCount() {
+        return drawArrayCount;
+    }
+
+    public void setDrawArrayCount(int drawArrayCount) {
+        this.drawArrayCount = drawArrayCount;
+    }
+
+    public int[] getDrawElementIndices() {
+        return drawElementIndices;
+    }
+
+    public void setDrawElementIndices(int[] drawElementIndices) {
+        this.drawElementIndices = drawElementIndices;
+    }
+
     public void setTime(long timeMs) {
         this.timeMs = timeMs;
     }
@@ -508,10 +552,6 @@ public class GLLayer extends GLObject {
         return timeMs;
     }
 
-
-    public void setDraw(GLDraw draw) {
-        this.draw = draw;
-    }
 
     public void setEnable(GLEnable enable) {
         this.enable = enable;
@@ -548,10 +588,6 @@ public class GLLayer extends GLObject {
 
     public GLXfermode getXfermode() {
         return xfermode;
-    }
-
-    public GLDraw getDraw() {
-        return draw;
     }
 
 

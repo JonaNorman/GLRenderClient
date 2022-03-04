@@ -41,8 +41,13 @@ public class GLShaderEffect extends GLEffect {
 
     private String vertexShaderCode;
     private String fragmentShaderCode;
-    private GLDraw draw;
-    private GLDraw selfDraw;
+
+    private GLDrawType drawType = GLDrawType.DRAW_ARRAY;
+    private GLDrawMode drawMode = GLDrawMode.TRIANGLE_STRIP;
+    private int drawArrayStart;
+    private int drawArrayCount = 4;
+    private int[] drawElementIndices;
+
     private final GLShaderParam shaderParam;
     private final GLShaderParam defaultShaderParam;
     private Map<String, KeyframeSet> keyframesMap = new HashMap<>();
@@ -50,20 +55,12 @@ public class GLShaderEffect extends GLEffect {
 
     protected GLShaderEffect(GLRenderClient client) {
         super(client);
-        this.draw = client.newDrawArray();
         this.vertexShaderCode = VERTEX_SHADER;
         this.fragmentShaderCode = FRAGMENT_SHADER;
         this.shaderParam = client.newShaderParam();
         this.defaultShaderParam = client.newShaderParam();
-        this.selfDraw = this.draw;
     }
 
-
-    @Override
-    protected void onDispose() {
-        super.onDispose();
-        selfDraw.dispose();
-    }
 
     @Override
     protected GLFrameBuffer renderEffect(GLFrameBuffer input) {
@@ -116,10 +113,6 @@ public class GLShaderEffect extends GLEffect {
     }
 
 
-    public void setDraw(GLDraw draw) {
-        this.draw = draw;
-    }
-
     public void putShaderParam(String position, float... coordinates) {
         shaderParam.put(position, coordinates);
     }
@@ -154,8 +147,43 @@ public class GLShaderEffect extends GLEffect {
     }
 
 
-    public GLDraw getDraw() {
-        return draw;
+    public GLDrawType getDrawType() {
+        return drawType;
     }
 
+    public void setDrawType(GLDrawType drawType) {
+        this.drawType = drawType;
+    }
+
+    public GLDrawMode getDrawMode() {
+        return drawMode;
+    }
+
+    public void setDrawMode(GLDrawMode drawMode) {
+        this.drawMode = drawMode;
+    }
+
+    public int getDrawArrayStart() {
+        return drawArrayStart;
+    }
+
+    public void setDrawArrayStart(int drawArrayStart) {
+        this.drawArrayStart = drawArrayStart;
+    }
+
+    public int getDrawArrayCount() {
+        return drawArrayCount;
+    }
+
+    public void setDrawArrayCount(int drawArrayCount) {
+        this.drawArrayCount = drawArrayCount;
+    }
+
+    public int[] getDrawElementIndices() {
+        return drawElementIndices;
+    }
+
+    public void setDrawElementIndices(int[] drawElementIndices) {
+        this.drawElementIndices = drawElementIndices;
+    }
 }

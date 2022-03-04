@@ -309,7 +309,20 @@ class EGL14RenderClient extends GLRenderClient {
 
     private void renderLayer(GLLayer layer, GLFrameBuffer outputBuffer, Matrix4 viewPortMatrix, GLXfermode xfermode, long renderTimeMs) {
         GLProgram program = getGlProgram(layer.getVertexShaderCode(), layer.getFragmentShaderCode());
-        program.setDraw(layer.getDraw());
+        GLDrawType drawType = layer.getDrawType();
+        program.setDrawType(drawType);
+        if (drawType == GLDrawType.DRAW_ARRAY) {
+            GLDrawArray drawArray = program.getDrawArray();
+            drawArray.setDrawMode(layer.getDrawMode());
+            drawArray.setVertexStart(layer.getDrawArrayStart());
+            drawArray.setVertexCount(layer.getDrawArrayCount());
+            program.setDrawType(layer.getDrawType());
+        } else if (drawType == GLDrawType.DRAW_ELEMENT) {
+            GLDrawElement drawElement = program.getDrawElement();
+            drawElement.setDrawMode(layer.getDrawMode());
+            drawElement.set(layer.getDrawElementIndices());
+            program.setDrawType(layer.getDrawType());
+        }
         GLFrameBuffer old = outputBuffer.bind();
         glViewPort.set(0, 0, outputBuffer.getWidth(), outputBuffer.getHeight());
         glViewPort.call();
@@ -383,7 +396,20 @@ class EGL14RenderClient extends GLRenderClient {
             GLFrameBuffer outputBuffer = obtainFrameBuffer(input.getWidth(), input.getHeight());
             glViewPort.set(0, 0, input.getWidth(), input.getHeight());
             GLProgram program = getGlProgram(shaderEffect.getVertexShaderCode(), shaderEffect.getFragmentShaderCode());
-            program.setDraw(shaderEffect.getDraw());
+            GLDrawType drawType = shaderEffect.getDrawType();
+            program.setDrawType(drawType);
+            if (drawType == GLDrawType.DRAW_ARRAY) {
+                GLDrawArray drawArray = program.getDrawArray();
+                drawArray.setDrawMode(shaderEffect.getDrawMode());
+                drawArray.setVertexStart(shaderEffect.getDrawArrayStart());
+                drawArray.setVertexCount(shaderEffect.getDrawArrayCount());
+                program.setDrawType(shaderEffect.getDrawType());
+            } else if (drawType == GLDrawType.DRAW_ELEMENT) {
+                GLDrawElement drawElement = program.getDrawElement();
+                drawElement.setDrawMode(shaderEffect.getDrawMode());
+                drawElement.set(shaderEffect.getDrawElementIndices());
+                program.setDrawType(shaderEffect.getDrawType());
+            }
             GLFrameBuffer old = outputBuffer.bind();
             glViewPort.call();
             glEnable.call();
@@ -480,6 +506,10 @@ class EGL14RenderClient extends GLRenderClient {
         GLProgram program = programCache.get(programHashCode);
         if (program == null) {
             program = new GL20Program(this);
+            GLDrawArray drawArray = newDrawArray();
+            GLDrawElement drawElement = newDrawElement();
+            program.setDrawArray(drawArray);
+            program.setDrawElement(drawElement);
             program.setVertexShader(vertexShader);
             program.setFragmentShader(fragmentShader);
             programCache.put(programHashCode, program);
@@ -677,8 +707,8 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    public GLLayer newLayer(String vertexCode, String fragmentCode, GLDraw draw) {
-        return new GLLayer(this, vertexCode, fragmentCode, draw);
+    public GLLayer newLayer(String vertexCode, String fragmentCode) {
+        return new GLLayer(this, vertexCode, fragmentCode);
     }
 
     @Override

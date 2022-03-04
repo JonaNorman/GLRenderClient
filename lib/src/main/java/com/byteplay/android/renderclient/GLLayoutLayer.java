@@ -85,7 +85,7 @@ public class GLLayoutLayer extends GLLayer {
     }
 
     protected GLLayoutLayer(GLRenderClient client, Context context, int style) {
-        super(client, VERTEX_SHADER, FRAGMENT_SHADER, client.newDrawArray());
+        super(client, VERTEX_SHADER, FRAGMENT_SHADER);
         context = new ContextThemeWrapper(context.getApplicationContext(), style);
         rootLayout = new FrameLayout(context);
         ReflectionLimitUtils.clearLimit();
