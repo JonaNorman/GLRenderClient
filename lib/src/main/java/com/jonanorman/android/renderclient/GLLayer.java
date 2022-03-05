@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.KeyframeSet;
 import com.jonanorman.android.renderclient.math.Matrix4;
+import com.jonanorman.android.renderclient.math.ScaleMode;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,6 +91,8 @@ public class GLLayer extends GLObject {
     private int[] drawElementIndices;
 
     private final float[] tempPoint = new float[2];
+
+    private ScaleMode layerScaleMode = ScaleMode.NONE;
 
 
     protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode) {
@@ -188,7 +191,7 @@ public class GLLayer extends GLObject {
         setRenderTranslateX(getTranslateX());
         setRenderTranslateY(getTranslateY());
         generateLayerKeyFrame();
-        onLayerSize(getRenderWidth(), getRenderHeight(), parentRenderWidth, parentRenderHeight);
+        onLayerRenderSize(getRenderWidth(), getRenderHeight(), parentRenderWidth, parentRenderHeight);
         onLayerGravity(parentRenderWidth, parentRenderHeight);
         onLayerViewPortMatrix(parentRenderWidth, parentRenderHeight);
         if (getRenderWidth() <= 0 || getRenderHeight() <= 0) {
@@ -198,8 +201,21 @@ public class GLLayer extends GLObject {
         effectGroup.calculateEffect(getRenderTime(), getRenderDuration());
     }
 
-    protected void onLayerSize(int renderWidth, int renderHeight, int parentRenderWidth, int parentRenderHeight) {
+    public void setLayerScaleMode(ScaleMode layerScaleMode) {
+        this.layerScaleMode = layerScaleMode;
+    }
 
+    public ScaleMode getLayerScaleMode() {
+        return layerScaleMode;
+    }
+
+    protected void onLayerRenderSize(int renderWidth, int renderHeight, int parentRenderWidth, int parentRenderHeight) {
+        if (layerScaleMode != null) {
+            float viewportWidth = layerScaleMode.getWidth(renderWidth, renderHeight, parentRenderWidth, parentRenderHeight);
+            float viewportHeight = layerScaleMode.getHeight(renderWidth, renderHeight, parentRenderWidth, parentRenderHeight);
+            setRenderWidth((int) (viewportWidth + 0.5));
+            setRenderHeight((int) (viewportHeight + 0.5));
+        }
     }
 
     protected void onLayerGravity(int parentWidth, int parentHeight) {

@@ -58,7 +58,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     textureLayer = renderClient.newTextureLayer();
                     layerGroup = renderClient.newLayerGroup();
                     layerGroup.setDuration(10000);
-                    layerGroup.add(textureLayer);
+                    layerGroup.addLayer(textureLayer);
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inScaled = false;
                     Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic1, options);
@@ -70,7 +70,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     textureLayer.setHeight(200);
                     textureLayer.setScaleX(5.0f);
                     textureLayer.setScaleY(1.5f);
-//                    textureLayer.setTranslateX(1080/2);
+                    textureLayer.setTranslateX(1080/2);
 
                     textureLayer.setRotation(10);
 //                    textureLayer.setTexture(texture);

@@ -41,7 +41,7 @@ public class GLTextureLayer extends GLLayer {
             "}";
 
     private GLTexture texture;
-    private ScaleMode scale = ScaleMode.FIT;
+    private ScaleMode textureScaleMode = ScaleMode.FIT;
 
     protected GLTextureLayer(GLRenderClient client) {
         super(client, VERTEX_SHADER, FRAGMENT_SHADER);
@@ -64,23 +64,22 @@ public class GLTextureLayer extends GLLayer {
         return texture == null ? 0 : texture.getTextureId();
     }
 
-    public void setScale(ScaleMode scale) {
-        this.scale = scale;
+    public void setTextureScaleMode(ScaleMode textureScaleMode) {
+        this.textureScaleMode = textureScaleMode;
     }
 
-    public ScaleMode getScale() {
-        return scale;
+    public ScaleMode getTextureScaleMode() {
+        return textureScaleMode;
     }
-
 
     @Override
-    protected void onLayerSize(int renderWidth, int renderHeight, int parentWidth, int parentHeight) {
-        super.onLayerSize(renderWidth, renderHeight, parentWidth, parentHeight);
+    protected void onLayerRenderSize(int renderWidth, int renderHeight, int parentWidth, int parentHeight) {
+        super.onLayerRenderSize(renderWidth, renderHeight, parentWidth, parentHeight);
         int textureWidth = getTextureWidth();
         int textureHeight = getTextureHeight();
         if (textureWidth != 0 && textureHeight != 0) {
-            float viewportWidth = scale.getWidth(textureWidth, textureHeight, renderWidth, renderHeight);
-            float viewportHeight = scale.getHeight(textureWidth, textureHeight, renderWidth, renderHeight);
+            float viewportWidth = textureScaleMode.getWidth(textureWidth, textureHeight, renderWidth, renderHeight);
+            float viewportHeight = textureScaleMode.getHeight(textureWidth, textureHeight, renderWidth, renderHeight);
             setRenderWidth((int) (viewportWidth + 0.5));
             setRenderHeight((int) (viewportHeight + 0.5));
         }

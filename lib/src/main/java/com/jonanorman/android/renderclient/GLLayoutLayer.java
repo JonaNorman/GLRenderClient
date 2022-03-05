@@ -210,7 +210,7 @@ public class GLLayoutLayer extends GLLayer {
             handler = new Handler();
         }
         dispatchAttachWindow(rootLayout);
-        measureAndLayoutRootLayer(viewWidth, viewHeight);
+        dispatchMeasureAndLayout(viewWidth, viewHeight);
         dispatchOnGlobalLayout(rootLayout);
         dispatchPreDraw(rootLayout);
         drawRootLayout();
@@ -242,7 +242,7 @@ public class GLLayoutLayer extends GLLayer {
         }
     }
 
-    private void measureAndLayoutRootLayer(int viewWidth, int viewHeight) {
+    private void dispatchMeasureAndLayout(int viewWidth, int viewHeight) {
         rootLayout.measure(
                 View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(viewHeight, View.MeasureSpec.EXACTLY));

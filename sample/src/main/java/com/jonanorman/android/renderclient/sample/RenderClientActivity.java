@@ -103,7 +103,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     textureLayer.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, keyframes);
                     keyframes = KeyframeSet.ofFloat(5000, 600, 1200);
                     textureLayer.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, keyframes);
-                    frameLayer.add(textureLayer);
+                    frameLayer.addLayer(textureLayer);
                 }
 
                 {
@@ -119,7 +119,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     texture1.updateBitmap(bitmap);
                     bitmap.recycle();
                     textureLayer1.setTexture(texture1);
-                    frameLayer.add(textureLayer1);
+                    frameLayer.addLayer(textureLayer1);
 
                 }
 
@@ -128,7 +128,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     frameLayer.setWidth(500);
                     frameLayer.setHeight(500);
                     frameLayer.setGravity(GravityMode.TOP_CENTER_HORIZONTAL);
-                    RenderClientActivity.this.frameLayer.add(frameLayer);
+                    RenderClientActivity.this.frameLayer.addLayer(frameLayer);
 
                     {
                         GLTextureLayer textureLayer = renderClient.newTextureLayer();
@@ -137,7 +137,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture.updateBitmap(bitmap);
                         bitmap.recycle();
                         textureLayer.setTexture(texture);
-                        frameLayer.add(textureLayer);
+                        frameLayer.addLayer(textureLayer);
                     }
 
                     {
@@ -147,7 +147,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture1.updateBitmap(bitmap);
                         bitmap.recycle();
                         textureLayer1.setTexture(texture1);
-                        frameLayer.add(textureLayer1);
+                        frameLayer.addLayer(textureLayer1);
                     }
                     GLShaderEffect effect = renderClient.newShaderEffect();
                     effect.setFragmentShaderCode("precision mediump float;\n" +
@@ -190,7 +190,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     frameLayer.setHeight(500);
                     frameLayer.setGravity(GravityMode.BOTTOM_CENTER_HORIZONTAL);
                     frameLayer.setBackgroundColor(Color.GREEN);
-                    RenderClientActivity.this.frameLayer.add(frameLayer);
+                    RenderClientActivity.this.frameLayer.addLayer(frameLayer);
 
                     {
                         GLTextureLayer textureLayer = renderClient.newTextureLayer();
@@ -199,7 +199,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture.updateBitmap(bitmap);
                         textureLayer.setTexture(texture);
                         textureLayer.setBackgroundColor(Color.YELLOW);
-                        frameLayer.add(textureLayer);
+                        frameLayer.addLayer(textureLayer);
                     }
 
                     {
@@ -209,7 +209,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         texture1.updateBitmap(bitmap);
                         bitmap.recycle();
                         textureLayer1.setTexture(texture1);
-                        frameLayer.add(textureLayer1);
+                        frameLayer.addLayer(textureLayer1);
                     }
                 }
                 {
@@ -227,7 +227,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     textview.setTextSize(40);
                     textview.setBackgroundColor(Color.TRANSPARENT);
                     viewLayer.addView(textview);
-                    frameLayer.add(viewLayer);
+                    frameLayer.addLayer(viewLayer);
                 }
 
 //                frameLayer.addTransform(new GLLayer.LayerTransform<GLFrameLayer>() {

@@ -3,8 +3,6 @@ package com.jonanorman.android.renderclient;
 
 import android.view.MotionEvent;
 
-import com.jonanorman.android.renderclient.math.ScaleMode;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -13,7 +11,6 @@ public class GLLayerGroup extends GLLayer {
 
     private final List<GLLayer> layerList = new ArrayList<>();
 
-    private ScaleMode scale = ScaleMode.FIT;
     private GLXfermode selfXfermode = GLXfermode.SRC_OVER;
     private GLLayer mFirstTouchLayer;
     private final float[] tempPoint = new float[2];
@@ -24,33 +21,33 @@ public class GLLayerGroup extends GLLayer {
     }
 
 
-    public void add(GLLayer layer) {
+    public void addLayer(GLLayer layer) {
         if (layer == null) {
             return;
         }
         layerList.add(layer);
     }
 
-    public void add(int index, GLLayer layer) {
+    public void addLayer(int index, GLLayer layer) {
         if (layer == null) {
             return;
         }
         layerList.add(index, layer);
     }
 
-    public void set(int index, GLLayer layer) {
+    public void setLayer(int index, GLLayer layer) {
         if (layer == null) return;
         layerList.set(index, layer);
     }
 
-    public void remove(int index) {
+    public void removeLayer(int index) {
         if (index < 0 || index >= layerList.size()) {
             return;
         }
         layerList.remove(index);
     }
 
-    public void remove(GLLayer layer) {
+    public void removeLayer(GLLayer layer) {
         if (layer == null || !layerList.contains(layer)) {
             return;
         }
@@ -62,15 +59,15 @@ public class GLLayerGroup extends GLLayer {
         return layerList.indexOf(layer);
     }
 
-    public boolean contains(GLLayer layer) {
+    public boolean containLayer(GLLayer layer) {
         return layerList.contains(layer);
     }
 
-    public void addAll(Collection<GLLayer> layers) {
+    public void addAllLayer(Collection<GLLayer> layers) {
         layerList.addAll(layers);
     }
 
-    public void removeAll(Collection<GLLayer> layers) {
+    public void removeAllLayer(Collection<GLLayer> layers) {
         layerList.removeAll(layers);
     }
 
@@ -95,15 +92,7 @@ public class GLLayerGroup extends GLLayer {
         layerList.clear();
     }
 
-
-    public void setScale(ScaleMode scale) {
-        this.scale = scale;
-    }
-
-    public ScaleMode getScale() {
-        return scale;
-    }
-
+    
     @Override
     protected void calculateLayer(long parentRenderTimeMs, long parentDurationMs) {
         super.calculateLayer(parentRenderTimeMs, parentDurationMs);
