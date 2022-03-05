@@ -256,8 +256,8 @@ class EGL14RenderClient extends GLRenderClient {
         if (!layer.isDisposed()) {
             layer.create();
         }
-        int currentWidth = layer.getRenderWidth();
-        int currentHeight = layer.getRenderHeight();
+        int currentWidth = (int) layer.getRenderWidth();
+        int currentHeight = (int) layer.getRenderHeight();
         long currentTimeMs = layer.getRenderTime();
         int transformSize = layer.getTransformSize();
         for (int i = 0; i < transformSize; i++) {
@@ -328,7 +328,7 @@ class EGL14RenderClient extends GLRenderClient {
         GLFrameBuffer old = outputBuffer.bind();
         glViewPort.set(0, 0, outputBuffer.getWidth(), outputBuffer.getHeight());
         glViewPort.call();
-        GLEnable enable = layer.getEnable();
+        GLEnable enable = layer.getGLEnable();
         enable.call();
         xfermode.apply(blend);
         blend.call();

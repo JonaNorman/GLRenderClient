@@ -30,7 +30,7 @@ public class KeyframeSet<T> implements Cloneable {
     };
 
 
-    private final TypeEvaluator<T> typeEvaluator;
+    private  TypeEvaluator<T> typeEvaluator;
     private final Class<T> valueType;
     private final List<Keyframe<T>> keyframes = new ArrayList<>();
     long startTime;
@@ -55,6 +55,10 @@ public class KeyframeSet<T> implements Cloneable {
     public void removeKeyFrame(Keyframe<T>... keyframes) {
         if (keyframes == null) return;
         this.keyframes.removeAll(Arrays.asList(keyframes));
+    }
+
+    public void setTypeEvaluator(TypeEvaluator<T> typeEvaluator) {
+        this.typeEvaluator = typeEvaluator;
     }
 
     public void clearKeyFrame() {

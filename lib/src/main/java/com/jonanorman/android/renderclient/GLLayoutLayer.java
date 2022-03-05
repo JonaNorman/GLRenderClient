@@ -157,16 +157,16 @@ public class GLLayoutLayer extends GLLayer {
         GLShaderParam shaderParam = layer.getDefaultShaderParam();
         shaderParam.put("inputImageTexture", viewTexture.getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
-        int viewWidth = layer.getRenderWidth();
-        int viewHeight = layer.getRenderHeight();
-        if (lastSurfaceTextureWidth != viewWidth || lastSurfaceTextureHeight != viewHeight) {
-            surfaceTexture.setDefaultBufferSize(viewWidth, viewHeight);
-            lastSurfaceTextureWidth = viewWidth;
-            lastSurfaceTextureHeight = viewHeight;
+        float viewWidth = layer.getRenderWidth();
+        float viewHeight = layer.getRenderHeight();
+        viewTexture.setWidth((int) viewWidth);
+        viewTexture.setHeight((int) viewHeight);
+        if (lastSurfaceTextureWidth != viewTexture.getWidth() || lastSurfaceTextureHeight != viewTexture.getHeight()) {
+            surfaceTexture.setDefaultBufferSize(viewTexture.getWidth(), viewTexture.getHeight());
+            lastSurfaceTextureWidth = viewTexture.getWidth();
+            lastSurfaceTextureHeight = viewTexture.getHeight();
         }
-        viewTexture.setWidth(viewWidth);
-        viewTexture.setHeight(viewHeight);
-        renderView(viewWidth, viewHeight);
+        renderView(viewTexture.getWidth(), viewTexture.getHeight());
         surfaceTexture.getTransformMatrix(textureMatrix.get());
         shaderParam.put("inputTextureMatrix", textureMatrix.get());
         return true;

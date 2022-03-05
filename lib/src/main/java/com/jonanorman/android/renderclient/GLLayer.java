@@ -40,18 +40,18 @@ public class GLLayer extends GLObject {
     private GLShaderParam defaultShaderParam;
     private GLEnable enable;
     private GLXfermode xfermode;
-    private GravityMode gravity = GravityMode.CENTER;
+    private GravityMode gravity = GravityMode.LEFT_TOP;
     private int x;
     private int y;
     private int width = SIZE_MATCH_PARENT;
     private int height = SIZE_MATCH_PARENT;
     private long timeMs;
-    private int renderX;
-    private int renderY;
-    private int renderWidth;
-    private int renderHeight;
-    private int parentRenderWidth;
-    private int parentRenderHeight;
+    private float renderX;
+    private float renderY;
+    private float renderWidth;
+    private float renderHeight;
+    private float parentRenderWidth;
+    private float parentRenderHeight;
     private float renderScaleX = 1;
     private float renderScaleY = 1;
     private float renderRotation = 0;
@@ -176,11 +176,11 @@ public class GLLayer extends GLObject {
         if (renderTime > getRenderDuration() || renderTime < 0) {
             return;
         }
-        int parentRenderWidth = getParentRenderWidth();
-        int parentRenderHeight = getParentRenderHeight();
+        float parentRenderWidth = getParentRenderWidth();
+        float parentRenderHeight = getParentRenderHeight();
         setRenderTime(renderTime);
-        int renderWidth = getWidth() == SIZE_MATCH_PARENT ? parentRenderWidth : Math.max(getWidth(), 0);
-        int renderHeight = getWidth() == SIZE_MATCH_PARENT ? parentRenderHeight : Math.max(getHeight(), 0);
+        float renderWidth = getWidth() == SIZE_MATCH_PARENT ? parentRenderWidth : Math.max(getWidth(), 0);
+        float renderHeight = getHeight() == SIZE_MATCH_PARENT ? parentRenderHeight : Math.max(getHeight(), 0);
         setRenderX(getX());
         setRenderY(getY());
         setRenderWidth(renderWidth);
@@ -209,35 +209,35 @@ public class GLLayer extends GLObject {
         return layerScaleMode;
     }
 
-    protected void onLayerRenderSize(int renderWidth, int renderHeight, int parentRenderWidth, int parentRenderHeight) {
+    protected void onLayerRenderSize(float renderWidth, float renderHeight, float parentRenderWidth, float parentRenderHeight) {
         if (layerScaleMode != null) {
             float viewportWidth = layerScaleMode.getWidth(renderWidth, renderHeight, parentRenderWidth, parentRenderHeight);
             float viewportHeight = layerScaleMode.getHeight(renderWidth, renderHeight, parentRenderWidth, parentRenderHeight);
-            setRenderWidth((int) (viewportWidth + 0.5));
-            setRenderHeight((int) (viewportHeight + 0.5));
+            setRenderWidth(viewportWidth);
+            setRenderHeight(viewportHeight);
         }
     }
 
-    protected void onLayerGravity(int parentWidth, int parentHeight) {
+    protected void onLayerGravity(float parentWidth, float parentHeight) {
         float x = gravity.getX(renderX, renderWidth, parentWidth);
         float y = gravity.getY(renderY, renderHeight, parentHeight);
-        setRenderX((int) (x + 0.5));
-        setRenderY((int) (y + 0.5));
+        setRenderX(x);
+        setRenderY(y);
     }
 
     private void generateLayerKeyFrame() {
         long renderTimeMs = getRenderTime();
         if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_X, renderTimeMs, floatTemp)) {
-            setRenderX((int) (floatTemp[0] + 0.5));
+            setRenderX(floatTemp[0]);
         }
         if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_Y, renderTimeMs, floatTemp)) {
-            setRenderY((int) (floatTemp[0] + 0.5));
+            setRenderY(floatTemp[0]);
         }
         if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, renderTimeMs, floatTemp)) {
-            setRenderWidth((int) (floatTemp[0] + 0.5));
+            setRenderWidth(floatTemp[0]);
         }
         if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, renderTimeMs, floatTemp)) {
-            setRenderHeight((int) (floatTemp[0] + 0.5));
+            setRenderHeight(floatTemp[0]);
         }
         if (loadKeyFrameFloat(GLLayer.KEY_FRAMES_KEY_LAYER_SCALE_X, renderTimeMs, floatTemp)) {
             setRenderScaleX(floatTemp[0]);
@@ -301,7 +301,7 @@ public class GLLayer extends GLObject {
         transformMatrix.postScale(
                 renderScaleX,
                 renderScaleY);
-        transformMatrix.postRotate(-renderRotation);
+        transformMatrix.postRotate(renderRotation);
         transformMatrix.postTranslate(
                 renderTranslateX + renderX,
                 renderTranslateY + renderY);
@@ -558,7 +558,7 @@ public class GLLayer extends GLObject {
     }
 
 
-    public GLEnable getEnable() {
+    public GLEnable getGLEnable() {
         return enable;
     }
 
@@ -627,10 +627,6 @@ public class GLLayer extends GLObject {
         return timeMs;
     }
 
-
-    public void setEnable(GLEnable enable) {
-        this.enable = enable;
-    }
 
     public void putShaderParam(String position, float... coordinates) {
         shaderParam.put(position, coordinates);
@@ -748,7 +744,7 @@ public class GLLayer extends GLObject {
         return renderX;
     }
 
-    protected void setRenderX(int renderX) {
+    protected void setRenderX(float renderX) {
         this.renderX = renderX;
     }
 
@@ -756,23 +752,23 @@ public class GLLayer extends GLObject {
         return renderY;
     }
 
-    protected void setRenderY(int renderY) {
+    protected void setRenderY(float renderY) {
         this.renderY = renderY;
     }
 
-    public int getRenderWidth() {
+    public float getRenderWidth() {
         return renderWidth;
     }
 
-    protected void setRenderWidth(int renderWidth) {
+    protected void setRenderWidth(float renderWidth) {
         this.renderWidth = renderWidth;
     }
 
-    public int getRenderHeight() {
+    public float getRenderHeight() {
         return renderHeight;
     }
 
-    protected void setRenderHeight(int renderHeight) {
+    protected void setRenderHeight(float renderHeight) {
         this.renderHeight = renderHeight;
     }
 
@@ -804,7 +800,7 @@ public class GLLayer extends GLObject {
         return renderTranslateX;
     }
 
-    public void setRenderTranslateX(float renderTranslateX) {
+    protected void setRenderTranslateX(float renderTranslateX) {
         this.renderTranslateX = renderTranslateX;
     }
 
@@ -812,23 +808,23 @@ public class GLLayer extends GLObject {
         return renderTranslateY;
     }
 
-    public void setRenderTranslateY(float renderTranslateY) {
+    protected void setRenderTranslateY(float renderTranslateY) {
         this.renderTranslateY = renderTranslateY;
     }
 
-    public int getParentRenderWidth() {
+    public float getParentRenderWidth() {
         return parentRenderWidth;
     }
 
-    protected void setParentRenderWidth(int parentRenderWidth) {
+    protected void setParentRenderWidth(float parentRenderWidth) {
         this.parentRenderWidth = parentRenderWidth;
     }
 
-    public int getParentRenderHeight() {
+    public float getParentRenderHeight() {
         return parentRenderHeight;
     }
 
-    protected void setParentRenderHeight(int parentRenderHeight) {
+    protected void setParentRenderHeight(float parentRenderHeight) {
         this.parentRenderHeight = parentRenderHeight;
     }
 

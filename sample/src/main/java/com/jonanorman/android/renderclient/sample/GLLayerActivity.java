@@ -1,7 +1,5 @@
 package com.jonanorman.android.renderclient.sample;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
@@ -16,13 +14,13 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.jonanorman.android.renderclient.GLColorLayer;
 import com.jonanorman.android.renderclient.GLLayer;
 import com.jonanorman.android.renderclient.GLLayerGroup;
 import com.jonanorman.android.renderclient.GLRenderClient;
 import com.jonanorman.android.renderclient.GLRenderSurface;
-import com.jonanorman.android.renderclient.GLTexture;
 import com.jonanorman.android.renderclient.GLTextureLayer;
-import com.jonanorman.android.renderclient.GLTextureType;
+import com.jonanorman.android.renderclient.math.KeyframeSet;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,6 +33,8 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
     private static final int MESSAGE_SURFACE_RENDER = 5;
     private static final int MESSAGE_SURFACE_MOTION_EVENT = 6;
 
+    private static final String LOG_TAG = "GLLayerActivity";
+
     private Handler handler;
 
     private AtomicBoolean surfaceDestroy = new AtomicBoolean();
@@ -46,6 +46,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
         GLTextureLayer textureLayer;
         long startTime = System.currentTimeMillis();
         GLLayerGroup layerGroup;
+        GLColorLayer colorLayer;
 
 
         @Override
@@ -55,32 +56,50 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                 case MESSAGE_CLIENT_CREATE:
                     renderClient = new GLRenderClient.Builder().build();
                     renderClient.attachCurrentThread();
-                    textureLayer = renderClient.newTextureLayer();
                     layerGroup = renderClient.newLayerGroup();
                     layerGroup.setDuration(10000);
-                    layerGroup.addLayer(textureLayer);
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inScaled = false;
-                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic1, options);
-                    GLTexture texture = renderClient.newTexture(GLTextureType.TEXTURE_2D);
-                    texture.updateBitmap(bitmap);
-                    bitmap.recycle();
-                    textureLayer.setBackgroundColor(Color.BLUE);
-                    textureLayer.setWidth(200);
-                    textureLayer.setHeight(200);
-                    textureLayer.setScaleX(5.0f);
-                    textureLayer.setScaleY(1.5f);
-                    textureLayer.setTranslateX(1080/2);
-
-                    textureLayer.setRotation(10);
-//                    textureLayer.setTexture(texture);
-                    textureLayer.setOnTouchListener(new GLLayer.OnTouchListener() {
+                    colorLayer = renderClient.newColorLayer();
+                    colorLayer.setColor(Color.RED);
+                    KeyframeSet colorFrameSet = GLColorLayer.ofColor(Color.RED, Color.YELLOW, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.RED);
+                    colorFrameSet.setTypeEvaluator(new GLColorLayer.ColorEvaluator());
+                    colorLayer.setKeyframes("color", colorFrameSet);
+                    colorFrameSet.setStartTime(1000);
+                    colorLayer.setOnClickListener(new GLLayer.OnClickListener() {
                         @Override
-                        public boolean onTouch(GLLayer layer, MotionEvent event) {
-                            Log.v("sdasdas", "x:" + event.getX() + "y:" + event.getY());
-                            return true;
+                        public void onClick(GLLayer layer) {
+                            Log.v(LOG_TAG, "colorLayer click");
                         }
                     });
+                    layerGroup.addLayer(colorLayer);
+
+
+//
+//                    textureLayer = renderClient.newTextureLayer();
+//                    layerGroup = renderClient.newLayerGroup();
+//                    layerGroup.setDuration(10000);
+//                    layerGroup.addLayer(textureLayer);
+//                    BitmapFactory.Options options = new BitmapFactory.Options();
+//                    options.inScaled = false;
+//                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic1, options);
+//                    GLTexture texture = renderClient.newTexture(GLTextureType.TEXTURE_2D);
+//                    texture.updateBitmap(bitmap);
+//                    bitmap.recycle();
+//                    textureLayer.setBackgroundColor(Color.BLUE);
+//                    textureLayer.setWidth(200);
+//                    textureLayer.setHeight(200);
+//                    textureLayer.setScaleX(5.0f);
+//                    textureLayer.setScaleY(1.5f);
+//                    textureLayer.setTranslateX(1080/2);
+//
+//                    textureLayer.setRotation(10);
+////                    textureLayer.setTexture(texture);
+//                    textureLayer.setOnTouchListener(new GLLayer.OnTouchListener() {
+//                        @Override
+//                        public boolean onTouch(GLLayer layer, MotionEvent event) {
+//                            Log.v("sdasdas", "x:" + event.getX() + "y:" + event.getY());
+//                            return true;
+//                        }
+//                    });
 
 //                    GLLayoutLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext());
 //                    viewLayer.setWidth(600);
@@ -151,7 +170,6 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         time = 0;
                     }
                     layerGroup.setTime(time);
-
                     layerGroup.render(eglSurface);
                     handler.sendEmptyMessageDelayed(MESSAGE_SURFACE_RENDER, 40);
                     return true;

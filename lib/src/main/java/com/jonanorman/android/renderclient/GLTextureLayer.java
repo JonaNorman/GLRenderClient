@@ -73,15 +73,15 @@ public class GLTextureLayer extends GLLayer {
     }
 
     @Override
-    protected void onLayerRenderSize(int renderWidth, int renderHeight, int parentWidth, int parentHeight) {
+    protected void onLayerRenderSize(float renderWidth, float renderHeight, float parentWidth, float parentHeight) {
         super.onLayerRenderSize(renderWidth, renderHeight, parentWidth, parentHeight);
         int textureWidth = getTextureWidth();
         int textureHeight = getTextureHeight();
         if (textureWidth != 0 && textureHeight != 0) {
             float viewportWidth = textureScaleMode.getWidth(textureWidth, textureHeight, renderWidth, renderHeight);
             float viewportHeight = textureScaleMode.getHeight(textureWidth, textureHeight, renderWidth, renderHeight);
-            setRenderWidth((int) (viewportWidth + 0.5));
-            setRenderHeight((int) (viewportHeight + 0.5));
+            setRenderWidth(viewportWidth);
+            setRenderHeight(viewportHeight);
         }
     }
 
