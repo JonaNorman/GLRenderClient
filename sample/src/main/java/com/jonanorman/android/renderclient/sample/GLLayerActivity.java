@@ -12,25 +12,18 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.jonanorman.android.renderclient.GLLayer;
 import com.jonanorman.android.renderclient.GLLayerGroup;
-import com.jonanorman.android.renderclient.GLLayoutLayer;
 import com.jonanorman.android.renderclient.GLRenderClient;
 import com.jonanorman.android.renderclient.GLRenderSurface;
 import com.jonanorman.android.renderclient.GLTexture;
 import com.jonanorman.android.renderclient.GLTextureLayer;
 import com.jonanorman.android.renderclient.GLTextureType;
 
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GLLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
@@ -53,7 +46,6 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
         GLTextureLayer textureLayer;
         long startTime = System.currentTimeMillis();
         GLLayerGroup layerGroup;
-        Queue<MotionEvent> motionEventQueue = new LinkedList<>();
 
 
         @Override
@@ -73,12 +65,15 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     GLTexture texture = renderClient.newTexture(GLTextureType.TEXTURE_2D);
                     texture.updateBitmap(bitmap);
                     bitmap.recycle();
-                    textureLayer.setWidth(400);
-                    textureLayer.setHeight(400);
-                    textureLayer.setScaleX(2.0f);
-                    textureLayer.setScaleY(2.0f);
-//                    textureLayer.setRotation(45);
-                    textureLayer.setTexture(texture);
+                    textureLayer.setBackgroundColor(Color.BLUE);
+                    textureLayer.setWidth(200);
+                    textureLayer.setHeight(200);
+                    textureLayer.setScaleX(5.0f);
+                    textureLayer.setScaleY(1.5f);
+//                    textureLayer.setTranslateX(1080/2);
+
+                    textureLayer.setRotation(10);
+//                    textureLayer.setTexture(texture);
                     textureLayer.setOnTouchListener(new GLLayer.OnTouchListener() {
                         @Override
                         public boolean onTouch(GLLayer layer, MotionEvent event) {
@@ -87,32 +82,32 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         }
                     });
 
-                    GLLayoutLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext());
-                    viewLayer.setWidth(600);
-                    viewLayer.setHeight(600);
+//                    GLLayoutLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext());
+//                    viewLayer.setWidth(600);
+//                    viewLayer.setHeight(600);
 
-                    ImageView imageView = new ImageView(getApplicationContext());
-                    imageView.setImageResource(R.drawable.pic4);
-                    viewLayer.addView(imageView, new FrameLayout.LayoutParams(500, 500));
-
-                    TextView textview = new TextView(getApplicationContext());
-                    textview.setText("123\nabc");
-                    textview.setTextSize(40);
-                    textview.setBackgroundColor(Color.TRANSPARENT);
-                    viewLayer.addView(textview);
-                    imageView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Toast.makeText(v.getContext(), "toas", Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    textview.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Toast.makeText(v.getContext(), "abc", Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    layerGroup.add(viewLayer);
+//                    ImageView imageView = new ImageView(getApplicationContext());
+//                    imageView.setImageResource(R.drawable.pic4);
+//                    viewLayer.addView(imageView, new FrameLayout.LayoutParams(500, 500));
+//
+//                    TextView textview = new TextView(getApplicationContext());
+//                    textview.setText("123\nabc");
+//                    textview.setTextSize(40);
+//                    textview.setBackgroundColor(Color.TRANSPARENT);
+//                    viewLayer.addView(textview);
+//                    imageView.setOnClickListener(new View.OnClickListener() {
+//                        @Override
+//                        public void onClick(View v) {
+//                            Toast.makeText(v.getContext(), "toas", Toast.LENGTH_LONG).show();
+//                        }
+//                    });
+//                    textview.setOnClickListener(new View.OnClickListener() {
+//                        @Override
+//                        public void onClick(View v) {
+//                            Toast.makeText(v.getContext(), "abc", Toast.LENGTH_LONG).show();
+//                        }
+//                    });
+//                    layerGroup.add(viewLayer);
                     return true;
 
                 case MESSAGE_SURFACE_CREATE:
@@ -144,7 +139,8 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     return true;
                 case MESSAGE_SURFACE_MOTION_EVENT: {
                     MotionEvent motionEvent = (MotionEvent) msg.obj;
-                    motionEventQueue.offer(motionEvent);
+                    layerGroup.dispatchTouchEvent(motionEvent);
+                    motionEvent.recycle();
                     return true;
                 }
                 case MESSAGE_SURFACE_RENDER:
@@ -155,11 +151,8 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         time = 0;
                     }
                     layerGroup.setTime(time);
-                    MotionEvent motionEvent = motionEventQueue.poll();
-                    layerGroup.render(eglSurface, motionEvent);
-                    if (motionEvent != null) {
-                        motionEvent.recycle();
-                    }
+
+                    layerGroup.render(eglSurface);
                     handler.sendEmptyMessageDelayed(MESSAGE_SURFACE_RENDER, 40);
                     return true;
             }

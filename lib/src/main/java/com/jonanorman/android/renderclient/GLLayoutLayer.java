@@ -252,7 +252,7 @@ public class GLLayoutLayer extends GLLayer {
     }
 
     @Override
-    protected boolean dispatchTouchEvent(MotionEvent event) {
+    public boolean dispatchTouchEvent(MotionEvent event) {
         boolean result = rootLayout.dispatchTouchEvent(event);
         if (result) {
             return true;

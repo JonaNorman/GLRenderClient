@@ -16,7 +16,8 @@ public class GLLayerGroup extends GLLayer {
     private ScaleMode scale = ScaleMode.FIT;
     private GLXfermode selfXfermode = GLXfermode.SRC_OVER;
     private GLLayer mFirstTouchLayer;
-    private final float[] tempPoint = new float[4];
+    private final float[] tempPoint = new float[2];
+
 
     public GLLayerGroup(GLRenderClient client) {
         super(client, null, null);
@@ -118,7 +119,7 @@ public class GLLayerGroup extends GLLayer {
         return false;
     }
 
-    protected boolean dispatchTouchEvent(MotionEvent ev) {
+    public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev == null) {
             return false;
         }
@@ -143,8 +144,8 @@ public class GLLayerGroup extends GLLayer {
                     int actionIndex = ev.getActionIndex();
                     final float x = ev.getX(actionIndex);
                     final float y = ev.getY(actionIndex);
-                    if (pointInView(x, y, child)) {//todo
-                        if (dispatchTransformedTouchEvent(ev, false, child)) {//todo
+                    if (pointInLayer(x, y, child)) {
+                        if (dispatchTransformedTouchEvent(ev, false, child)) {
                             mFirstTouchLayer = child;
                             alreadyDispatchedToNewTouchTarget = true;
                         }
@@ -188,18 +189,8 @@ public class GLLayerGroup extends GLLayer {
             int actionIndex = ev.getActionIndex();
             final float x = ev.getX(actionIndex);
             final float y = ev.getY(actionIndex);
-            final float[] point = tempPoint;//todo
-            point[0] = x;
-            point[1] = y;
-            point[2] = 0;
-            point[3] = 1;
-            point[0] = point[0] / getRenderWidth() * 2.0f - 1.0f;
-            point[1] = point[1] / getRenderHeight() * 2.0f - 1.0f;
-            child.getViewPortInvertMatrix().mapPoints(point);
-            point[0] = (point[0] + 1.0f) / 2.0f * child.getRenderWidth();
-            point[1] = (point[1] + 1.0f) / 2.0f * child.getRenderHeight();
-
-
+            final float[] point = tempPoint;
+            child.mapPoint(x, y, tempPoint);
             transformedEvent.setLocation(point[0], point[1]);
             handled = child.dispatchTouchEvent(transformedEvent);
             transformedEvent.recycle();
@@ -208,18 +199,10 @@ public class GLLayerGroup extends GLLayer {
         return handled;
     }
 
-    protected boolean pointInView(float x, float y, GLLayer child) {// TODO: 2022/3/4  
+    protected boolean pointInLayer(float x, float y, GLLayer child) {
         final float[] point = tempPoint;
-        point[0] = x;
-        point[1] = y;
-        point[2] = 0;
-        point[3] = 1;
-        point[0] = point[0] / getRenderWidth() * 2.0f - 1.0f;
-        point[1] = point[1] / getRenderHeight() * 2.0f - 1.0f;
-        child.getViewPortInvertMatrix().mapPoints(point);
-        point[0] = (point[0] + 1.0f) / 2.0f * child.getRenderWidth();
-        point[1] = (point[1] + 1.0f) / 2.0f * child.getRenderHeight();
-        final boolean isInView = child.pointInView(point[0], point[1]);
+        child.mapPoint(x, y, tempPoint);
+        final boolean isInView = child.pointInLayer(point[0], point[1]);
         return isInView;
     }
 

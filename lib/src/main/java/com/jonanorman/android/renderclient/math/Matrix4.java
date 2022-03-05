@@ -8,6 +8,7 @@ import java.util.Stack;
 public class Matrix4 implements Cloneable {
     private static final float[] MULTIPLY_MM_TEMP = new float[16];
     private static final float[] POINT_TEMP = new float[4];
+    private static final float[] ANDROID_MATRIX_TEMP = new float[9];
     private final Stack<float[]> matrixStack = new Stack<>();
     private final float[] temp = new float[16];
     private float[] val = new float[16];
@@ -19,6 +20,10 @@ public class Matrix4 implements Cloneable {
 
     public Matrix4(Matrix4 matrix) {
         set(matrix.get());
+    }
+
+    public Matrix4(android.graphics.Matrix matrix) {
+        set(matrix);
     }
 
 
@@ -193,7 +198,35 @@ public class Matrix4 implements Cloneable {
         return this;
     }
 
-    public void getInvertMatrix(Matrix4 matrix4) {
+
+    public Matrix4 set(android.graphics.Matrix matrix) {
+        synchronized (ANDROID_MATRIX_TEMP) {
+            float[] values = ANDROID_MATRIX_TEMP;
+            matrix.getValues(values);
+            val[0] = values[0 * 3 + 0];
+            val[1] = values[1 * 3 + 0];
+            val[2] = 0;
+            val[3] = values[2 * 3 + 0];
+
+            val[4] = values[0 * 3 + 1];
+            val[5] = values[1 * 3 + 1];
+            val[6] = 0;
+            val[7] = values[2 * 3 + 1];
+
+            val[8] = 0;
+            val[9] = 0;
+            val[10] = 1;
+            val[11] = 0;
+
+            val[12] = values[0 * 3 + 2];
+            val[13] = values[1 * 3 + 2];
+            val[14] = 0;
+            val[15] = values[2 * 3 + 2];
+        }
+        return this;
+    }
+
+    public void invert(Matrix4 matrix4) {
         boolean success = Matrix.invertM(matrix4.get(), 0, val, 0);
         if (!success) {
             matrix4.setIdentity();

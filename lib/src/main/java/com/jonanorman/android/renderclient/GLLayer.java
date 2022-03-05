@@ -2,6 +2,7 @@ package com.jonanorman.android.renderclient;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.view.MotionEvent;
 
 import com.jonanorman.android.renderclient.math.GravityMode;
@@ -73,7 +74,9 @@ public class GLLayer extends GLObject {
     private Map<String, KeyframeSet> keyframesMap = new HashMap<>();
     private GLEffectGroup effectGroup;
     private final Matrix4 viewPortMatrix = new Matrix4();
-    private final Matrix4 viewPortInvertMatrix = new Matrix4();
+    private final Matrix transformMatrix = new Matrix();
+    private final Matrix4 transformMatrix4 = new Matrix4();
+    private final Matrix transformInvertMatrix = new Matrix();
     private OnTouchListener onTouchListener;
     private OnClickListener onClickListener;
     private boolean downed = false;
@@ -85,6 +88,8 @@ public class GLLayer extends GLObject {
     private int drawArrayStart;
     private int drawArrayCount = 4;
     private int[] drawElementIndices;
+
+    private final float[] tempPoint = new float[2];
 
 
     protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode) {
@@ -183,12 +188,25 @@ public class GLLayer extends GLObject {
         setRenderTranslateX(getTranslateX());
         setRenderTranslateY(getTranslateY());
         generateLayerKeyFrame();
-        calculateViewPortMatrix(parentRenderWidth, parentRenderHeight);
+        onLayerSize(getRenderWidth(), getRenderHeight(), parentRenderWidth, parentRenderHeight);
+        onLayerGravity(parentRenderWidth, parentRenderHeight);
+        onLayerViewPortMatrix(parentRenderWidth, parentRenderHeight);
         if (getRenderWidth() <= 0 || getRenderHeight() <= 0) {
             return;
         }
         setRenderEnable(true);
         effectGroup.calculateEffect(getRenderTime(), getRenderDuration());
+    }
+
+    protected void onLayerSize(int renderWidth, int renderHeight, int parentRenderWidth, int parentRenderHeight) {
+
+    }
+
+    protected void onLayerGravity(int parentWidth, int parentHeight) {
+        float x = gravity.getX(renderX, renderWidth, parentWidth);
+        float y = gravity.getY(renderY, renderHeight, parentHeight);
+        setRenderX((int) (x + 0.5));
+        setRenderY((int) (y + 0.5));
     }
 
     private void generateLayerKeyFrame() {
@@ -247,20 +265,51 @@ public class GLLayer extends GLObject {
         return true;
     }
 
-    protected void calculateViewPortMatrix(int frameWidth, int frameHeight) {
+    protected void onLayerViewPortMatrix(float frameWidth, float frameHeight) {
         viewPortMatrix.setIdentity();
-        float x = gravity.getX(renderX, renderWidth, frameWidth);
-        float y = gravity.getY(renderY, renderHeight, frameHeight);// TODO: 2022/3/4  
-        viewPortMatrix.scale(renderScaleX * renderWidth / 2, renderScaleY * renderHeight / 2, 1);
-        viewPortMatrix.rotate(renderRotation, 0, 0, 1);
-        viewPortMatrix.translate(renderTranslateX + x - (frameWidth / 2.0f - renderWidth / 2.0f), -(renderTranslateY + y - (frameHeight / 2.0f - renderHeight / 2.0f)), 0);
-        viewPortMatrix.scale(2.0f / frameWidth, 2.0f / frameHeight, 1);
-        viewPortMatrix.getInvertMatrix(viewPortInvertMatrix);
-        setRenderX((int) (x + 0.5));
-        setRenderY((int) (y + 0.5));
+
+        viewPortMatrix.scale(
+                renderWidth / 2,
+                -renderHeight / 2,
+                1);
+        viewPortMatrix.translate(
+                renderWidth / 2.0f,
+                renderHeight / 2.0f,
+                0);
+
+
+        transformMatrix.reset();
+        transformMatrix.postTranslate(
+                -renderWidth / 2.0f,
+                -renderHeight / 2.0f);
+        transformMatrix.postScale(
+                renderScaleX,
+                renderScaleY);
+        transformMatrix.postRotate(-renderRotation);
+        transformMatrix.postTranslate(
+                renderTranslateX + renderX,
+                renderTranslateY + renderY);
+        transformMatrix.postTranslate(
+                renderWidth / 2.0f,
+                renderHeight / 2.0f);
+
+        transformMatrix.invert(transformInvertMatrix);
+
+        transformMatrix4.set(transformMatrix);
+        viewPortMatrix.postMul(transformMatrix4);
+        viewPortMatrix.translate(
+                -frameWidth / 2.0f,
+                -frameHeight / 2.0f,
+                0);
+        viewPortMatrix.scale(
+                2.0f / frameWidth,
+                -2.0f / frameHeight,
+                1);
+
+
     }
 
-    protected boolean dispatchTouchEvent(MotionEvent event) {
+    public boolean dispatchTouchEvent(MotionEvent event) {
         if (event == null) {
             return false;
         }
@@ -285,7 +334,7 @@ public class GLLayer extends GLObject {
                 downed = true;
                 break;
             case MotionEvent.ACTION_UP:
-                if (downed && pointInView(localX, localY, touchSlop)) {
+                if (downed && pointInLayer(localX, localY, touchSlop)) {
                     downed = false;
                     if (onClickListener != null) {
                         onClickListener.onClick(this);
@@ -293,7 +342,7 @@ public class GLLayer extends GLObject {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (!pointInView(localX, localY, touchSlop)) {
+                if (!pointInLayer(localX, localY, touchSlop)) {
                     downed = false;
                 }
                 break;
@@ -304,14 +353,14 @@ public class GLLayer extends GLObject {
         return true;
     }
 
-    boolean pointInView(float localX, float localY) {
-        return pointInView(localX, localY, 0);
+    boolean pointInLayer(float localX, float localY) {
+        return pointInLayer(localX, localY, 0);
     }
 
 
-    boolean pointInView(float localX, float localY, float slop) {
+    boolean pointInLayer(float localX, float localY, float slop) {
         return localX >= -slop && localY >= -slop && localX < (renderWidth + slop) &&
-                localY < (renderHeight + slop);// TODO: 2022/3/4
+                localY < (renderHeight + slop);
     }
 
 
@@ -614,8 +663,15 @@ public class GLLayer extends GLObject {
         return viewPortMatrix;
     }
 
-    Matrix4 getViewPortInvertMatrix() {
-        return viewPortInvertMatrix;
+
+    void mapPoint(float x, float y, float[] dst) {
+        tempPoint[0] = x;
+        tempPoint[1] = y;
+        transformInvertMatrix.mapPoints(dst, tempPoint);
+    }
+
+    Matrix getTransformInvertMatrix() {
+        return transformInvertMatrix;
     }
 
     protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {

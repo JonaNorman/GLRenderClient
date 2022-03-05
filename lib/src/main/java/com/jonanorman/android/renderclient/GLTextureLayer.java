@@ -73,22 +73,17 @@ public class GLTextureLayer extends GLLayer {
     }
 
 
-    protected void calculateViewPortMatrix(int frameWidth, int frameHeight) {
+    @Override
+    protected void onLayerSize(int renderWidth, int renderHeight, int parentWidth, int parentHeight) {
+        super.onLayerSize(renderWidth, renderHeight, parentWidth, parentHeight);
         int textureWidth = getTextureWidth();
         int textureHeight = getTextureHeight();
-        if (textureWidth == 0 || textureHeight == 0) {
-            super.calculateViewPortMatrix(frameWidth, frameHeight);
-            return;
-        }
-        if (scale != null) {
-            int renderWidth = getRenderWidth();
-            int renderHeight = getRenderHeight();
+        if (textureWidth != 0 && textureHeight != 0) {
             float viewportWidth = scale.getWidth(textureWidth, textureHeight, renderWidth, renderHeight);
             float viewportHeight = scale.getHeight(textureWidth, textureHeight, renderWidth, renderHeight);
             setRenderWidth((int) (viewportWidth + 0.5));
             setRenderHeight((int) (viewportHeight + 0.5));
         }
-        super.calculateViewPortMatrix(frameWidth, frameHeight);
     }
 
     @Override
