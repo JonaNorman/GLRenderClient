@@ -1,5 +1,7 @@
 package com.jonanorman.android.renderclient.sample;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
@@ -23,8 +25,14 @@ import com.jonanorman.android.renderclient.GLLayerGroup;
 import com.jonanorman.android.renderclient.GLLayoutLayer;
 import com.jonanorman.android.renderclient.GLRenderClient;
 import com.jonanorman.android.renderclient.GLRenderSurface;
+import com.jonanorman.android.renderclient.GLShaderEffect;
+import com.jonanorman.android.renderclient.GLTexture;
+import com.jonanorman.android.renderclient.GLTextureFilter;
+import com.jonanorman.android.renderclient.GLTextureLayer;
+import com.jonanorman.android.renderclient.GLTextureType;
 import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.KeyframeSet;
+import com.jonanorman.android.renderclient.math.ScaleMode;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -59,9 +67,9 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     renderClient = new GLRenderClient.Builder().build();
                     renderClient.attachCurrentThread();
                     rootLayer = renderClient.newLayerGroup();
-                    rootLayer.setDuration(60000);
+                    rootLayer.setDuration(10000);
+
                     GLColorLayer colorLayer = renderClient.newColorLayer();
-                    rootLayer.addLayer(colorLayer);
                     KeyframeSet colorFrameSet = GLColorLayer.ofColor(Color.RED, Color.YELLOW, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.RED);
                     colorFrameSet.setTypeEvaluator(new GLColorLayer.ColorEvaluator());
                     colorLayer.setKeyframes(GLColorLayer.KEY_COLOR, colorFrameSet);
@@ -71,28 +79,31 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                             Log.v(LOG_TAG, "colorLayer click");
                         }
                     });
+                    rootLayer.addLayer(colorLayer);
 
-                    GLBitmapLayer bitmapLayer = renderClient.newBitmapLayer();
-                    bitmapLayer.setBitmapResId(getApplicationContext(), R.drawable.alpha);
-                    bitmapLayer.setDuration(5000);
-                    bitmapLayer.setWidth(400);
-                    bitmapLayer.setHeight(400);
-                    bitmapLayer.setOnClickListener(new GLLayer.OnClickListener() {
-                        @Override
-                        public void onClick(GLLayer layer) {
-                            Log.v(LOG_TAG, "bitmapLayer click");
-                        }
-                    });
-                    rootLayer.addLayer(bitmapLayer);
+
+                {
+
+                    GLLayerGroup topGroup = renderClient.newLayerGroup();
+                    topGroup.setGravity(GravityMode.TOP_CENTER_HORIZONTAL);
+                    topGroup.setWidth(500);
+                    topGroup.setHeight(500);
+                    topGroup.setDuration(10000);
+                    KeyframeSet keyframes = KeyframeSet.ofFloat(10000, 500, 1000, 0);
+                    topGroup.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, keyframes);
+                    keyframes = KeyframeSet.ofFloat(10000, 500, 600, 500);
+                    topGroup.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, keyframes);
+                    rootLayer.addLayer(topGroup);
 
 
                     GLLayoutLayer layoutLayer = renderClient.newLayoutLayer(getApplicationContext());
                     layoutLayer.setBackgroundColor(Color.RED);
-                    rootLayer.addLayer(layoutLayer);
                     layoutLayer.setStartTime(4000);
-                    layoutLayer.setX(300);
+                    layoutLayer.setDuration(6000);
                     layoutLayer.setWidth(600);
                     layoutLayer.setHeight(400);
+                    layoutLayer.setGravity(GravityMode.TOP_CENTER_HORIZONTAL);
+                    topGroup.addLayer(layoutLayer);
 
                     ImageView imageView = new ImageView(getApplicationContext());
                     imageView.setImageResource(R.drawable.pic4);
@@ -106,7 +117,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     });
 
                     TextView textview = new TextView(getApplicationContext());
-                    textview.setText("textView");
+                    textview.setText("abcd");
                     textview.setTextSize(40);
                     textview.setBackgroundColor(Color.WHITE);
                     layoutLayer.addView(textview);
@@ -118,16 +129,95 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         }
                     });
 
+                    GLTextureLayer textureLayer = renderClient.newTextureLayer();
+                    textureLayer.setDuration(5000);
+                    textureLayer.setWidth(200);
+                    textureLayer.setHeight(200);
+                    GLTexture texture = renderClient.newTexture(GLTextureType.TEXTURE_2D);
+                    texture.setMinFilter(GLTextureFilter.LINEAR_MIPMAP_LINEAR);
+                    texture.setMagFilter(GLTextureFilter.LINEAR);
+                    BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+                    bitmapOptions.inPremultiplied = false;
+                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.alpha, bitmapOptions);
+                    texture.updateBitmap(bitmap);
+                    bitmap.recycle();
+                    textureLayer.setTexture(texture);
+                    topGroup.addLayer(textureLayer);
+                }
+
+
+                {
+
                     GLLayerGroup layerGroup = renderClient.newLayerGroup();
-                    layerGroup.setStartTime(10000);
-                    layerGroup.setDuration(200000);
                     layerGroup.setGravity(GravityMode.CENTER);
-                    layerGroup.setWidth(500);
                     layerGroup.setHeight(500);
-                    layerGroup.setBackgroundColor(Color.BLUE);
                     rootLayer.addLayer(layerGroup);
 
-                    return true;
+
+                    GLBitmapLayer bitmapLayer1 = renderClient.newBitmapLayer();
+                    bitmapLayer1.setBitmapResId(getApplicationContext(), R.drawable.pic2);
+                    bitmapLayer1.setGravity(GravityMode.CENTER);
+                    bitmapLayer1.setTextureScaleMode(ScaleMode.FILL);
+                    layerGroup.addLayer(bitmapLayer1);
+
+                    GLBitmapLayer bitmapLayer2 = renderClient.newBitmapLayer();
+                    bitmapLayer2.setWidth(300);
+                    bitmapLayer2.setHeight(300);
+                    bitmapLayer2.setTextureScaleMode(ScaleMode.FILL);
+                    bitmapLayer2.setBitmapResId(getApplicationContext(), R.drawable.pic1);
+                    layerGroup.addLayer(bitmapLayer2);
+
+
+                    GLShaderEffect effect = renderClient.newShaderEffect();
+                    effect.setFragmentShaderCode("precision mediump float;\n" +
+                            "varying highp vec2 textureCoordinate;\n" +
+                            "uniform sampler2D inputImageTexture;\n" +
+                            "uniform vec2 inputTextureSize;\n" +
+                            "uniform vec2 viewPortSize;\n" +
+                            "uniform float renderTime;\n" +
+                            "uniform float alpha;\n" +
+                            "\n" +
+                            "void main()\n" +
+                            "{\n" +
+                            "    vec4 color  = texture2D(inputImageTexture, textureCoordinate);\n" +
+                            "    gl_FragColor = color*alpha;\n" +
+                            "}");
+                    KeyframeSet keyframeSet = KeyframeSet.ofFloat(1.0f, 0.0f, 1.0f);
+                    keyframeSet.setDuration(3000);
+                    effect.setKeyframes("alpha", keyframeSet);
+
+                    layerGroup.addEffect(effect);
+                }
+                {
+                    GLLayerGroup bottomGroup = renderClient.newLayerGroup();
+                    bottomGroup.setWidth(600);
+                    bottomGroup.setHeight(500);
+                    bottomGroup.setGravity(GravityMode.BOTTOM_CENTER_HORIZONTAL);
+                    bottomGroup.setBackgroundColor(Color.BLUE);
+                    bottomGroup.setDuration(5000);
+
+
+                    {
+                        GLBitmapLayer bitmapLayer = renderClient.newBitmapLayer();
+                        bitmapLayer.setBitmapResId(getApplicationContext(), R.drawable.pic3);
+                        bitmapLayer.setBackgroundColor(Color.YELLOW);
+                        bitmapLayer.setGravity(GravityMode.CENTER);
+                        bottomGroup.addLayer(bitmapLayer);
+
+                    }
+
+                    {
+                        GLBitmapLayer bitmapLayer = renderClient.newBitmapLayer();
+                        bitmapLayer.setBitmapResId(getApplicationContext(), R.drawable.pic4);
+                        bitmapLayer.setBackgroundColor(Color.YELLOW);
+                        bitmapLayer.setGravity(GravityMode.CENTER);
+                        bottomGroup.addLayer(bitmapLayer);
+                    }
+                    rootLayer.addLayer(bottomGroup);
+                }
+
+
+                return true;
 
                 case MESSAGE_SURFACE_CREATE:
                     if (eglSurface != null) {

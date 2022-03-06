@@ -25,6 +25,7 @@ public abstract class GLEffect {
         if (renderTime > getRenderDuration() || renderTime < 0) {
             return;
         }
+        setRenderTime(renderTime);
         setRenderEnable(true);
     }
 

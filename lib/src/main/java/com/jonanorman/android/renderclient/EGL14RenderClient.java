@@ -258,6 +258,9 @@ class EGL14RenderClient extends GLRenderClient {
         }
         int currentWidth = (int) layer.getRenderWidth();
         int currentHeight = (int) layer.getRenderHeight();
+        if (currentWidth <= 0 || currentHeight <= 0) {
+            return;
+        }
         long currentTimeMs = layer.getRenderTime();
         int transformSize = layer.getTransformSize();
         for (int i = 0; i < transformSize; i++) {
