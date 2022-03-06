@@ -149,14 +149,6 @@ public abstract class GLRenderClient {
 
     public abstract void setCheckThread(boolean checkThread);
 
-    public abstract boolean isCheckThread();
-
-    public abstract boolean isThrowError();
-
-    public abstract boolean isCheckGLError();
-
-    public abstract boolean isCheckEGLError();
-
     public abstract int getMaxTextureSize();
 
     protected abstract void checkEGLError();

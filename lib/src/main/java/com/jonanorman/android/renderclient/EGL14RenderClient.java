@@ -205,7 +205,6 @@ class EGL14RenderClient extends GLRenderClient {
         blend = newBlend();
         glEnable = newEnable();
         glViewPort = newViewPort();
-        // TODO: 2022/3/4 thread
         //  todo 不变换就保存纹理，不需要更新
     }
 
@@ -1020,26 +1019,6 @@ class EGL14RenderClient extends GLRenderClient {
     @Override
     public void setCheckThread(boolean checkThread) {
         this.checkThread = checkThread;
-    }
-
-    @Override
-    public boolean isCheckThread() {
-        return checkThread;
-    }
-
-    @Override
-    public boolean isThrowError() {
-        return throwError;
-    }
-
-    @Override
-    public boolean isCheckGLError() {
-        return checkGLError;
-    }
-
-    @Override
-    public boolean isCheckEGLError() {
-        return checkEGLError;
     }
 
     @Override

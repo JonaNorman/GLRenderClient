@@ -18,7 +18,6 @@ public class MainActivity extends AppCompatActivity {
 
     public MainActivity() {
         super();
-        classList.add(RenderClientActivity.class);
         classList.add(GLLayerActivity.class);
     }
 
