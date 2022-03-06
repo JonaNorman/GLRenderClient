@@ -28,6 +28,7 @@ import com.jonanorman.android.renderclient.GLTexture;
 import com.jonanorman.android.renderclient.GLTextureFilter;
 import com.jonanorman.android.renderclient.GLTextureLayer;
 import com.jonanorman.android.renderclient.GLTextureType;
+import com.jonanorman.android.renderclient.math.ScaleMode;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -94,6 +95,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
 
                 {
                     GLTextureLayer textureLayer = renderClient.newTextureLayer();
+                    textureLayer.setGravity(GravityMode.CENTER);
                     GLTexture texture = renderClient.newTexture(GLTextureType.TEXTURE_2D);
                     Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic2);
                     texture.updateBitmap(bitmap);
@@ -119,6 +121,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     texture1.updateBitmap(bitmap);
                     bitmap.recycle();
                     textureLayer1.setTexture(texture1);
+                    textureLayer1.setGravity(GravityMode.CENTER);
                     frameLayer.addLayer(textureLayer1);
 
                 }
@@ -138,6 +141,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         bitmap.recycle();
                         textureLayer.setTexture(texture);
                         frameLayer.addLayer(textureLayer);
+                        textureLayer.setGravity(GravityMode.CENTER);
                     }
 
                     {
@@ -148,6 +152,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         bitmap.recycle();
                         textureLayer1.setTexture(texture1);
                         frameLayer.addLayer(textureLayer1);
+                        textureLayer1.setGravity(GravityMode.CENTER);
                     }
                     GLShaderEffect effect = renderClient.newShaderEffect();
                     effect.setFragmentShaderCode("precision mediump float;\n" +
@@ -200,6 +205,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         textureLayer.setTexture(texture);
                         textureLayer.setBackgroundColor(Color.YELLOW);
                         frameLayer.addLayer(textureLayer);
+                        textureLayer.setGravity(GravityMode.CENTER);
                     }
 
                     {
@@ -210,6 +216,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                         bitmap.recycle();
                         textureLayer1.setTexture(texture1);
                         frameLayer.addLayer(textureLayer1);
+                        textureLayer1.setGravity(GravityMode.CENTER);
                     }
                 }
                 {
@@ -228,6 +235,7 @@ public class RenderClientActivity extends AppCompatActivity implements TextureVi
                     textview.setBackgroundColor(Color.TRANSPARENT);
                     viewLayer.addView(textview);
                     frameLayer.addLayer(viewLayer);
+                    viewLayer.setGravity(GravityMode.CENTER);
                 }
 
 //                frameLayer.addTransform(new GLLayer.LayerTransform<GLFrameLayer>() {

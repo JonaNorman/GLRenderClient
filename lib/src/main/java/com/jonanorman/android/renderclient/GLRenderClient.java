@@ -84,6 +84,8 @@ public abstract class GLRenderClient {
 
     public abstract GLColorLayer newColorLayer();
 
+    public abstract GLBitmapLayer newBitmapLayer();
+
     public abstract GLLayerGroup newLayerGroup();
 
     public abstract GLLayoutLayer newLayoutLayer(Context context, int styleRes);

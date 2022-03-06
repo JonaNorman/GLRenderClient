@@ -10,16 +10,20 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.jonanorman.android.renderclient.GLBitmapLayer;
 import com.jonanorman.android.renderclient.GLColorLayer;
 import com.jonanorman.android.renderclient.GLLayer;
 import com.jonanorman.android.renderclient.GLLayerGroup;
+import com.jonanorman.android.renderclient.GLLayoutLayer;
 import com.jonanorman.android.renderclient.GLRenderClient;
 import com.jonanorman.android.renderclient.GLRenderSurface;
-import com.jonanorman.android.renderclient.GLTextureLayer;
+import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.KeyframeSet;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,10 +47,8 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
     private Handler.Callback callback = new Handler.Callback() {
         GLRenderSurface eglSurface;
         GLRenderClient renderClient;
-        GLTextureLayer textureLayer;
         long startTime = System.currentTimeMillis();
-        GLLayerGroup layerGroup;
-        GLColorLayer colorLayer;
+        GLLayerGroup rootLayer;
 
 
         @Override
@@ -56,77 +58,75 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                 case MESSAGE_CLIENT_CREATE:
                     renderClient = new GLRenderClient.Builder().build();
                     renderClient.attachCurrentThread();
-                    layerGroup = renderClient.newLayerGroup();
-                    layerGroup.setDuration(10000);
-                    colorLayer = renderClient.newColorLayer();
-                    colorLayer.setColor(Color.RED);
+                    rootLayer = renderClient.newLayerGroup();
+                    rootLayer.setDuration(60000);
+                    GLColorLayer colorLayer = renderClient.newColorLayer();
+                    rootLayer.addLayer(colorLayer);
                     KeyframeSet colorFrameSet = GLColorLayer.ofColor(Color.RED, Color.YELLOW, Color.BLUE, Color.CYAN, Color.GREEN, Color.MAGENTA, Color.RED);
                     colorFrameSet.setTypeEvaluator(new GLColorLayer.ColorEvaluator());
-                    colorLayer.setKeyframes("color", colorFrameSet);
-                    colorFrameSet.setStartTime(1000);
+                    colorLayer.setKeyframes(GLColorLayer.KEY_COLOR, colorFrameSet);
                     colorLayer.setOnClickListener(new GLLayer.OnClickListener() {
                         @Override
                         public void onClick(GLLayer layer) {
                             Log.v(LOG_TAG, "colorLayer click");
                         }
                     });
-                    layerGroup.addLayer(colorLayer);
+
+                    GLBitmapLayer bitmapLayer = renderClient.newBitmapLayer();
+                    bitmapLayer.setBitmapResId(getApplicationContext(), R.drawable.alpha);
+                    bitmapLayer.setDuration(5000);
+                    bitmapLayer.setWidth(400);
+                    bitmapLayer.setHeight(400);
+                    bitmapLayer.setOnClickListener(new GLLayer.OnClickListener() {
+                        @Override
+                        public void onClick(GLLayer layer) {
+                            Log.v(LOG_TAG, "bitmapLayer click");
+                        }
+                    });
+                    rootLayer.addLayer(bitmapLayer);
 
 
-//
-//                    textureLayer = renderClient.newTextureLayer();
-//                    layerGroup = renderClient.newLayerGroup();
-//                    layerGroup.setDuration(10000);
-//                    layerGroup.addLayer(textureLayer);
-//                    BitmapFactory.Options options = new BitmapFactory.Options();
-//                    options.inScaled = false;
-//                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pic1, options);
-//                    GLTexture texture = renderClient.newTexture(GLTextureType.TEXTURE_2D);
-//                    texture.updateBitmap(bitmap);
-//                    bitmap.recycle();
-//                    textureLayer.setBackgroundColor(Color.BLUE);
-//                    textureLayer.setWidth(200);
-//                    textureLayer.setHeight(200);
-//                    textureLayer.setScaleX(5.0f);
-//                    textureLayer.setScaleY(1.5f);
-//                    textureLayer.setTranslateX(1080/2);
-//
-//                    textureLayer.setRotation(10);
-////                    textureLayer.setTexture(texture);
-//                    textureLayer.setOnTouchListener(new GLLayer.OnTouchListener() {
-//                        @Override
-//                        public boolean onTouch(GLLayer layer, MotionEvent event) {
-//                            Log.v("sdasdas", "x:" + event.getX() + "y:" + event.getY());
-//                            return true;
-//                        }
-//                    });
+                    GLLayoutLayer layoutLayer = renderClient.newLayoutLayer(getApplicationContext());
+                    layoutLayer.setBackgroundColor(Color.RED);
+                    rootLayer.addLayer(layoutLayer);
+                    layoutLayer.setStartTime(4000);
+                    layoutLayer.setX(300);
+                    layoutLayer.setWidth(600);
+                    layoutLayer.setHeight(400);
 
-//                    GLLayoutLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext());
-//                    viewLayer.setWidth(600);
-//                    viewLayer.setHeight(600);
+                    ImageView imageView = new ImageView(getApplicationContext());
+                    imageView.setImageResource(R.drawable.pic4);
+                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    layoutLayer.addView(imageView);
+                    imageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Log.v(LOG_TAG, "imageView click");
+                        }
+                    });
 
-//                    ImageView imageView = new ImageView(getApplicationContext());
-//                    imageView.setImageResource(R.drawable.pic4);
-//                    viewLayer.addView(imageView, new FrameLayout.LayoutParams(500, 500));
-//
-//                    TextView textview = new TextView(getApplicationContext());
-//                    textview.setText("123\nabc");
-//                    textview.setTextSize(40);
-//                    textview.setBackgroundColor(Color.TRANSPARENT);
-//                    viewLayer.addView(textview);
-//                    imageView.setOnClickListener(new View.OnClickListener() {
-//                        @Override
-//                        public void onClick(View v) {
-//                            Toast.makeText(v.getContext(), "toas", Toast.LENGTH_LONG).show();
-//                        }
-//                    });
-//                    textview.setOnClickListener(new View.OnClickListener() {
-//                        @Override
-//                        public void onClick(View v) {
-//                            Toast.makeText(v.getContext(), "abc", Toast.LENGTH_LONG).show();
-//                        }
-//                    });
-//                    layerGroup.add(viewLayer);
+                    TextView textview = new TextView(getApplicationContext());
+                    textview.setText("textView");
+                    textview.setTextSize(40);
+                    textview.setBackgroundColor(Color.WHITE);
+                    layoutLayer.addView(textview);
+
+                    textview.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Log.v(LOG_TAG, "textview click");
+                        }
+                    });
+
+                    GLLayerGroup layerGroup = renderClient.newLayerGroup();
+                    layerGroup.setStartTime(10000);
+                    layerGroup.setDuration(200000);
+                    layerGroup.setGravity(GravityMode.CENTER);
+                    layerGroup.setWidth(500);
+                    layerGroup.setHeight(500);
+                    layerGroup.setBackgroundColor(Color.BLUE);
+                    rootLayer.addLayer(layerGroup);
+
                     return true;
 
                 case MESSAGE_SURFACE_CREATE:
@@ -158,19 +158,19 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                     return true;
                 case MESSAGE_SURFACE_MOTION_EVENT: {
                     MotionEvent motionEvent = (MotionEvent) msg.obj;
-                    layerGroup.dispatchTouchEvent(motionEvent);
+                    rootLayer.dispatchTouchEvent(motionEvent);
                     motionEvent.recycle();
                     return true;
                 }
                 case MESSAGE_SURFACE_RENDER:
                     handler.removeMessages(MESSAGE_SURFACE_RENDER);
                     long time = System.currentTimeMillis() - startTime;
-                    if (time > layerGroup.getDuration()) {
+                    if (time > rootLayer.getDuration()) {
                         startTime = System.currentTimeMillis();
                         time = 0;
                     }
-                    layerGroup.setTime(time);
-                    layerGroup.render(eglSurface);
+                    rootLayer.setTime(time);
+                    rootLayer.render(eglSurface);
                     handler.sendEmptyMessageDelayed(MESSAGE_SURFACE_RENDER, 40);
                     return true;
             }

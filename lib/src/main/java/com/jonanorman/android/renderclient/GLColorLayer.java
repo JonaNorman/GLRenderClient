@@ -30,6 +30,8 @@ public class GLColorLayer extends GLLayer {
             "    gl_FragColor = color;\n" +
             "}";
 
+    public static final String KEY_COLOR = "color";
+
     private int color = Color.TRANSPARENT;
     private float redColor;
     private float greenColor;
@@ -53,7 +55,7 @@ public class GLColorLayer extends GLLayer {
     protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
         super.onRenderLayer(layer, renderTimeMs);
         GLShaderParam shaderParam = layer.getDefaultShaderParam();
-        shaderParam.put("color", redColor, greenColor, blueColor, alphaColor);
+        shaderParam.put(KEY_COLOR, redColor, greenColor, blueColor, alphaColor);
         return true;
     }
 

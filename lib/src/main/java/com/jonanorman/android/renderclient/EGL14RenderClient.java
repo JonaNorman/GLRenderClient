@@ -694,6 +694,12 @@ class EGL14RenderClient extends GLRenderClient {
 
 
     @Override
+    public GLBitmapLayer newBitmapLayer() {
+        return new GLBitmapLayer(this);
+    }
+
+
+    @Override
     public GLLayerGroup newLayerGroup() {
         return new GLLayerGroup(this);
     }

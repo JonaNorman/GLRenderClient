@@ -1,6 +1,7 @@
 package com.jonanorman.android.renderclient;
 
 
+import com.jonanorman.android.renderclient.math.Matrix4;
 import com.jonanorman.android.renderclient.math.ScaleMode;
 import com.jonanorman.android.renderclient.utils.MathUtils;
 
@@ -12,13 +13,14 @@ public class GLTextureLayer extends GLLayer {
             "attribute vec4 position;\n" +
             "attribute vec4 inputTextureCoordinate;\n" +
             "uniform mat4 viewPortMatrix;\n" +
+            "uniform mat4 scaleTypeMatrix;\n" +
             "uniform mat4 inputTextureMatrix;\n" +
             "\n" +
             "varying vec2 textureCoordinate;\n" +
             "\n" +
             "void main()\n" +
             "{\n" +
-            "    gl_Position =viewPortMatrix*position;\n" +
+            "    gl_Position =scaleTypeMatrix*viewPortMatrix*position;\n" +
             "    textureCoordinate =(inputTextureMatrix*inputTextureCoordinate).xy;\n" +
             "}";
 
@@ -42,6 +44,7 @@ public class GLTextureLayer extends GLLayer {
 
     private GLTexture texture;
     private ScaleMode textureScaleMode = ScaleMode.FIT;
+    private Matrix4 scaleTypeMatrix = new Matrix4();
 
     protected GLTextureLayer(GLRenderClient client) {
         super(client, VERTEX_SHADER, FRAGMENT_SHADER);
@@ -64,6 +67,10 @@ public class GLTextureLayer extends GLLayer {
         return texture == null ? 0 : texture.getTextureId();
     }
 
+    public GLTexture getTexture() {
+        return texture;
+    }
+
     public void setTextureScaleMode(ScaleMode textureScaleMode) {
         this.textureScaleMode = textureScaleMode;
     }
@@ -75,20 +82,20 @@ public class GLTextureLayer extends GLLayer {
     @Override
     protected void onLayerRenderSize(float renderWidth, float renderHeight, float parentWidth, float parentHeight) {
         super.onLayerRenderSize(renderWidth, renderHeight, parentWidth, parentHeight);
+        scaleTypeMatrix.setIdentity();
         int textureWidth = getTextureWidth();
         int textureHeight = getTextureHeight();
         if (textureWidth != 0 && textureHeight != 0) {
             float viewportWidth = textureScaleMode.getWidth(textureWidth, textureHeight, renderWidth, renderHeight);
             float viewportHeight = textureScaleMode.getHeight(textureWidth, textureHeight, renderWidth, renderHeight);
-            setRenderWidth(viewportWidth);
-            setRenderHeight(viewportHeight);
+            scaleTypeMatrix.scale(viewportWidth / renderWidth, viewportHeight / renderHeight, 1.0f);
         }
     }
 
     @Override
     protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
         super.onRenderLayer(layer, renderTimeMs);
-        if (texture == null) {
+        if (getTextureWidth() <= 0 || getTextureHeight() <= 0) {
             return false;
         }
         GLShaderParam shaderParam = getDefaultShaderParam();
@@ -105,6 +112,7 @@ public class GLTextureLayer extends GLLayer {
         shaderParam.put("inputImageTexture", getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
         shaderParam.put("inputTexturePreMul", texture == null ? true : texture.isPremultiplied());
+        shaderParam.put("scaleTypeMatrix", scaleTypeMatrix.get());
         if (texture != null) {
             shaderParam.put("inputTextureMatrix", texture.getTextureMatrix().get());
         }

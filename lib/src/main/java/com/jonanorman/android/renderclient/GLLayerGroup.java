@@ -92,7 +92,7 @@ public class GLLayerGroup extends GLLayer {
         layerList.clear();
     }
 
-    
+
     @Override
     protected void calculateLayer(long parentRenderTimeMs, long parentDurationMs) {
         super.calculateLayer(parentRenderTimeMs, parentDurationMs);
@@ -110,6 +110,9 @@ public class GLLayerGroup extends GLLayer {
 
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev == null) {
+            return false;
+        }
+        if (!isRenderEnable()) {
             return false;
         }
         boolean intercepted;
@@ -173,7 +176,7 @@ public class GLLayerGroup extends GLLayer {
         boolean handled;
         if (child == null) {
             handled = super.dispatchTouchEvent(ev);
-        } else {
+        } else if (child.isRenderEnable()) {
             final MotionEvent transformedEvent = MotionEvent.obtain(ev);
             int actionIndex = ev.getActionIndex();
             final float x = ev.getX(actionIndex);
@@ -183,12 +186,17 @@ public class GLLayerGroup extends GLLayer {
             transformedEvent.setLocation(point[0], point[1]);
             handled = child.dispatchTouchEvent(transformedEvent);
             transformedEvent.recycle();
+        } else {
+            handled = false;
         }
         ev.setAction(oldAction);
         return handled;
     }
 
     protected boolean pointInLayer(float x, float y, GLLayer child) {
+        if (!child.isRenderEnable()) {
+            return false;
+        }
         final float[] point = tempPoint;
         child.mapPoint(x, y, tempPoint);
         final boolean isInView = child.pointInLayer(point[0], point[1]);

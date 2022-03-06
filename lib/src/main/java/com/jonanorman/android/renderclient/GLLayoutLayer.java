@@ -174,7 +174,7 @@ public class GLLayoutLayer extends GLLayer {
 
 
     public void addView(View view) {
-        rootLayout.addView(view);
+        rootLayout.addView(view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
     public void addView(View view, FrameLayout.LayoutParams params) {
@@ -244,8 +244,8 @@ public class GLLayoutLayer extends GLLayer {
 
     private void dispatchMeasureAndLayout(int viewWidth, int viewHeight) {
         rootLayout.measure(
-                View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(viewHeight, View.MeasureSpec.EXACTLY));
+                View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.AT_MOST),
+                View.MeasureSpec.makeMeasureSpec(viewHeight, View.MeasureSpec.AT_MOST));
         do {
             rootLayout.layout(0, 0, rootLayout.getMeasuredWidth(), rootLayout.getMeasuredHeight());
         } while (rootLayout.isLayoutRequested());
@@ -253,6 +253,9 @@ public class GLLayoutLayer extends GLLayer {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
+        if (!isRenderEnable()) {
+            return false;
+        }
         boolean result = rootLayout.dispatchTouchEvent(event);
         if (result) {
             return true;
