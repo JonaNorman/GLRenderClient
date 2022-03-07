@@ -5,6 +5,7 @@ import android.graphics.Color;
 
 public abstract class GLFrameBuffer extends GLObject {
 
+
     public GLFrameBuffer(GLRenderClient client) {
         super(client);
         registerMethod(GLClearColorMethod.class, new GLClearColorMethod());
@@ -42,7 +43,7 @@ public abstract class GLFrameBuffer extends GLObject {
     public final GLFrameBuffer bind() {
         GLBindMethod bindMethod = findMethod(GLBindMethod.class);
         bindMethod.call();
-        return bindMethod.getOld();
+        return bindMethod.getPreFrameBuffer();
     }
 
     public final void copyToTexture(GLTexture texture) {
@@ -180,17 +181,17 @@ public abstract class GLFrameBuffer extends GLObject {
             super();
         }
 
-        GLFrameBuffer old;
+        GLFrameBuffer preFrameBuffer;
 
         @Override
         protected void onCallMethod() {
             onBind();
-            old = client.onBindFrameBuffer(GLFrameBuffer.this);
-
+            preFrameBuffer = client.getCurrentFrameBuffer();
+            client.setCurrentFrameBuffer(GLFrameBuffer.this);
         }
 
-        public GLFrameBuffer getOld() {
-            return old;
+        public GLFrameBuffer getPreFrameBuffer() {
+            return preFrameBuffer;
         }
     }
 

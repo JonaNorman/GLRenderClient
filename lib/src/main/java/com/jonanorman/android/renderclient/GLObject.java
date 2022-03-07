@@ -3,7 +3,7 @@ package com.jonanorman.android.renderclient;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class GLObject {
+public abstract class GLObject implements GLRenderClientReleaseListener{
 
     protected final GLRenderClient client;
 
@@ -14,6 +14,7 @@ public abstract class GLObject {
 
     public GLObject(GLRenderClient client) {
         this.client = client;
+        this.client.addClientReleaseListener(this);
     }
 
 
@@ -38,15 +39,6 @@ public abstract class GLObject {
     }
 
     public final void create() {
-        client.createObject(this);
-    }
-
-
-    public final void dispose() {
-        client.disposeObject(this);
-    }
-
-    final void createObject() {
         if (created) {
             return;
         }
@@ -54,10 +46,12 @@ public abstract class GLObject {
             throw new IllegalStateException(getClass() + "it is disposed");
         }
         created = true;
+        client.checkThread();
         onCreate();
     }
 
-    final void disposeObject() {
+
+    public final void dispose() {
         if (!created) {
             disposed = true;
             created = false;
@@ -69,6 +63,11 @@ public abstract class GLObject {
         disposed = true;
         created = false;
         onDispose();
+    }
+
+    @Override
+    public void onClientRelease(GLRenderClient renderClient) {
+        dispose();
     }
 
     protected abstract void onCreate();

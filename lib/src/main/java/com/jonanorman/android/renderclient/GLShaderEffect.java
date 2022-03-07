@@ -2,12 +2,35 @@ package com.jonanorman.android.renderclient;
 
 
 import com.jonanorman.android.renderclient.math.KeyframeSet;
+import com.jonanorman.android.renderclient.math.Matrix4;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class GLShaderEffect extends GLEffect {
+
+    public static final String KEY_RENDER_TIME = "renderTime";
+    public static final String KEY_VIEW_PORT_SIZE = "viewPortSize";
+    public static final String KEY_POSITION = "position";
+    public static final String KEY_INPUT_TEXTURE_COORDINATE = "inputTextureCoordinate";
+    public static final String KEY_POSITION_MATRIX = "positionMatrix";
+    public static final String KEY_TEXTURE_MATRIX = "textureMatrix";
+    private static final Matrix4 DEFAULT_MATRIX = new Matrix4();
+
+    private static final float POSITION_COORDINATES[] = {
+            -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
+            1.0f, -1.0f, 0.0f, 1.0f,//right bottom
+            -1.0f, 1.0f, 0.0f, 1.0f, //left top
+            1.0f, 1.0f, 0.0f, 1.0f//right top
+    };
+
+    private static final float TEXTURE_COORDINATES[] = {
+            0.0f, 0.0f, 0.0f, 1.0f,//left bottom
+            1.0f, 0.0f, 0.0f, 1.0f,//right bottom
+            0.0f, 1.0f, 0.0f, 1.0f,//left top
+            1.0f, 1.0f, 0.0f, 1.0f,//right  top
+    };
 
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
@@ -51,6 +74,9 @@ public class GLShaderEffect extends GLEffect {
     private final GLShaderParam shaderParam;
     private final GLShaderParam defaultShaderParam;
     private Map<String, KeyframeSet> keyframesMap = new HashMap<>();
+    private GLViewPort viewPort;
+    private GLEnable glEnable;
+    private GLBlend blend;
 
 
     protected GLShaderEffect(GLRenderClient client) {
@@ -59,12 +85,75 @@ public class GLShaderEffect extends GLEffect {
         this.fragmentShaderCode = FRAGMENT_SHADER;
         this.shaderParam = client.newShaderParam();
         this.defaultShaderParam = client.newShaderParam();
+        this.viewPort = client.newViewPort();
+        this.glEnable = client.newEnable();
+        this.blend = client.newBlend();
     }
 
 
     @Override
     protected GLFrameBuffer renderEffect(GLFrameBuffer input) {
-        return client.renderEffect(this, input);
+        if (!isRenderEnable()) {
+            return input;
+        }
+        GLFrameBufferCache frameBufferCache = client.getFrameBufferCache();
+        GLProgramCache programCache = client.getProgramCache();
+        long effectTime = getRenderTime();
+        GLFrameBuffer outputBuffer = frameBufferCache.obtain(input.getWidth(), input.getHeight());
+        viewPort.set(0, 0, input.getWidth(), input.getHeight());
+        GLProgram program = programCache.obtain(getVertexShaderCode(), getFragmentShaderCode());
+        GLDrawType drawType = getDrawType();
+        program.setDrawType(drawType);
+        if (drawType == GLDrawType.DRAW_ARRAY) {
+            GLDrawArray drawArray = program.getDrawArray();
+            drawArray.setDrawMode(getDrawMode());
+            drawArray.setVertexStart(getDrawArrayStart());
+            drawArray.setVertexCount(getDrawArrayCount());
+            program.setDrawType(getDrawType());
+        } else if (drawType == GLDrawType.DRAW_ELEMENT) {
+            GLDrawElement drawElement = program.getDrawElement();
+            drawElement.setDrawMode(getDrawMode());
+            drawElement.set(getDrawElementIndices());
+            program.setDrawType(getDrawType());
+        }
+        GLFrameBuffer preBuffer = outputBuffer.bind();
+        viewPort.call();
+        glEnable.call();
+        GLXfermode.SRC_OVER.apply(blend);
+        blend.call();
+        program.clearShaderParam();
+        GLShaderParam programParam = program.getShaderParam();
+        programParam.put(KEY_RENDER_TIME, effectTime / 1000.0f);
+        programParam.put(KEY_VIEW_PORT_SIZE, viewPort.getWidth(), viewPort.getHeight());
+        programParam.put(KEY_POSITION, POSITION_COORDINATES);
+        programParam.put(KEY_INPUT_TEXTURE_COORDINATE, TEXTURE_COORDINATES);
+        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX.get());
+        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX.get());
+        onRenderShaderEffect(input);
+        programParam.put(getDefaultShaderParam());
+        for (String key : getKeyNames()) {
+            KeyframeSet keyFrames = getKeyframes(key);
+            if (keyFrames != null) {
+                Object keyValue = keyFrames.getValueByTime(effectTime, getRenderDuration());
+                if (keyValue != null) {
+                    Class valueType = keyFrames.getValueType();
+                    if (valueType == int.class) {
+                        programParam.put(key, (int) keyValue);
+                    } else if (valueType == float.class) {
+                        programParam.put(key, (float) keyValue);
+                    } else if (valueType == int[].class) {
+                        programParam.put(key, (float) keyValue);
+                    } else if (valueType == float[].class) {
+                        programParam.put(key, (float[]) keyValue);
+                    }
+                }
+            }
+        }
+        programParam.put(getShaderParam());
+        program.execute();
+        preBuffer.bind();
+        return outputBuffer;
+
     }
 
     protected void onRenderShaderEffect(GLFrameBuffer input) {

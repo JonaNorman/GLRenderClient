@@ -7,6 +7,8 @@ import android.opengl.EGLDisplay;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.jonanorman.android.renderclient.math.Matrix4;
+
 public abstract class GLRenderClient {
 
 
@@ -47,7 +49,6 @@ public abstract class GLRenderClient {
 
     public abstract GLFrameBuffer newFrameBuffer(GLTexture texture);
 
-    public abstract GLFrameBuffer getBindFrameBuffer();
 
     public abstract GLTexture newTexture(GLTextureType textureType);
 
@@ -66,12 +67,6 @@ public abstract class GLRenderClient {
 
     protected abstract GLPbufferSurface getDefaultPBufferSurface();
 
-    protected abstract void makeCurrent(GLRenderSurface surface);
-
-    protected abstract void swapBuffers(GLRenderSurface surface);
-
-    protected abstract GLFrameBuffer onBindFrameBuffer(GLFrameBuffer newFrameBuffer);
-
     public abstract void release();
 
     public abstract boolean isRelease();
@@ -88,13 +83,13 @@ public abstract class GLRenderClient {
 
     public abstract GLLayerGroup newLayerGroup();
 
+    public abstract GLFrameBufferCache getFrameBufferCache();
+
     public abstract GLLayoutLayer newLayoutLayer(Context context, int styleRes);
 
     public abstract GLLayoutLayer newLayoutLayer(Context context);
 
-
-    public abstract void setMaxProgramSize(int maxProgramSize);
-
+    public abstract GLProgramCache getProgramCache();
 
     public abstract void attachCurrentThread();
 
@@ -102,17 +97,10 @@ public abstract class GLRenderClient {
 
     public abstract Thread getAttachThread();
 
-    protected abstract void renderLayer(GLLayer layer, GLFrameBuffer frameBuffer);
 
-    protected abstract GLFrameBuffer renderEffect(GLEffect effect, GLFrameBuffer input);
+    abstract void drawColor(int backgroundColor, Matrix4 viewPortMatrix, GLFrameBuffer outBuffer);
 
-    protected abstract void createObject(GLObject object);
-
-    protected abstract void disposeObject(GLObject object);
-
-    protected abstract void createEGLSurface(GLRenderSurface surface);
-
-    protected abstract void disposeEGLSurface(GLRenderSurface surface);
+    abstract void drawTexture(GLTexture texture, GLXfermode xfermode, Matrix4 viewPortMatrix, GLFrameBuffer outBuffer);
 
     protected abstract void checkThread();
 
@@ -124,22 +112,14 @@ public abstract class GLRenderClient {
 
     protected abstract EGLDisplay getEGLDisplay();
 
-    protected abstract android.opengl.EGLSurface create(GLWindowSurface windowSurface);
-
-    protected abstract android.opengl.EGLSurface create(GLPbufferSurface eglPbufferSurface);
-
-
-    protected abstract void destroy(GLWindowSurface windowSurface);
-
-    protected abstract void destroy(GLPbufferSurface pbufferSurface);
-
-    protected abstract int queryWidth(GLWindowSurface windowSurface);
-
-    protected abstract int queryHeight(GLWindowSurface windowSurface);
 
     public abstract void addGLErrorListener(GLErrorListener listener);
 
     public abstract void removeGLErrorListener(GLErrorListener listener);
+
+    public abstract void addClientReleaseListener(GLRenderClientReleaseListener releaseListener);
+
+    public abstract void removeClientReleaseListener(GLRenderClientReleaseListener releaseListener);
 
     public abstract void setThrowError(boolean throwError);
 
@@ -152,6 +132,16 @@ public abstract class GLRenderClient {
     public abstract int getMaxTextureSize();
 
     protected abstract void checkEGLError();
+
+    public abstract GLFrameBuffer getCurrentFrameBuffer();
+
+    protected abstract void setCurrentFrameBuffer(GLFrameBuffer currentFrameBuffer);
+
+    public abstract GLRenderSurface getCurrentRenderSurface();
+
+    protected abstract void setCurrentRenderSurface(GLRenderSurface currentRenderSurface);
+
+    protected abstract void removeWindowSurface(GLWindowSurface windowSurface);
 
 
     public static class Builder {

@@ -203,4 +203,27 @@ public class GLLayerGroup extends GLLayer {
         return isInView;
     }
 
+
+    @Override
+    protected void drawLayer(int currentWidth, int currentHeight, GLFrameBuffer outputBuffer) {
+        GLFrameBufferCache frameBufferCache = client.getFrameBufferCache();
+        GLFrameBuffer groupFrameBuffer = frameBufferCache.obtain(currentWidth, currentHeight);
+        if (vertexShaderCode != null &&
+                fragmentShaderCode != null) {
+            drawLayer(groupFrameBuffer, DEFAULT_MATRIX, selfXfermode, renderTime);
+        }
+        for (int i = 0; i < layerList.size(); i++) {
+            GLLayer child = layerList.get(i);
+            child.renderLayer(groupFrameBuffer);
+        }
+        GLFrameBuffer effectBuffer = effectGroup.renderEffect(groupFrameBuffer);
+        if (groupFrameBuffer != effectBuffer) {
+            frameBufferCache.cache(groupFrameBuffer);
+        }
+        GLTexture effectTexture = effectBuffer.getColorTexture();
+        client.drawTexture(effectTexture, xfermode, viewPortMatrix, outputBuffer);
+        frameBufferCache.cache(effectBuffer);
+    }
+
+
 }

@@ -28,7 +28,20 @@ public class GLEffectGroup extends GLEffect {
 
     @Override
     protected GLFrameBuffer renderEffect(GLFrameBuffer input) {
-        return client.renderEffect(this, input);
+        if (!isRenderEnable()) {
+            return input;
+        }
+        GLFrameBufferCache frameBufferCache = client.getFrameBufferCache();
+        GLFrameBuffer out = input;
+        for (int i = 0; i < effectList.size(); i++) {
+            GLEffect child = effectList.get(i);
+            GLFrameBuffer effectBuffer = child.renderEffect(out);
+            if (out != effectBuffer && out != input) {
+                frameBufferCache.cache(out);
+            }
+            out = effectBuffer;
+        }
+        return out;
     }
 
     public void addEffect(GLEffect effect) {

@@ -2,27 +2,20 @@ package com.jonanorman.android.renderclient;
 
 import android.graphics.Bitmap;
 
-public abstract class GLRenderSurface {
+public abstract class GLRenderSurface implements GLRenderClientReleaseListener{
     private boolean disposed;
     private boolean created;
     protected final GLRenderClient client;
     private final GLFrameBuffer defaultFrameBuffer;
+    private long timeNs;
 
     public GLRenderSurface(GLRenderClient client) {
         this.client = client;
         this.defaultFrameBuffer = client.newFrameBuffer(this);
+        client.addClientReleaseListener(this);
     }
 
     public final void create() {
-        client.createEGLSurface(this);
-    }
-
-    public final void dispose() {
-        client.disposeEGLSurface(this);
-    }
-
-
-    protected final void createSurface() {
         if (created || disposed) {
             return;
         }
@@ -30,7 +23,7 @@ public abstract class GLRenderSurface {
         onCreate();
     }
 
-    protected final void disposeSurface() {
+    public final void dispose() {
         if (disposed) {
             return;
         }
@@ -42,7 +35,11 @@ public abstract class GLRenderSurface {
         disposed = true;
         created = false;
         onDispose();
+        if (client.getCurrentRenderSurface() == this) {
+            client.setCurrentRenderSurface(null);
+        }
     }
+
 
     public final boolean isCreated() {
         return created;
@@ -73,12 +70,19 @@ public abstract class GLRenderSurface {
         if (disposed) {
             throw new IllegalStateException(getClass() + "it is disposed");
         }
-        client.makeCurrent(this);
+        onMakeCurrent(this);
     }
 
     public final void makeNoCurrent() {
-        client.makeCurrent(null);
+        create();
+        if (disposed) {
+            throw new IllegalStateException(getClass() + "it is disposed");
+        }
+        onMakeCurrent(null);
     }
+
+
+    protected abstract void onMakeCurrent(GLRenderSurface renderSurface);
 
     public final void readBitmap(Bitmap bitmap) {
         defaultFrameBuffer.readBitmap(bitmap);
@@ -98,7 +102,25 @@ public abstract class GLRenderSurface {
     }
 
     public final void swapBuffers() {
-        client.swapBuffers(this);
+        if (!isDisposed()) {
+            create();
+        }
+        makeCurrent();
+        onSwapBuffers();
     }
 
+    public void setTime(long timeNs) {
+        this.timeNs = timeNs;
+    }
+
+    public long getTime() {
+        return timeNs;
+    }
+
+    protected abstract void onSwapBuffers();
+
+    @Override
+    public void onClientRelease(GLRenderClient renderClient) {
+        dispose();
+    }
 }

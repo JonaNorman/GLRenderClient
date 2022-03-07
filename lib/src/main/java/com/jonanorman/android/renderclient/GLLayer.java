@@ -19,9 +19,30 @@ import java.util.Set;
 
 public class GLLayer extends GLObject {
 
+    //  todo 不变换就保存纹理，不需要更新
+    private static final float POSITION_COORDINATES[] = {
+            -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
+            1.0f, -1.0f, 0.0f, 1.0f,//right bottom
+            -1.0f, 1.0f, 0.0f, 1.0f, //left top
+            1.0f, 1.0f, 0.0f, 1.0f//right top
+    };
 
+    private static final float TEXTURE_COORDINATES[] = {
+            0.0f, 0.0f, 0.0f, 1.0f,//left bottom
+            1.0f, 0.0f, 0.0f, 1.0f,//right bottom
+            0.0f, 1.0f, 0.0f, 1.0f,//left top
+            1.0f, 1.0f, 0.0f, 1.0f,//right  top
+    };
+    protected static final Matrix4 DEFAULT_MATRIX = new Matrix4();
     public static final long DURATION_MATCH_PARENT = -1;
     public static final int SIZE_MATCH_PARENT = -1;
+    public static final String KEY_RENDER_TIME = "renderTime";
+    public static final String KEY_VIEW_PORT_SIZE = "viewPortSize";
+    public static final String KEY_POSITION = "position";
+    public static final String KEY_INPUT_TEXTURE_COORDINATE = "inputTextureCoordinate";
+    public static final String KEY_POSITION_MATRIX = "positionMatrix";
+    public static final String KEY_TEXTURE_MATRIX = "textureMatrix";
+    public static final String KEY_VIEW_PORT_MATRIX_MATRIX = "viewPortMatrix";
     public static final String KEY_FRAMES_KEY_LAYER_X = "layer_x";
     public static final String KEY_FRAMES_KEY_LAYER_Y = "layer_y";
     public static final String KEY_FRAMES_KEY_LAYER_WIDTH = "layer_width";
@@ -34,12 +55,12 @@ public class GLLayer extends GLObject {
     public static final int TOUCH_SLOP = 8;
 
 
-    private String vertexShaderCode;
-    private String fragmentShaderCode;
+    String vertexShaderCode;
+    String fragmentShaderCode;
     private GLShaderParam shaderParam;
     private GLShaderParam defaultShaderParam;
     private GLEnable enable;
-    private GLXfermode xfermode;
+    GLXfermode xfermode;
     private GravityMode gravity = GravityMode.LEFT_TOP;
     private int x;
     private int y;
@@ -58,7 +79,7 @@ public class GLLayer extends GLObject {
     private float renderTranslateX = 0;
     private float renderTranslateY = 0;
     private long renderDuration;
-    private long renderTime;
+    protected long renderTime;
     private boolean renderEnable = true;
     private float scaleX = 1;
     private float scaleY = 1;
@@ -73,8 +94,8 @@ public class GLLayer extends GLObject {
     private long duration = DURATION_MATCH_PARENT;
 
     private Map<String, KeyframeSet> keyframesMap = new HashMap<>();
-    private GLEffectGroup effectGroup;
-    private final Matrix4 viewPortMatrix = new Matrix4();
+    GLEffectGroup effectGroup;
+    final Matrix4 viewPortMatrix = new Matrix4();
     private final Matrix transformMatrix = new Matrix();
     private final Matrix4 transformMatrix4 = new Matrix4();
     private final Matrix transformInvertMatrix = new Matrix();
@@ -93,6 +114,8 @@ public class GLLayer extends GLObject {
     private final float[] tempPoint = new float[2];
 
     private ScaleMode layerScaleMode = ScaleMode.NONE;
+    private GLViewPort viewPort;
+    private GLBlend blend;
 
 
     protected GLLayer(GLRenderClient client, String vertexShaderCode, String fragmentShaderCode) {
@@ -104,6 +127,8 @@ public class GLLayer extends GLObject {
         this.shaderParam = client.newShaderParam();
         this.defaultShaderParam = client.newShaderParam();
         this.effectGroup = client.newEffectSet();
+        this.viewPort = client.newViewPort();
+        this.blend = client.newBlend();
     }
 
     @Override
@@ -179,12 +204,10 @@ public class GLLayer extends GLObject {
         float parentRenderWidth = getParentRenderWidth();
         float parentRenderHeight = getParentRenderHeight();
         setRenderTime(renderTime);
-        float renderWidth = getWidth() == SIZE_MATCH_PARENT ? parentRenderWidth : Math.max(getWidth(), 0);
-        float renderHeight = getHeight() == SIZE_MATCH_PARENT ? parentRenderHeight : Math.max(getHeight(), 0);
         setRenderX(getX());
         setRenderY(getY());
-        setRenderWidth(renderWidth);
-        setRenderHeight(renderHeight);
+        setRenderWidth(getWidth() == SIZE_MATCH_PARENT ? parentRenderWidth : Math.max(getWidth(), 0));
+        setRenderHeight(getHeight() == SIZE_MATCH_PARENT ? parentRenderHeight : Math.max(getHeight(), 0));
         setRenderScaleX(getScaleX());
         setRenderScaleY(getScaleY());
         setRenderRotation(getRotation());
@@ -194,11 +217,13 @@ public class GLLayer extends GLObject {
         onLayerRenderSize(getRenderWidth(), getRenderHeight(), parentRenderWidth, parentRenderHeight);
         onLayerGravity(parentRenderWidth, parentRenderHeight);
         onLayerViewPortMatrix(parentRenderWidth, parentRenderHeight);
-        if (getRenderWidth() <= 0 || getRenderHeight() <= 0) {
+        int currentWidth = (int) getRenderWidth();
+        int currentHeight = (int) getRenderHeight();
+        if (currentWidth <= 0 || currentHeight <= 0) {
             return;
         }
         setRenderEnable(true);
-        effectGroup.calculateEffect(getRenderTime(), getRenderDuration());
+        effectGroup.calculateEffect(renderTime, renderDurationMs);
     }
 
     public void setLayerScaleMode(ScaleMode layerScaleMode) {
@@ -380,8 +405,108 @@ public class GLLayer extends GLObject {
     }
 
 
-    protected void renderLayer(GLFrameBuffer frameBuffer) {
-        client.renderLayer(this, frameBuffer);
+    final void renderLayer(GLFrameBuffer outputBuffer) {
+        if (outputBuffer == null) {
+            throw new IllegalArgumentException("outputBuffer is null");
+        }
+        if (!isRenderEnable()) {
+            return;
+        }
+        transformLayer();
+        client.drawColor(backgroundColor, viewPortMatrix, outputBuffer);
+        int currentWidth = (int) getRenderWidth();
+        int currentHeight = (int) getRenderHeight();
+        drawLayer(currentWidth, currentHeight, outputBuffer);
+    }
+
+    protected void drawLayer(int currentWidth, int currentHeight, GLFrameBuffer outputBuffer) {
+        if (effectGroup.isRenderEnable()) {
+            GLFrameBufferCache frameBufferCache = client.getFrameBufferCache();
+            GLFrameBuffer currentFrameBuffer = frameBufferCache.obtain(currentWidth, currentHeight);
+            drawLayer(currentFrameBuffer, DEFAULT_MATRIX, GLXfermode.SRC_OVER, renderTime);
+            GLFrameBuffer effectBuffer = effectGroup.renderEffect(currentFrameBuffer);
+            if (currentFrameBuffer != effectBuffer) {
+                frameBufferCache.cache(currentFrameBuffer);
+            }
+            GLTexture effectTexture = effectBuffer.getColorTexture();
+            client.drawTexture(effectTexture, xfermode, viewPortMatrix, outputBuffer);
+            frameBufferCache.cache(effectBuffer);
+            return;
+        }
+        drawLayer(outputBuffer, viewPortMatrix, xfermode, renderTime);
+    }
+
+    private void transformLayer() {
+        if (!isDisposed()) {
+            create();
+        }
+        for (int i = 0; i < layerTransforms.size(); i++) {
+            LayerTransform transform = layerTransforms.get(i);
+            transform.onLayerTransform(this, renderTime);
+        }
+    }
+
+
+    protected void drawLayer(GLFrameBuffer outputBuffer, Matrix4 viewPortMatrix, GLXfermode xfermode, long renderTimeMs) {
+        GLProgramCache programCache = client.getProgramCache();
+        GLProgram program = programCache.obtain(vertexShaderCode, fragmentShaderCode);
+        program.setDrawType(drawType);
+        if (drawType == GLDrawType.DRAW_ARRAY) {
+            GLDrawArray drawArray = program.getDrawArray();
+            drawArray.setDrawMode(getDrawMode());
+            drawArray.setVertexStart(getDrawArrayStart());
+            drawArray.setVertexCount(getDrawArrayCount());
+            program.setDrawType(getDrawType());
+        } else if (drawType == GLDrawType.DRAW_ELEMENT) {
+            GLDrawElement drawElement = program.getDrawElement();
+            drawElement.setDrawMode(getDrawMode());
+            drawElement.set(getDrawElementIndices());
+            program.setDrawType(getDrawType());
+        }
+        GLFrameBuffer old = outputBuffer.bind();
+        viewPort.set(0, 0, outputBuffer.getWidth(), outputBuffer.getHeight());
+        viewPort.call();
+        enable.call();
+        xfermode.apply(blend);
+        blend.call();
+        program.clearShaderParam();
+        GLShaderParam programParam = program.getShaderParam();
+        programParam.put(KEY_RENDER_TIME, renderTimeMs / 1000.0f);
+        programParam.put(KEY_VIEW_PORT_SIZE, viewPort.getWidth(), viewPort.getHeight());
+        programParam.put(KEY_POSITION, POSITION_COORDINATES);
+        programParam.put(KEY_INPUT_TEXTURE_COORDINATE, TEXTURE_COORDINATES);
+        programParam.put(KEY_POSITION_MATRIX, DEFAULT_MATRIX.get());
+        programParam.put(KEY_TEXTURE_MATRIX, DEFAULT_MATRIX.get());
+        programParam.put(KEY_VIEW_PORT_MATRIX_MATRIX, viewPortMatrix.get());
+        boolean render = onRenderLayer(this, renderTimeMs);
+        if (!render) {
+            old.bind();
+            return;
+        }
+        programParam.put(defaultShaderParam);
+        for (String key : getKeyNames()) {
+            KeyframeSet keyFrames = getKeyFrames(key);
+            if (keyFrames != null) {
+                Object keyValue = keyFrames.getValueByTime(renderTimeMs, getRenderDuration());
+                if (keyValue != null) {
+                    Class valueType = keyFrames.getValueType();
+                    if (valueType == int.class) {
+                        programParam.put(key, (int) keyValue);
+                    } else if (valueType == float.class) {
+                        programParam.put(key, (float) keyValue);
+                    } else if (valueType == int[].class) {
+                        programParam.put(key, (float) keyValue);
+                    } else if (valueType == float[].class) {
+                        programParam.put(key, (float[]) keyValue);
+                    }
+                }
+            }
+        }
+        programParam.put(shaderParam);
+        program.execute();
+        GLRenderSurface eglSurface = outputBuffer.getRenderSurface();
+        eglSurface.setTime(renderTimeMs * 1000000L);
+        old.bind();
     }
 
     public void setX(int x) {
@@ -486,19 +611,6 @@ public class GLLayer extends GLObject {
     }
 
 
-    public int getEffectSize() {
-        return effectGroup.getEffectSize();
-    }
-
-    public GLEffectGroup getEffectGroup() {
-        return effectGroup;
-    }
-
-    public GLEffect getEffect(int index) {
-        return index < 0 || index >= getEffectSize() ? null : effectGroup.getEffect(index);
-    }
-
-
     public void addTransform(LayerTransform transform) {
         if (transform == null) return;
         layerTransforms.add(transform);
@@ -541,17 +653,6 @@ public class GLLayer extends GLObject {
         return keyframesMap.get(key);
     }
 
-    public int getTransformSize() {
-        return layerTransforms.size();
-    }
-
-    public LayerTransform getTransform(int index) {
-        return index < 0 || index >= getTransformSize() ? null : layerTransforms.get(index);
-    }
-
-    public int getIndexOfTransform(LayerTransform layerTransform) {
-        return layerTransforms.indexOf(layerTransform);
-    }
 
     public void clearTransform() {
         layerTransforms.clear();

@@ -2,13 +2,11 @@ package com.jonanorman.android.renderclient;
 
 import android.opengl.EGLSurface;
 
-import java.util.Objects;
-
-public class GLPbufferSurface extends GLRenderSurface {
+public abstract class GLPbufferSurface extends GLRenderSurface {
 
     private final int width;
     private final int height;
-    private EGLSurface eglSurface;
+    protected EGLSurface eglSurface;
 
     public GLPbufferSurface(GLRenderClient client, int width, int height) {
         super(client);
@@ -32,30 +30,6 @@ public class GLPbufferSurface extends GLRenderSurface {
         return width;
     }
 
-    @Override
-    protected void onDispose() {
-        client.destroy(this);
-    }
-
-    @Override
-    protected void onCreate() {
-        eglSurface = client.create(this);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GLPbufferSurface)) return false;
-        GLPbufferSurface that = (GLPbufferSurface) o;
-        return Objects.equals(eglSurface, that.eglSurface)
-                && Objects.equals(width, that.width)
-                && Objects.equals(height, that.height);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(width, height, eglSurface);
-    }
 
     @Override
     protected EGLSurface getEGLSurface() {
