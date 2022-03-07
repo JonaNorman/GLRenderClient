@@ -19,7 +19,6 @@ import java.util.Set;
 
 public class GLLayer extends GLObject {
 
-    //  todo 不变换就保存纹理，不需要更新
     private static final float POSITION_COORDINATES[] = {
             -1.0f, -1.0f, 0.0f, 1.0f,//left bottom
             1.0f, -1.0f, 0.0f, 1.0f,//right bottom
@@ -416,10 +415,10 @@ public class GLLayer extends GLObject {
         client.drawColor(backgroundColor, viewPortMatrix, outputBuffer);
         int currentWidth = (int) getRenderWidth();
         int currentHeight = (int) getRenderHeight();
-        drawLayer(currentWidth, currentHeight, outputBuffer);
+        onRenderLayer(currentWidth, currentHeight, outputBuffer);
     }
 
-    protected void drawLayer(int currentWidth, int currentHeight, GLFrameBuffer outputBuffer) {
+    protected void onRenderLayer(int currentWidth, int currentHeight, GLFrameBuffer outputBuffer) {
         if (effectGroup.isRenderEnable()) {
             GLFrameBufferCache frameBufferCache = client.getFrameBufferCache();
             GLFrameBuffer currentFrameBuffer = frameBufferCache.obtain(currentWidth, currentHeight);

@@ -205,7 +205,7 @@ public class GLLayerGroup extends GLLayer {
 
 
     @Override
-    protected void drawLayer(int currentWidth, int currentHeight, GLFrameBuffer outputBuffer) {
+    protected void onRenderLayer(int currentWidth, int currentHeight, GLFrameBuffer outputBuffer) {
         GLFrameBufferCache frameBufferCache = client.getFrameBufferCache();
         GLFrameBuffer groupFrameBuffer = frameBufferCache.obtain(currentWidth, currentHeight);
         if (vertexShaderCode != null &&
