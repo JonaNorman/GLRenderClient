@@ -29,6 +29,10 @@
             android:label="RenderClientActivity"></activity>
 
         <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLSurfaceLayerActivity"
+            android:label="RenderClientActivity"></activity>
+
+        <activity
             android:name="com.jonanorman.android.renderclient.sample.GLLayerActivity"
             android:label="GLLayerActivity"></activity>
     </application>

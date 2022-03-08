@@ -89,6 +89,8 @@ public abstract class GLRenderClient {
 
     public abstract GLLayoutLayer newLayoutLayer(Context context);
 
+    public abstract GLSurfaceTextureLayer newSurfaceTextureLayer();
+
     public abstract GLProgramCache getProgramCache();
 
     public abstract void attachCurrentThread();

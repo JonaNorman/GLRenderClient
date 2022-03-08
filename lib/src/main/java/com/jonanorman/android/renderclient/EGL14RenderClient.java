@@ -337,6 +337,11 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
+    public GLSurfaceTextureLayer newSurfaceTextureLayer() {
+        return new GLSurfaceTextureLayer(this);
+    }
+
+    @Override
     public GLLayoutLayer newLayoutLayer(Context context, int styleRes) {
         return new GLLayoutLayer(this, context, styleRes);
     }
