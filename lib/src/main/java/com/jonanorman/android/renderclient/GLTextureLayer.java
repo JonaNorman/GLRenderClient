@@ -6,7 +6,7 @@ import com.jonanorman.android.renderclient.math.ScaleMode;
 import com.jonanorman.android.renderclient.utils.MathUtils;
 
 
-public class GLTextureLayer extends GLLayer {
+public class GLTextureLayer extends GLShaderLayer {
 
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
@@ -93,8 +93,8 @@ public class GLTextureLayer extends GLLayer {
     }
 
     @Override
-    protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
-        super.onRenderLayer(layer, renderTimeMs);
+    protected boolean onShaderLayerRender(long renderTimeMs) {
+        super.onShaderLayerRender(renderTimeMs);
         if (getTextureWidth() <= 0 || getTextureHeight() <= 0) {
             return false;
         }
@@ -104,8 +104,8 @@ public class GLTextureLayer extends GLLayer {
         int maxMipmapLevel = Math.max(texture == null ? 0 : texture.getMaxMipmapLevel(), 0);
         float mipMapLevel = textureWidth > 0 && textureHeight > 0 ? 0 :
                 (float) MathUtils.clamp(
-                        Math.max(layer.getRenderWidth() * 1.0 / textureWidth,
-                                layer.getHeight() * 1.0 / textureHeight) - 1.0,
+                        Math.max(getRenderWidth() * 1.0 / textureWidth,
+                                getRenderHeight() * 1.0 / textureHeight) - 1.0,
                         0.0, maxMipmapLevel);
         shaderParam.put("maxMipmapLevel", maxMipmapLevel);
         shaderParam.put("mipmapLevel", mipMapLevel);

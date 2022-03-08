@@ -5,7 +5,7 @@ import android.graphics.Color;
 
 import com.jonanorman.android.renderclient.math.KeyframeSet;
 
-public class GLColorLayer extends GLLayer {
+public class GLColorLayer extends GLShaderLayer {
 
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
@@ -51,10 +51,11 @@ public class GLColorLayer extends GLLayer {
         this.color = color;
     }
 
+
     @Override
-    protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
-        super.onRenderLayer(layer, renderTimeMs);
-        GLShaderParam shaderParam = layer.getDefaultShaderParam();
+    protected boolean onShaderLayerRender(long renderTimeMs) {
+        super.onShaderLayerRender(renderTimeMs);
+        GLShaderParam shaderParam = getDefaultShaderParam();
         shaderParam.put(KEY_COLOR, redColor, greenColor, blueColor, alphaColor);
         return true;
     }

@@ -28,7 +28,7 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GLLayoutLayer extends GLLayer {
+public class GLLayoutLayer extends GLShaderLayer {
 
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
@@ -150,15 +150,15 @@ public class GLLayoutLayer extends GLLayer {
 
 
     @Override
-    protected boolean onRenderLayer(GLLayer layer, long renderTimeMs) {
-        super.onRenderLayer(layer, renderTimeMs);
+    protected boolean onShaderLayerRender(long renderTimeMs) {
+        super.onShaderLayerRender(renderTimeMs);
         int textureWidth = viewTexture.getWidth();
         int textureHeight = viewTexture.getHeight();
-        GLShaderParam shaderParam = layer.getDefaultShaderParam();
+        GLShaderParam shaderParam = getDefaultShaderParam();
         shaderParam.put("inputImageTexture", viewTexture.getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
-        float viewWidth = layer.getRenderWidth();
-        float viewHeight = layer.getRenderHeight();
+        float viewWidth = getRenderWidth();
+        float viewHeight = getRenderHeight();
         viewTexture.setWidth((int) viewWidth);
         viewTexture.setHeight((int) viewHeight);
         if (lastSurfaceTextureWidth != viewTexture.getWidth() || lastSurfaceTextureHeight != viewTexture.getHeight()) {

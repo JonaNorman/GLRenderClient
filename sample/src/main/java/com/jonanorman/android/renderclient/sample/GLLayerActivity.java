@@ -242,7 +242,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_gl_layer);
+        setContentView(R.layout.texture_view);
         TextureView textureView = findViewById(R.id.textureView);
         textureView.setSurfaceTextureListener(this);
         textureView.setOpaque(false);

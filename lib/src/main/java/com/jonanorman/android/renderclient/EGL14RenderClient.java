@@ -342,8 +342,8 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    public GLLayer newLayer(String vertexCode, String fragmentCode) {
-        return new GLLayer(this, vertexCode, fragmentCode);
+    public GLShaderLayer newShaderLayer(String vertexCode, String fragmentCode) {
+        return new GLShaderLayer(this, vertexCode, fragmentCode);
     }
 
     @Override
@@ -568,7 +568,7 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    void drawColor(int backgroundColor, Matrix4 viewPortMatrix, GLFrameBuffer outBuffer) {
+    void drawColor(GLFrameBuffer outBuffer, Matrix4 viewPortMatrix, int backgroundColor) {
         if (backgroundColor != Color.TRANSPARENT) {
             colorDrawer.setColor(backgroundColor);
             colorDrawer.drawLayer(outBuffer, viewPortMatrix, GLXfermode.SRC_OVER, 0);
@@ -576,7 +576,7 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    void drawTexture(GLTexture texture, GLXfermode xfermode, Matrix4 viewPortMatrix, GLFrameBuffer outBuffer) {
+    void drawTexture(GLFrameBuffer outBuffer, Matrix4 viewPortMatrix, GLXfermode xfermode, GLTexture texture) {
         textureDrawer.setTexture(texture);
         textureDrawer.drawLayer(outBuffer, viewPortMatrix, xfermode, 0);
     }

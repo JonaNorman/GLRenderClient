@@ -11,13 +11,12 @@ public class GLLayerGroup extends GLLayer {
 
     private final List<GLLayer> layerList = new ArrayList<>();
 
-    private GLXfermode selfXfermode = GLXfermode.SRC_OVER;
     private GLLayer mFirstTouchLayer;
     private final float[] tempPoint = new float[2];
 
 
     public GLLayerGroup(GLRenderClient client) {
-        super(client, null, null);
+        super(client);
     }
 
 
@@ -80,13 +79,6 @@ public class GLLayerGroup extends GLLayer {
         return index < 0 || index >= layerList.size() ? null : layerList.get(index);
     }
 
-    public void setSelfXfermode(GLXfermode selfXfermode) {
-        this.selfXfermode = selfXfermode;
-    }
-
-    public GLXfermode getSelfXfermode() {
-        return selfXfermode;
-    }
 
     public void clear() {
         layerList.clear();
@@ -94,7 +86,7 @@ public class GLLayerGroup extends GLLayer {
 
 
     @Override
-    protected void calculateLayer(long parentRenderTimeMs, long parentDurationMs) {
+    public void calculateLayer(long parentRenderTimeMs, long parentDurationMs) {
         super.calculateLayer(parentRenderTimeMs, parentDurationMs);
         for (int i = 0; i < getLayerSize(); i++) {
             GLLayer child = getLayer(i);
@@ -208,10 +200,6 @@ public class GLLayerGroup extends GLLayer {
     protected void onRenderLayer(int currentWidth, int currentHeight, GLFrameBuffer outputBuffer) {
         GLFrameBufferCache frameBufferCache = client.getFrameBufferCache();
         GLFrameBuffer groupFrameBuffer = frameBufferCache.obtain(currentWidth, currentHeight);
-        if (vertexShaderCode != null &&
-                fragmentShaderCode != null) {
-            drawLayer(groupFrameBuffer, DEFAULT_MATRIX, selfXfermode, renderTime);
-        }
         for (int i = 0; i < layerList.size(); i++) {
             GLLayer child = layerList.get(i);
             child.renderLayer(groupFrameBuffer);
@@ -221,9 +209,8 @@ public class GLLayerGroup extends GLLayer {
             frameBufferCache.cache(groupFrameBuffer);
         }
         GLTexture effectTexture = effectBuffer.getColorTexture();
-        client.drawTexture(effectTexture, xfermode, viewPortMatrix, outputBuffer);
+        client.drawTexture(outputBuffer, viewPortMatrix, xfermode, effectTexture);
         frameBufferCache.cache(effectBuffer);
     }
-
 
 }

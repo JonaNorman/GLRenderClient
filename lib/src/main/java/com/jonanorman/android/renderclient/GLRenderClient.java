@@ -75,7 +75,7 @@ public abstract class GLRenderClient {
     public abstract GLTextureLayer newTextureLayer();
 
 
-    public abstract GLLayer newLayer(String vertexCode, String fragmentCode);
+    public abstract GLShaderLayer newShaderLayer(String vertexCode, String fragmentCode);
 
     public abstract GLColorLayer newColorLayer();
 
@@ -98,9 +98,9 @@ public abstract class GLRenderClient {
     public abstract Thread getAttachThread();
 
 
-    abstract void drawColor(int backgroundColor, Matrix4 viewPortMatrix, GLFrameBuffer outBuffer);
+    abstract void drawColor(GLFrameBuffer outBuffer, Matrix4 viewPortMatrix, int backgroundColor);
 
-    abstract void drawTexture(GLTexture texture, GLXfermode xfermode, Matrix4 viewPortMatrix, GLFrameBuffer outBuffer);
+    abstract void drawTexture(GLFrameBuffer outBuffer, Matrix4 viewPortMatrix, GLXfermode xfermode, GLTexture texture);
 
     protected abstract void checkThread();
 
