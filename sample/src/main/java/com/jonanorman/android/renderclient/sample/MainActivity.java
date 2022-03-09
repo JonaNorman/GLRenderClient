@@ -18,10 +18,10 @@ public class MainActivity extends AppCompatActivity {
 
     public MainActivity() {
         super();
-        classList.add(GLLayerActivity.class);
-        classList.add(GLShaderActivity.class);
+        classList.add(GLLayerGroupActivity.class);
+        classList.add(GLShaderLayerActivity.class);
         classList.add(GLSurfaceLayerActivity.class);
-        classList.add(GLLayoutLayerActivity.class);
+        classList.add(GLViewLayerActivity.class);
     }
 
     @Override

@@ -19,7 +19,7 @@ import com.jonanorman.android.renderclient.GLShaderLayer;
 import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.Matrix4;
 
-public class GLShaderActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
+public class GLShaderLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
 
     private static final int MESSAGE_LAYER_CREATE = 1;
     private static final int MESSAGE_SURFACE_RENDER = 2;

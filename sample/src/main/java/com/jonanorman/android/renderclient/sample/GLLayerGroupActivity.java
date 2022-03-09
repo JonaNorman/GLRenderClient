@@ -33,7 +33,7 @@ import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.KeyframeSet;
 import com.jonanorman.android.renderclient.math.ScaleMode;
 
-public class GLLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
+public class GLLayerGroupActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
 
     private static final int MESSAGE_LAYER_CREATE = 1;
     private static final int MESSAGE_SURFACE_RENDER = 2;

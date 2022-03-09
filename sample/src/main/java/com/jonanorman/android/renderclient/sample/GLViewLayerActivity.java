@@ -31,7 +31,7 @@ import com.jonanorman.android.renderclient.GLRenderThread;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GLLayoutLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
+public class GLViewLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
 
     private static final int MESSAGE_LAYER_CREATE = 1;
     private static final int MESSAGE_SURFACE_RENDER = 2;
@@ -112,7 +112,7 @@ public class GLLayoutLayerActivity extends AppCompatActivity implements TextureV
             @Override
             public void run() {
                 LayoutInflater layoutInflater = LayoutInflater.from(viewLayer.getContext());
-                View view = layoutInflater.inflate(R.layout.layer_layout, null);
+                View view = layoutInflater.inflate(R.layout.layout_view_layer, null);
                 viewLayer.addView(view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
                 ListView listView = view.findViewById(R.id.list_view);
