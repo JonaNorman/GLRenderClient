@@ -15,8 +15,10 @@ import com.jonanorman.android.renderclient.math.ScaleMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 public abstract class GLLayer extends GLObject {
@@ -84,6 +86,7 @@ public abstract class GLLayer extends GLObject {
     private final float[] tempPoint = new float[2];
 
     private ScaleMode layerScaleMode = ScaleMode.NONE;
+    private Queue<MotionEvent> motionEventQueue = new LinkedList<>();
 
 
     protected GLLayer(GLRenderClient client) {
@@ -102,26 +105,28 @@ public abstract class GLLayer extends GLObject {
             ownFrameBuffer.dispose();
             ownFrameBuffer = null;
         }
+        for (MotionEvent motionEvent : motionEventQueue) {
+            motionEvent.recycle();
+        }
+        motionEventQueue.clear();
     }
 
-    public void render(GLFrameBuffer frameBuffer, MotionEvent motionEvent) {
+    public void render(GLFrameBuffer frameBuffer) {
         long duration = getDuration() == DURATION_MATCH_PARENT ? Long.MAX_VALUE : getDuration();
         setParentRenderWidth(frameBuffer.getWidth());
         setParentRenderHeight(frameBuffer.getHeight());
         calculateLayer(getTime(), duration);
-        dispatchTouchEvent(motionEvent);
+        MotionEvent motionEvent;
+        while ((motionEvent = motionEventQueue.poll()) != null) {
+            dispatchTouchEvent(motionEvent);
+            motionEvent.recycle();
+        }
+        motionEventQueue.clear();
         renderLayer(frameBuffer);
     }
 
-    public void render(GLFrameBuffer frameBuffer) {
-        render(frameBuffer, null);
-    }
 
     public void render(GLRenderSurface eglSurface, SurfaceReadBitmapCallback callback) {
-        render(eglSurface, null, callback);
-    }
-
-    public void render(GLRenderSurface eglSurface, MotionEvent event, SurfaceReadBitmapCallback callback) {
         if (outEGLSurface != eglSurface) {
             outEGLSurface = eglSurface;
             if (ownFrameBuffer != null) {
@@ -130,7 +135,7 @@ public abstract class GLLayer extends GLObject {
             ownFrameBuffer = client.newFrameBuffer(eglSurface);
         }
         ownFrameBuffer.clearColor(Color.TRANSPARENT);
-        render(ownFrameBuffer, event);
+        render(ownFrameBuffer);
         if (callback != null) {
             Bitmap bitmap = callback.bitmap;
             if (bitmap != null) {
@@ -144,11 +149,7 @@ public abstract class GLLayer extends GLObject {
     }
 
     public void render(GLRenderSurface eglSurface) {
-        render(eglSurface, null, null);
-    }
-
-    public void render(GLRenderSurface eglSurface, MotionEvent motionEvent) {
-        render(eglSurface, motionEvent, null);
+        render(eglSurface, null);
     }
 
     public void render(Surface surface) {
@@ -317,6 +318,14 @@ public abstract class GLLayer extends GLObject {
                 1);
 
 
+    }
+
+    public void queueTouchEvent(MotionEvent motionEvent) {
+        motionEventQueue.offer(motionEvent);
+    }
+
+    public void clearTouchEventQueue() {
+        motionEventQueue.clear();
     }
 
     public boolean dispatchTouchEvent(MotionEvent event) {

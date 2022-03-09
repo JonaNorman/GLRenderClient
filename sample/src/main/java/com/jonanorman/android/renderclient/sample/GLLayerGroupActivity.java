@@ -208,8 +208,7 @@ public class GLLayerGroupActivity extends AppCompatActivity implements TextureVi
                 return true;
                 case MESSAGE_SURFACE_MOTION_EVENT: {
                     MotionEvent motionEvent = (MotionEvent) msg.obj;
-                    rootLayer.dispatchTouchEvent(motionEvent);
-                    motionEvent.recycle();
+                    rootLayer.queueTouchEvent(motionEvent);
                     return true;
                 }
                 case MESSAGE_SURFACE_RENDER:

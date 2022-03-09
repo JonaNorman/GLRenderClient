@@ -24,9 +24,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.jonanorman.android.renderclient.GLViewLayer;
 import com.jonanorman.android.renderclient.GLRenderClient;
 import com.jonanorman.android.renderclient.GLRenderThread;
+import com.jonanorman.android.renderclient.GLViewLayer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,8 +79,7 @@ public class GLViewLayerActivity extends AppCompatActivity implements TextureVie
                     return true;
                 case MESSAGE_SURFACE_MOTION_EVENT: {
                     MotionEvent motionEvent = (MotionEvent) msg.obj;
-                    viewLayer.dispatchTouchEvent(motionEvent);
-                    motionEvent.recycle();
+                    viewLayer.queueTouchEvent(motionEvent);
                     return true;
                 }
             }
