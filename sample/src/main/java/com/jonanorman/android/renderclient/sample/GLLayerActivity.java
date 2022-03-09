@@ -21,7 +21,7 @@ import com.jonanorman.android.renderclient.GLBitmapLayer;
 import com.jonanorman.android.renderclient.GLColorLayer;
 import com.jonanorman.android.renderclient.GLLayer;
 import com.jonanorman.android.renderclient.GLLayerGroup;
-import com.jonanorman.android.renderclient.GLLayoutLayer;
+import com.jonanorman.android.renderclient.GLViewLayer;
 import com.jonanorman.android.renderclient.GLRenderClient;
 import com.jonanorman.android.renderclient.GLRenderThread;
 import com.jonanorman.android.renderclient.GLShaderEffect;
@@ -84,7 +84,7 @@ public class GLLayerActivity extends AppCompatActivity implements TextureView.Su
                         rootLayer.addLayer(topGroup);
 
 
-                        GLLayoutLayer layoutLayer = renderClient.newLayoutLayer(getApplicationContext());
+                        GLViewLayer layoutLayer = renderClient.newLayoutLayer(getApplicationContext());
                         layoutLayer.setBackgroundColor(Color.RED);
                         layoutLayer.setStartTime(4000);
                         layoutLayer.setDuration(6000);

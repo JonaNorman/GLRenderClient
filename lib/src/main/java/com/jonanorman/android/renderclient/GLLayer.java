@@ -3,7 +3,9 @@ package com.jonanorman.android.renderclient;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.SurfaceTexture;
 import android.view.MotionEvent;
+import android.view.Surface;
 
 import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.KeyframeSet;
@@ -147,6 +149,15 @@ public abstract class GLLayer extends GLObject {
 
     public void render(GLRenderSurface eglSurface, MotionEvent motionEvent) {
         render(eglSurface, motionEvent, null);
+    }
+
+    public void render(Surface surface) {
+        render(client.obtainWindowSurface(surface));
+    }
+
+
+    public void render(SurfaceTexture surface) {
+        render(client.obtainWindowSurface(surface));
     }
 
 

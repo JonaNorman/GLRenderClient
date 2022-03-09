@@ -26,15 +26,19 @@
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLShaderActivity"
-            android:label="RenderClientActivity"></activity>
+            android:label="GLShaderActivity"></activity>
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLSurfaceLayerActivity"
-            android:label="RenderClientActivity"></activity>
+            android:label="GLSurfaceLayerActivity"></activity>
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLLayerActivity"
             android:label="GLLayerActivity"></activity>
+
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLLayoutLayerActivity"
+            android:label="GLLayoutLayerActivity"></activity>
     </application>
 
 </manifest>

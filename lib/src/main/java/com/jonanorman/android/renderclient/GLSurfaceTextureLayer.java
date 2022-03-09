@@ -70,7 +70,7 @@ public class GLSurfaceTextureLayer extends GLShaderLayer {
     }
 
     private Handler getSurfaceTextureHandler() {
-        synchronized (GLLayoutLayer.class) {
+        synchronized (GLViewLayer.class) {
             if (surfaceTextureHandler == null) {
                 if (FRAME_AVAILABLE_HANDLER == null) {
                     HandlerThread handlerThread = new HandlerThread("SurfaceTextureFrameAvailableThread");
@@ -148,7 +148,7 @@ public class GLSurfaceTextureLayer extends GLShaderLayer {
     }
 
     private void releaseSurfaceTextureHandler() {
-        synchronized (GLLayoutLayer.class) {
+        synchronized (GLViewLayer.class) {
             if (surfaceTextureHandler != null) {
                 surfaceTextureHandler.removeCallbacksAndMessages(null);
                 FRAME_AVAILABLE_COUNT--;

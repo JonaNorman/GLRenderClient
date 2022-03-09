@@ -3,6 +3,9 @@ package com.jonanorman.android.renderclient;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.SurfaceTexture;
 import android.os.Binder;
 import android.os.Build;
@@ -28,7 +31,7 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GLLayoutLayer extends GLShaderLayer {
+public class GLViewLayer extends GLShaderLayer {
 
 
     private static final String VERTEX_SHADER = "precision highp float;\n" +
@@ -78,15 +81,18 @@ public class GLLayoutLayer extends GLShaderLayer {
     private Context context;
     private Object object = new Object();
     private boolean done;
+    private Object attachInfo;
+    Paint clearPaint = new Paint();
 
-    protected GLLayoutLayer(GLRenderClient client, Context context) {
+    protected GLViewLayer(GLRenderClient client, Context context) {
         this(client, context, 0);
     }
 
-    protected GLLayoutLayer(GLRenderClient client, Context context, int style) {
+    protected GLViewLayer(GLRenderClient client, Context context, int style) {
         super(client, VERTEX_SHADER, FRAGMENT_SHADER);
         this.context = new ContextThemeWrapper(context.getApplicationContext(), style);
         rootLayout = new FrameLayout(this.context);
+        clearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
         ReflectionLimitUtils.clearLimit();
     }
 
@@ -108,7 +114,7 @@ public class GLLayoutLayer extends GLShaderLayer {
     }
 
     private Handler getSurfaceTextureHandler() {
-        synchronized (GLLayoutLayer.class) {
+        synchronized (GLViewLayer.class) {
             if (surfaceTextureHandler == null) {
                 if (FRAME_AVAILABLE_HANDLER == null) {
                     HandlerThread handlerThread = new HandlerThread("SurfaceTextureFrameAvailableThread");
@@ -133,7 +139,7 @@ public class GLLayoutLayer extends GLShaderLayer {
     }
 
     private void releaseSurfaceTextureHandler() {
-        synchronized (GLLayoutLayer.class) {
+        synchronized (GLViewLayer.class) {
             if (surfaceTextureHandler != null) {
                 surfaceTextureHandler.removeCallbacksAndMessages(null);
                 FRAME_AVAILABLE_COUNT--;
@@ -205,9 +211,11 @@ public class GLLayoutLayer extends GLShaderLayer {
     void renderView(int viewWidth, int viewHeight) {
         if (handler == null) {
             handler = new Handler();
+            attachInfo = generateAttachInfo(rootLayout);
         } else if (!handler.getLooper().equals(Looper.myLooper())) {
             detachWindow();
             handler = new Handler();
+            attachInfo = generateAttachInfo(rootLayout);
         }
         dispatchAttachWindow(rootLayout);
         dispatchMeasureAndLayout(viewWidth, viewHeight);
@@ -220,7 +228,6 @@ public class GLLayoutLayer extends GLShaderLayer {
     private void dispatchAttachWindow(View view) {
         if (view.getWindowToken() == null && !viewAttachments.containsKey(view)) {
             try {
-                Object attachInfo = generateAttachInfo(view);
                 if (attachInfo == null) {
                     viewAttachments.put(view, false);
                 } else {
@@ -244,15 +251,22 @@ public class GLLayoutLayer extends GLShaderLayer {
 
     private void dispatchMeasureAndLayout(int viewWidth, int viewHeight) {
         rootLayout.measure(
-                View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.AT_MOST),
-                View.MeasureSpec.makeMeasureSpec(viewHeight, View.MeasureSpec.AT_MOST));
+                View.MeasureSpec.makeMeasureSpec(viewWidth, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(viewHeight, View.MeasureSpec.EXACTLY));
         do {
             rootLayout.layout(0, 0, rootLayout.getMeasuredWidth(), rootLayout.getMeasuredHeight());
         } while (rootLayout.isLayoutRequested());
     }
 
+    public FrameLayout getRootLayout() {
+        return rootLayout;
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event == null) {
+            return false;
+        }
         if (!isRenderEnable()) {
             return false;
         }
@@ -285,6 +299,13 @@ public class GLLayoutLayer extends GLShaderLayer {
     }
 
     private void drawRootLayout() {
+        try {
+            if (attachInfo != null) {
+                setField(attachInfo, "mDrawingTime", renderTime);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Canvas glCanvas = null;
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -292,6 +313,7 @@ public class GLLayoutLayer extends GLShaderLayer {
             } else {
                 glCanvas = surface.lockCanvas(null);
             }
+            glCanvas.drawRect(0, 0, glCanvas.getWidth(), glCanvas.getHeight(), clearPaint);
             rootLayout.draw(glCanvas);
         } catch (Exception e) {
 
@@ -359,7 +381,7 @@ public class GLLayoutLayer extends GLShaderLayer {
 
 
     private Object generateAttachInfo(View view) {
-        try {
+        try {//https://github.com/facebook/screenshot-tests-for-android
             Class cAttachInfo = Class.forName("android.view.View$AttachInfo");
             Class cViewRootImpl;
             if (Build.VERSION.SDK_INT >= 11) {
@@ -471,6 +493,9 @@ public class GLLayoutLayer extends GLShaderLayer {
                 if ("getCoverStateSwitch".equals(method.getName())) {
                     // needed for Samsung version of Android 8.0
                     return false;
+                }else if ("performHapticFeedback".equals(method.getName())) {
+
+                    return true;
                 }
                 return null;
             }

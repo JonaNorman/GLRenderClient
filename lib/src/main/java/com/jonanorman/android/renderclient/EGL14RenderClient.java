@@ -332,8 +332,8 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    public GLLayoutLayer newLayoutLayer(Context context) {
-        return new GLLayoutLayer(this, context);
+    public GLViewLayer newLayoutLayer(Context context) {
+        return new GLViewLayer(this, context);
     }
 
     @Override
@@ -342,8 +342,8 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
-    public GLLayoutLayer newLayoutLayer(Context context, int styleRes) {
-        return new GLLayoutLayer(this, context, styleRes);
+    public GLViewLayer newLayoutLayer(Context context, int styleRes) {
+        return new GLViewLayer(this, context, styleRes);
     }
 
     @Override

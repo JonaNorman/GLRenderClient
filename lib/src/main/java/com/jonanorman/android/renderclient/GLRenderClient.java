@@ -85,9 +85,9 @@ public abstract class GLRenderClient {
 
     public abstract GLFrameBufferCache getFrameBufferCache();
 
-    public abstract GLLayoutLayer newLayoutLayer(Context context, int styleRes);
+    public abstract GLViewLayer newLayoutLayer(Context context, int styleRes);
 
-    public abstract GLLayoutLayer newLayoutLayer(Context context);
+    public abstract GLViewLayer newLayoutLayer(Context context);
 
     public abstract GLSurfaceTextureLayer newSurfaceTextureLayer();
 
