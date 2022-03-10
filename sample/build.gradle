@@ -15,6 +15,10 @@ android {
         multiDexEnabled true
     }
 
+    aaptOptions {
+        noCompress "obj"  //表示不让aapt压缩的文件后缀
+    }
+
     buildTypes {
         debug {
             debuggable true

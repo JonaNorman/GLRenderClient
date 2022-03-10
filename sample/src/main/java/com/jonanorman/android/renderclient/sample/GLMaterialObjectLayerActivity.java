@@ -15,19 +15,17 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.jonanorman.android.renderclient.EGLConfigSimpleChooser;
 import com.jonanorman.android.renderclient.GLCapability;
-import com.jonanorman.android.renderclient.GLDrawMode;
-import com.jonanorman.android.renderclient.GLDrawType;
 import com.jonanorman.android.renderclient.GLLayer;
+import com.jonanorman.android.renderclient.GLMaterialObjectLayer;
 import com.jonanorman.android.renderclient.GLRenderClient;
 import com.jonanorman.android.renderclient.GLRenderThread;
-import com.jonanorman.android.renderclient.GLShaderLayer;
 import com.jonanorman.android.renderclient.GLWindowSurface;
 import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.Matrix4;
 import com.jonanorman.android.renderclient.math.Quaternion;
 import com.jonanorman.android.renderclient.math.Vector3;
 
-public class GLShaderLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
+public class GLMaterialObjectLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
 
     private static final int MESSAGE_LAYER_CREATE = 1;
     private static final int MESSAGE_SURFACE_RENDER = 2;
@@ -36,59 +34,12 @@ public class GLShaderLayerActivity extends AppCompatActivity implements TextureV
     private GLRenderThread renderThread;
     private SurfaceTexture surfaceTexture = null;
 
-    final float cubePositions[] = {
-            -1.0f, 1.0f, 1.0f,    //正面左上0
-            -1.0f, -1.0f, 1.0f,   //正面左下1
-            1.0f, -1.0f, 1.0f,    //正面右下2
-            1.0f, 1.0f, 1.0f,     //正面右上3
-            -1.0f, 1.0f, -1.0f,    //反面左上4
-            -1.0f, -1.0f, -1.0f,   //反面左下5
-            1.0f, -1.0f, -1.0f,    //反面右下6
-            1.0f, 1.0f, -1.0f,     //反面右上7
-    };
-    final short index[] = {
-            0, 3, 2, 0, 2, 1,    //正面
-            0, 1, 5, 0, 5, 4,    //左面
-            0, 7, 3, 0, 4, 7,    //上面
-            6, 7, 4, 6, 4, 5,    //后面
-            6, 3, 7, 6, 2, 3,    //右面
-            6, 5, 1, 6, 1, 2     //下面
-    };
-
-    float color[] = {
-            0f, 1f, 0f, 1f,
-            0f, 1f, 0f, 1f,
-            0f, 1f, 0f, 1f,
-            0f, 1f, 0f, 1f,
-            1f, 0f, 0f, 1f,
-            1f, 0f, 0f, 1f,
-            1f, 0f, 0f, 1f,
-            1f, 0f, 0f, 1f
-    };
-
-    private String vertexCode = "\tattribute vec3 vPosition;\n" +
-            "uniform mat4 viewPortMatrix;\n" +
-            "uniform mat4 positionMatrix;\n" +
-            "varying  vec4 vColor;\n" +
-            "attribute vec4 aColor;\n" +
-            "void main() {\n" +
-            "  gl_Position = positionMatrix*vec4(vPosition,1.0);\n" +
-            "  vColor=aColor;\n" +
-            "}";
-
-    private String fragmentCode = "precision mediump float;\n" +
-            "varying vec4 vColor;\n" +
-            "void main() {\n" +
-            "  gl_FragColor =vColor;\n" +
-            "}";
-
 
     private Handler.Callback callback = new Handler.Callback() {
 
         long startTime;
-        GLShaderLayer rootLayer;
+        GLMaterialObjectLayer rootLayer;
         DragControl dragControl;
-        Matrix4 mvpMatrix = new Matrix4();
         Matrix4 rotationMatrix = new Matrix4();
         float rotationZ = 0;
 
@@ -99,18 +50,21 @@ public class GLShaderLayerActivity extends AppCompatActivity implements TextureV
                 case MESSAGE_LAYER_CREATE: {
                     dragControl = new DragControl(getApplicationContext());
                     GLRenderClient renderClient = renderThread.getRenderClient();
-                    rootLayer = renderClient.newShaderLayer(vertexCode, fragmentCode);
-                    rootLayer.putShaderParam("vPosition", cubePositions);
-                    rootLayer.putShaderParam("aColor", color);
+                    rootLayer = new GLMaterialObjectLayer(renderClient);
                     rootLayer.setOnTouchListener(dragControl);
                     rootLayer.getGLEnable().add(GLCapability.DEPTH_TEST);
-
-
+                    rootLayer.setMaterialObjectFile(getApplicationContext(), "andy.obj");
+                    rootLayer.setMaterialTexture(getApplicationContext(), R.drawable.andy);
                     rootLayer.addTransform(new GLLayer.LayerTransform() {
                         @Override
                         public void onLayerTransform(GLLayer layer, long renderTimeMs) {
-                            mvpMatrix.setIdentity();
-                            mvpMatrix.scale(dragControl.getCurrentScale(), dragControl.getCurrentScale(), dragControl.getCurrentScale());
+                            float scale = 4;
+                            Matrix4 modelMatrix = rootLayer.getModelMatrix();
+                            modelMatrix.setIdentity();
+                            modelMatrix.translate(0, -0.1f, 0);
+                            scale *= dragControl.getCurrentScale();
+                            modelMatrix.scale(scale, scale, scale);
+
                             if (dragControl.isDragging()) {
                                 rotationMatrix.setIdentity();
                                 dragControl.currentRotation().toMatrix(rotationMatrix);
@@ -123,17 +77,19 @@ public class GLShaderLayerActivity extends AppCompatActivity implements TextureV
                                 }
                                 rotationMatrix.rotate(rotationZ, 0, 1, 0);
                             }
+                            modelMatrix.postMul(rotationMatrix);
+                            modelMatrix.translate(0, 0.1f, 0);
                             float aspect = layer.getRenderWidth() / layer.getRenderHeight();
-                            mvpMatrix.postMul(rotationMatrix);
-                            mvpMatrix.lookAt(0.0f, 0.0f, -10.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-                            mvpMatrix.perspective(45, aspect, 1, 10);
-                            rootLayer.putShaderParam("positionMatrix", mvpMatrix.get());
+                            Matrix4 viewMatrix = rootLayer.getViewMatrix();
+                            viewMatrix.setIdentity();
+                            viewMatrix.lookAt(0.0f, 0.0f, -2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+                            Matrix4 projectionMatrix = rootLayer.getProjectionMatrix();
+                            projectionMatrix.setIdentity();
+                            projectionMatrix.perspective(45, aspect, 1, 100);
+
                         }
                     });
 
-                    rootLayer.setDrawElementIndices(index);
-                    rootLayer.setDrawType(GLDrawType.DRAW_ELEMENT);
-                    rootLayer.setDrawMode(GLDrawMode.TRIANGLES);
                     rootLayer.setGravity(GravityMode.CENTER);
                 }
 

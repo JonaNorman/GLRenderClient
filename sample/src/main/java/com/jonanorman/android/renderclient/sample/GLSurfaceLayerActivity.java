@@ -91,8 +91,8 @@ public class GLSurfaceLayerActivity extends AppCompatActivity implements Texture
 
 
     @Override
-    public void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
+    protected void onDestroy() {
+        super.onDestroy();
         renderThread.quitAndWait();
         animationRenderer.quit();
     }

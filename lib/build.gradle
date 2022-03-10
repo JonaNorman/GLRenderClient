@@ -30,4 +30,5 @@ android {
 
 dependencies {
     implementation 'androidx.annotation:annotation:1.2.0'
+    implementation 'de.javagl:obj:0.3.0'
 }

@@ -119,7 +119,9 @@ public class GLRenderThread extends HandlerThread {
     public void run() {
         try {
             super.run();
-        } finally {
+        }catch (Exception e){
+           throw  new RuntimeException(e);
+        }  finally{
             renderClient.release();
             Iterator<BlockingRunnable> iterator = blockingRunnableList.iterator();
             while (iterator.hasNext()) {

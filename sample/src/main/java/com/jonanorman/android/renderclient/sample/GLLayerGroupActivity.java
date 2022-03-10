@@ -263,8 +263,8 @@ public class GLLayerGroupActivity extends AppCompatActivity implements TextureVi
 
 
     @Override
-    public void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
+    protected void onDestroy() {
+        super.onDestroy();
         renderThread.quitAndWait();
     }
 

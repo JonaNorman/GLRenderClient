@@ -26,7 +26,7 @@
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLShaderLayerActivity"
-            android:label="GLShaderActivity"></activity>
+            android:label="GLShaderLayerActivity"></activity>
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLSurfaceLayerActivity"
@@ -34,11 +34,14 @@
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLLayerGroupActivity"
-            android:label="GLLayerActivity"></activity>
+            android:label="GLLayerGroupActivity"></activity>
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLViewLayerActivity"
-            android:label="GLLayoutLayerActivity"></activity>
+            android:label="GLViewLayerActivity"></activity>
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLMaterialObjectLayerActivity"
+            android:label="GLMaterialObjLayerActivity"></activity>
     </application>
 
 </manifest>

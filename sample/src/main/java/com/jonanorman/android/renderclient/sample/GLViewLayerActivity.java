@@ -175,10 +175,9 @@ public class GLViewLayerActivity extends AppCompatActivity implements TextureVie
 
     }
 
-
     @Override
-    public void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
+    protected void onDestroy() {
+        super.onDestroy();
         renderThread.quitAndWait();
     }
 

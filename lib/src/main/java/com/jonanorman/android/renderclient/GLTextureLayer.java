@@ -101,7 +101,7 @@ public class GLTextureLayer extends GLShaderLayer {
         GLShaderParam shaderParam = getDefaultShaderParam();
         int textureWidth = getTextureWidth();
         int textureHeight = getTextureHeight();
-        int maxMipmapLevel = Math.max(texture == null ? 0 : texture.getMaxMipmapLevel(), 0);
+        int maxMipmapLevel = Math.max(texture.getMaxMipmapLevel(), 0);
         float mipMapLevel = textureWidth > 0 && textureHeight > 0 ? 0 :
                 (float) MathUtils.clamp(
                         Math.max(getRenderWidth() * 1.0 / textureWidth,
@@ -111,11 +111,9 @@ public class GLTextureLayer extends GLShaderLayer {
         shaderParam.put("mipmapLevel", mipMapLevel);
         shaderParam.put("inputImageTexture", getTextureId());
         shaderParam.put("inputTextureSize", textureWidth, textureHeight);
-        shaderParam.put("inputTexturePreMul", texture == null ? true : texture.isPremultiplied());
+        shaderParam.put("inputTexturePreMul", texture.isPremultiplied());
         shaderParam.put("scaleTypeMatrix", scaleTypeMatrix.get());
-        if (texture != null) {
-            shaderParam.put("inputTextureMatrix", texture.getTextureMatrix().get());
-        }
+        shaderParam.put("inputTextureMatrix", texture.getTextureMatrix().get());
         return true;
     }
 }
