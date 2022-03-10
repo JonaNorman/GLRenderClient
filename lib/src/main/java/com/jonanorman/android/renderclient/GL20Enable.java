@@ -54,6 +54,9 @@ class GL20Enable extends GLEnable {
             gl.glEnable(value);
             disableCapList.remove(capability);
         }
+        if (contains(GLCapability.DEPTH_TEST) && client.getEGLChooseConfig().getDepthSize() <= 0) {
+            throw new IllegalStateException("client depth size is zero, please choose EGLConfig");
+        }
         for (GLCapability capability : disableCapList) {
             Integer value = CAP_MAP.get(capability);
             gl.glDisable(value);

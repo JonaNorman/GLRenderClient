@@ -52,6 +52,8 @@ public abstract class GLRenderClient {
 
     public abstract GLTexture newTexture(GLTextureType textureType);
 
+    public abstract GLDepthBuffer newDepthBuffer();
+
     public abstract GLTexture newTexture(GLTextureType textureType, int textureId);
 
     public abstract GLViewPort newViewPort();
@@ -109,6 +111,8 @@ public abstract class GLRenderClient {
     protected abstract void checkRelease();
 
     public abstract EGLContext getEGLContext();
+
+    public abstract EGLConfig getEGLChooseConfig();
 
     protected abstract android.opengl.EGLConfig getEGLConfig();
 

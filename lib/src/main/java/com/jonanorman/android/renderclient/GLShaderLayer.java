@@ -109,9 +109,9 @@ public class GLShaderLayer extends GLLayer {
             program.setDrawType(getDrawType());
         }
         GLFrameBuffer old = outputBuffer.bind();
+        enable.call();
         viewPort.set(0, 0, outputBuffer.getWidth(), outputBuffer.getHeight());
         viewPort.call();
-        enable.call();
         xfermode.apply(blend);
         blend.call();
         program.clearShaderParam();

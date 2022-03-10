@@ -13,6 +13,8 @@ public abstract class GLFrameBuffer extends GLObject {
         registerMethod(GLCopyToTextureMethod.class, new GLCopyToTextureMethod());
         registerMethod(GLReadBitmapMethod.class, new GLReadBitmapMethod());
         registerMethod(GLAttachColorTextureMethod.class, new GLAttachColorTextureMethod());
+        registerMethod(GLAttachDepthBufferMethod.class, new GLAttachDepthBufferMethod());
+        registerMethod(GLClearDepthBufferMethod.class, new GLClearDepthBufferMethod());
     }
 
 
@@ -21,6 +23,13 @@ public abstract class GLFrameBuffer extends GLObject {
             create();
         }
         return findMethod(GLAttachColorTextureMethod.class).getTexture();
+    }
+
+    public GLDepthBuffer getDepthBuffer() {
+        if (!isDisposed()) {
+            create();
+        }
+        return findMethod(GLAttachDepthBufferMethod.class).getDepthBuffer();
     }
 
     public abstract GLRenderSurface getRenderSurface();
@@ -38,6 +47,11 @@ public abstract class GLFrameBuffer extends GLObject {
         GLClearColorMethod clearColorMethod = findMethod(GLClearColorMethod.class);
         clearColorMethod.setClearColor(color);
         clearColorMethod.call();
+    }
+
+    public final void clearDepthBuffer() {
+        GLClearDepthBufferMethod clearDepthBufferMethod = findMethod(GLClearDepthBufferMethod.class);
+        clearDepthBufferMethod.call();
     }
 
     public final GLFrameBuffer bind() {
@@ -70,6 +84,12 @@ public abstract class GLFrameBuffer extends GLObject {
     public final void attachColorTexture(GLTexture texture) {
         GLAttachColorTextureMethod attachColorTextureMethod = findMethod(GLAttachColorTextureMethod.class);
         attachColorTextureMethod.setTexture(texture);
+        attachColorTextureMethod.call();
+    }
+
+    public final void attachDepthBuffer(GLDepthBuffer depthBuffer) {
+        GLAttachDepthBufferMethod attachColorTextureMethod = findMethod(GLAttachDepthBufferMethod.class);
+        attachColorTextureMethod.setDepthBuffer(depthBuffer);
         attachColorTextureMethod.call();
     }
 
@@ -108,11 +128,20 @@ public abstract class GLFrameBuffer extends GLObject {
             throw new IllegalArgumentException("Surface Frame Buffer can not set size");
         }
         attachTexture.setTextureSize(width, height);
+        GLDepthBuffer depthBuffer = getDepthBuffer();
+        if (depthBuffer == null) {
+            throw new IllegalArgumentException("Surface Frame Buffer can not set size");
+        }
+        depthBuffer.setBufferSize(width, height);
     }
 
     protected abstract void onClearClear(float red, float green, float blue, float alpha);
 
+    protected abstract void onClearDepthBuffer();
+
     protected abstract void onAttachColorTexture(GLTexture texture);
+
+    protected abstract void onAttachDepthBuffer(GLDepthBuffer depthBuffer);
 
     protected abstract void onBind();
 
@@ -148,6 +177,32 @@ public abstract class GLFrameBuffer extends GLObject {
         }
     }
 
+    class GLAttachDepthBufferMethod extends GLMethod {
+        protected GLDepthBuffer depthBuffer;
+
+        public GLAttachDepthBufferMethod() {
+            super();
+        }
+
+        @Override
+        protected void onCallMethod() {
+            GLFrameBuffer old = bind();
+            if (!depthBuffer.isDisposed()) {
+                depthBuffer.create();
+            }
+            onAttachDepthBuffer(depthBuffer);
+            old.bind();
+        }
+
+        public void setDepthBuffer(GLDepthBuffer depthBuffer) {
+            this.depthBuffer = depthBuffer;
+        }
+
+        public GLDepthBuffer getDepthBuffer() {
+            return depthBuffer;
+        }
+    }
+
     class GLClearColorMethod extends GLMethod {
 
         protected float redColor;
@@ -174,6 +229,25 @@ public abstract class GLFrameBuffer extends GLObject {
         }
 
     }
+
+
+    class GLClearDepthBufferMethod extends GLMethod {
+
+
+        public GLClearDepthBufferMethod() {
+            super();
+        }
+
+        @Override
+        protected void onCallMethod() {
+            GLFrameBuffer old = bind();
+            onClearDepthBuffer();
+            old.bind();
+        }
+
+
+    }
+
 
     class GLBindMethod extends GLMethod {
 

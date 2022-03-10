@@ -78,6 +78,10 @@ public class Vector3 implements Cloneable {
         return this.scale(1f / (float) Math.sqrt(len2));
     }
 
+    public float len(){
+        return (float) Math.sqrt(len2());
+    }
+
     public float len2() {
         return x * x + y * y + z * z;
     }

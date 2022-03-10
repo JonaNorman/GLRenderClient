@@ -64,6 +64,7 @@ public class GLFrameBufferCache extends GLObject {
                 currentFrameBuffer.setSize(currentWidth, currentHeight);
             }
             currentFrameBuffer.clearColor(Color.TRANSPARENT);
+            currentFrameBuffer.clearDepthBuffer();
         }
         return currentFrameBuffer;
     }

@@ -2,7 +2,7 @@ package com.jonanorman.android.renderclient;
 
 import android.graphics.Bitmap;
 
-public abstract class GLRenderSurface implements GLRenderClientReleaseListener{
+public abstract class GLRenderSurface implements GLRenderClientReleaseListener {
     private boolean disposed;
     private boolean created;
     protected final GLRenderClient client;
@@ -99,6 +99,10 @@ public abstract class GLRenderSurface implements GLRenderClientReleaseListener{
 
     public final void clearColor(int color) {
         defaultFrameBuffer.clearColor(color);
+    }
+
+    public final void clearDepthBuffer() {
+        defaultFrameBuffer.clearDepthBuffer();
     }
 
     public final void swapBuffers() {

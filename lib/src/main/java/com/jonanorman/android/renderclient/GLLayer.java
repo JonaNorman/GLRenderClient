@@ -135,6 +135,7 @@ public abstract class GLLayer extends GLObject {
             ownFrameBuffer = client.newFrameBuffer(eglSurface);
         }
         ownFrameBuffer.clearColor(Color.TRANSPARENT);
+        ownFrameBuffer.clearDepthBuffer();
         render(ownFrameBuffer);
         if (callback != null) {
             Bitmap bitmap = callback.bitmap;
@@ -383,7 +384,7 @@ public abstract class GLLayer extends GLObject {
     }
 
 
-    final void renderLayer(GLFrameBuffer outputBuffer) {
+    public final void renderLayer(GLFrameBuffer outputBuffer) {
         if (outputBuffer == null) {
             throw new IllegalArgumentException("outputBuffer is null");
         }

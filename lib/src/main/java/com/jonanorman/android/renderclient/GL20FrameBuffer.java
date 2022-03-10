@@ -17,7 +17,9 @@ class GL20FrameBuffer extends GLFrameBuffer {
     private int initWidth;
     private int initHeight;
     private GLTexture texture;
+    private GLDepthBuffer depthBuffer;
     private final GLRenderSurface renderSurface;
+
 
     public GL20FrameBuffer(GLRenderClient client, int width, int height) {
         super(client);
@@ -55,7 +57,12 @@ class GL20FrameBuffer extends GLFrameBuffer {
                 texture = client.newTexture(GLTextureType.TEXTURE_2D);
                 texture.setTextureSize(initWidth, initHeight);
             }
+            if (depthBuffer == null) {
+                depthBuffer = client.newDepthBuffer();
+                depthBuffer.setBufferSize(initWidth, initHeight);
+            }
             attachColorTexture(texture);
+            attachDepthBuffer(depthBuffer);
         }
     }
 
@@ -86,6 +93,7 @@ class GL20FrameBuffer extends GLFrameBuffer {
         }
         if (initWidth > 0 && initHeight > 0) {
             texture.dispose();
+            depthBuffer.dispose();
         }
     }
 
@@ -102,8 +110,19 @@ class GL20FrameBuffer extends GLFrameBuffer {
     }
 
     @Override
+    protected void onClearDepthBuffer() {
+        gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+    }
+
+    @Override
     protected void onAttachColorTexture(GLTexture texture) {
         gl.glFramebufferTexture2D(GL20.GL_FRAMEBUFFER, GL20.GL_COLOR_ATTACHMENT0, texture.getTarget(), texture.getTextureId(), 0);
+    }
+
+    @Override
+    protected void onAttachDepthBuffer(GLDepthBuffer depthBuffer) {
+        gl.glFramebufferRenderbuffer(GL20.GL_FRAMEBUFFER, GL20.GL_DEPTH_ATTACHMENT,
+                GL20.GL_RENDERBUFFER, depthBuffer.getDepthBufferId());
     }
 
     @Override

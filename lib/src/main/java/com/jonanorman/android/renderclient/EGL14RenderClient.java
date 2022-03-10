@@ -75,6 +75,7 @@ class EGL14RenderClient extends GLRenderClient {
     private GLColorLayer colorDrawer;
     private GLTextureLayer textureDrawer;
 
+    private EGLConfig eglChooseConfig;
 
     public EGL14RenderClient(EGLContext shareContext, EGLConfigChooser configChooser) {
         if (configChooser == null) {
@@ -136,6 +137,8 @@ class EGL14RenderClient extends GLRenderClient {
         frameBufferCache = new GLFrameBufferCache(this);
         colorDrawer = newColorLayer();
         textureDrawer = newTextureLayer();
+        eglChooseConfig = chooseConfig;
+
     }
 
     @Override
@@ -269,6 +272,11 @@ class EGL14RenderClient extends GLRenderClient {
     }
 
     @Override
+    public GLDepthBuffer newDepthBuffer() {
+        return new GL20DepthBuffer(this);
+    }
+
+    @Override
     public GLTexture newTexture(GLTextureType textureType, int textureId) {
         return new GL20Texture(this, textureType, textureId);
     }
@@ -384,6 +392,11 @@ class EGL14RenderClient extends GLRenderClient {
     @Override
     public EGLContext getEGLContext() {
         return eglContext;
+    }
+
+    @Override
+    public EGLConfig getEGLChooseConfig() {
+        return eglChooseConfig;
     }
 
     @Override
