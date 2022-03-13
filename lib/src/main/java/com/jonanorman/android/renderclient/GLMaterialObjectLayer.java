@@ -101,7 +101,7 @@ public class GLMaterialObjectLayer extends GLShaderLayer {
             "            pow(specularStrength, materialSpecularPower);\n" +
             "\n" +
             "    vec3 color = objectColor.rgb * (ambient + diffuse) + specular;\n" +
-            "    // Apply SRGB gamma before writing the fragment color.\n" +
+            "    // Apply SRGB m before writing the fragment color.\n" +
             "    color.rgb = pow(color, vec3(kGamma));\n" +
             "    // Apply average pixel intensity and color shift\n" +
             "    gl_FragColor.rgb = color;\n" +

@@ -42,6 +42,9 @@
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLMaterialObjectLayerActivity"
             android:label="GLMaterialObjLayerActivity"></activity>
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLGaussianBlurEffectActivity"
+            android:label="GLGaussianBlurEffectActivity"></activity>
     </application>
 
 </manifest>

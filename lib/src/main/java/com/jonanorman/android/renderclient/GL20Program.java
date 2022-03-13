@@ -20,6 +20,8 @@ class GL20Program extends GLProgram {
     private String programFragmentCode;
     private final GL20 gl;
     private int dequeueTextureUnit;
+    private GLShader attachVertexShader;
+    private GLShader attachFragmentShader;
 
     public GL20Program(GLRenderClient client) {
         super(client);
@@ -38,13 +40,11 @@ class GL20Program extends GLProgram {
 
     @Override
     protected void onDispose() {
-        GLShader vertexShader = getVertexShader();
-        GLShader fragmentShader = getFragmentShader();
-        if (vertexShader != null && vertexShader.isCreated()) {
-            gl.glDetachShader(programId, vertexShader.getShaderId());
+        if (attachVertexShader != null && attachVertexShader.isCreated()) {
+            gl.glDetachShader(programId, attachVertexShader.getShaderId());
         }
-        if (fragmentShader != null && vertexShader.isCreated()) {
-            gl.glDetachShader(programId, fragmentShader.getShaderId());
+        if (attachFragmentShader != null && attachFragmentShader.isCreated()) {
+            gl.glDetachShader(programId, attachFragmentShader.getShaderId());
         }
         gl.glDeleteProgram(programId);
         for (GLUniform uniform : uniformMap.values()) {
@@ -90,7 +90,9 @@ class GL20Program extends GLProgram {
             uniformMap.clear();
             attributeMap.clear();
             gl.glAttachShader(programId, vertexShader.getShaderId());
+            attachVertexShader = vertexShader;
             gl.glAttachShader(programId, fragmentShader.getShaderId());
+            attachFragmentShader = fragmentShader;
             gl.glLinkProgram(programId);
             int linkStatus = gl.glGetProgram(programId, GL20.GL_LINK_STATUS);
             if (linkStatus != GL20.GL_TRUE) {

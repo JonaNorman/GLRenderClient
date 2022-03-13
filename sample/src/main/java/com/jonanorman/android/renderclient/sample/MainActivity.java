@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
         classList.add(GLSurfaceLayerActivity.class);
         classList.add(GLViewLayerActivity.class);
         classList.add(GLMaterialObjectLayerActivity.class);
+        classList.add(GLGaussianBlurEffectActivity.class);
     }
 
     @Override
