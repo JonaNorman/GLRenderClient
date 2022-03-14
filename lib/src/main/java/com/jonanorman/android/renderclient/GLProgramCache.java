@@ -4,6 +4,7 @@ import android.util.LruCache;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class GLProgramCache extends GLObject {
 
@@ -58,7 +59,7 @@ public class GLProgramCache extends GLObject {
             fragmentShader.setShaderCode(fragmentShaderCode);
             shaderMap.put(fragmentShaderCode, fragmentShader);
         }
-        Integer programHashCode = vertexShaderCode.hashCode() + fragmentShaderCode.hashCode();
+        Integer programHashCode = Objects.hash(vertexShaderCode.hashCode(), fragmentShaderCode.hashCode());
         GLProgram program = programCache.get(programHashCode);
         if (program == null) {
             program = client.newProgram();

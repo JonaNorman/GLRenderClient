@@ -50,7 +50,7 @@ public class GLGaussianBlurEffectActivity extends AppCompatActivity implements T
                 case MESSAGE_LAYER_CREATE: {
                     GLRenderClient renderClient = renderThread.getRenderClient();
                     rootLayer = renderClient.newBitmapLayer();
-                    rootLayer.setBitmapResId(getApplicationContext(), R.drawable.alpha);
+                    rootLayer.setBitmapResId(getApplicationContext(), R.drawable.pic9);
                     gaussianBlurEffect = new GLGaussianBlurEffect(renderClient) {
                         @Override
                         protected GLFrameBuffer renderEffect(GLFrameBuffer input) {

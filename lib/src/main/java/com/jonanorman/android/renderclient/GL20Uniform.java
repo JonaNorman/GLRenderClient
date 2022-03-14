@@ -82,7 +82,7 @@ class GL20Uniform extends GLUniform {
     private final String typeName;
 
     private final GL20 gl;
-    private final int[] samplerArr;
+    private int[] samplerArr;
 
     GL20Uniform(GLRenderClient client, GLProgram program, int id, int type, String name, int length) {
         super(client, program, id, type, name, length);
@@ -90,9 +90,12 @@ class GL20Uniform extends GLUniform {
         this.typeName = TYPE_NAME_MAP.get(type);
         this.typeFloat = TYPE_FLOAT_MAP.get(type);
         this.gl = client.getGL20();
-        this.samplerArr = new int[length];
-        for (int i = 0; i < samplerArr.length; i++) {
-            samplerArr[i] = program.dequeueTextureUnit();
+
+        if (type == GL20.GL_SAMPLER_2D || type == GL20.GL_SAMPLER_EXTERNAL_OES || type == GL20.GL_SAMPLER_CUBE) {
+            this.samplerArr = new int[length];
+            for (int i = 0; i < samplerArr.length; i++) {
+                samplerArr[i] = program.dequeueTextureUnit();
+            }
         }
     }
 
