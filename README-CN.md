@@ -1,13 +1,11 @@
 # 介绍
-
+===
 这是一个面向Android开发的OpenGL渲染库，致力于帮助广大Android开发者降低开发成本，它可以使用在图片编辑、视频图像编辑中。
 
 # 接入
-
-```
+``` java
 implementation('io.github.jonanorman.android:glrenderclient:0.1.0')
 ```
-
 ```
 SurfaceTexture surfaceTexture = ((TextureView) findViewById(R.id.textureView)).getSurfaceTexture();
 GLRenderThread renderThread = new GLRenderThread(new GLRenderClient.Builder());
@@ -25,9 +23,8 @@ renderThread.quitAndWait();
 ```
 
 ## 功能1：自动解析shader参数
-
-不用根据参数的类型调用不同api设置不同变量 之前
-
+不用根据参数的类型调用不同api设置不同变量 
+**之前**
 ```
 int uniformLocation1 = GLES20.glGetUniformLocation(programId, "viewSize");
 int textureUniformLocation = GLES20.glGetUniformLocation(programId, "inputTexture");
@@ -51,9 +48,7 @@ floatBuffer.position(0);
 GLES20.glVertexAttribPointer(attributeLocation, size, GLES20.GL_FLOAT, false, 0,floatBuffer);
 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 ```
-
-现在
-
+**现在**
 ```
 GLShaderLayer shaderLayer = renderClient.newShaderLayer(vertexCode,fragmentCode);
 GLShaderParam shaderParam = shaderLayer.getShaderParam();
@@ -66,6 +61,7 @@ shaderLayer.setDrawArrayCount(4);
 ```
 
 ## 功能2 异步渲染Android原生的View
+![异步渲染view](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview2.gif?raw=true "异步渲染view")
 
 ```
 GLViewLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext(), R.style.AppTheme);
@@ -78,7 +74,7 @@ viewLayer.render(surfaceTexture);
 ```
 
 ## 功能3 多层级多时间线渲染
-
+![多层级](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview1.gif?raw=true "多层级")
 ```
 GLRenderClient renderClient = renderThread.getRenderClient();
 GLLayerGroup rootLayer = renderClient.newLayerGroup();
@@ -123,11 +119,14 @@ effect.setKeyframes(shaderKey,  KeyframeSet.ofFloat(10000, 500, 1000, 0));
 ```
 
 ## 功能6 obj文件渲染
+![obj文件渲染](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview3.gif?raw=true "obj文件渲染")
 
 
 
 ## 功能7 高斯模糊
 解决速度慢、模糊半径不能设置、强度不够、颜色没有gamma调整、模糊半透明颜色变黑的问题
+![高斯模糊](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview4.gif?raw=true "高斯模糊")
+
 ```
     GLRenderClient client = renderThread.getRenderClient();
     GLGaussianBlurEffect gaussianBlurEffect = new GLGaussianBlurEffect(client) {};
