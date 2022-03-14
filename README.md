@@ -1,8 +1,8 @@
-# Introduce
-===
-This is a lightweight OpenGL rendering library for Android development, dedicated to help Android developers to reduce development costs, 
-forget the technical details of OpenGL, it can be used in the image editing, video  editing.
-# Import
+# 介绍
+简体中文 | [English](./README_EN.md)
+这是一个面向Android开发的OpenGL渲染库，致力于帮助广大Android开发者降低开发成本，它可以使用在图片编辑、视频图像编辑中。
+
+# 接入
 ``` java
 implementation('io.github.jonanorman.android:glrenderclient:0.1.0')
 ```
@@ -22,9 +22,9 @@ layerGroup.render(surfaceTexture);
 renderThread.quitAndWait();
 ```
 
-## Feature 1: automatically parses shader parameter
-You don't have to call different apis to set different variables depending on the type of the argument
-**before**
+## 功能1：自动解析shader参数
+不用根据参数的类型调用不同api设置不同变量 
+**之前**
 ```
 int uniformLocation1 = GLES20.glGetUniformLocation(programId, "viewSize");
 int textureUniformLocation = GLES20.glGetUniformLocation(programId, "inputTexture");
@@ -48,7 +48,7 @@ floatBuffer.position(0);
 GLES20.glVertexAttribPointer(attributeLocation, size, GLES20.GL_FLOAT, false, 0,floatBuffer);
 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 ```
-**now**
+**现在**
 ```
 GLShaderLayer shaderLayer = renderClient.newShaderLayer(vertexCode,fragmentCode);
 GLShaderParam shaderParam = shaderLayer.getShaderParam();
@@ -60,8 +60,8 @@ shaderLayer.setDrawType(GLDrawType.DRAW_ARRAY);
 shaderLayer.setDrawArrayCount(4);
 ```
 
-## Feature 2 async render android native View
-![async render View](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview2.gif?raw=true "async render View")
+## 功能2 异步渲染Android原生的View
+![异步渲染view](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview2.gif?raw=true "异步渲染view")
 
 ```
 GLViewLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext(), R.style.AppTheme);
@@ -73,8 +73,8 @@ viewLayer.queueTouchEvent(motionEvent);
 viewLayer.render(surfaceTexture);
 ```
 
-## Feature 3 multi-layer and multi-timeline rendering
-![multi-layer](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview1.gif?raw=true "multi-layer")
+## 功能3 多层级多时间线渲染
+![多层级](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview1.gif?raw=true "多层级")
 ```
 GLRenderClient renderClient = renderThread.getRenderClient();
 GLLayerGroup rootLayer = renderClient.newLayerGroup();
@@ -90,7 +90,7 @@ rootLayer.addLayer(group);
 rootLayer.render(surfaceTexture);
 ```
 
-## Feature 4  effect group
+## 功能4 特效嵌套渲染
 
 ```
 GLEffectGroup effectGroup = renderClient.newEffectSet();
@@ -108,7 +108,7 @@ layer.addEffect(effectGroup);
 layer.render(surfaceTexture);
 ```
 
-## Function 5  keyframe
+## 功能5 shader参数关键帧
 
 ```
 KeyframeSet keyframes = KeyframeSet.ofFloat(10000, 500, 1000, 0);
@@ -118,14 +118,14 @@ layer.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, keyframes);
 effect.setKeyframes(shaderKey,  KeyframeSet.ofFloat(10000, 500, 1000, 0));
 ```
 
-## Function 6 obj file rendering
-![obj](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview3.gif?raw=true "obj")
+## 功能6 obj文件渲染
+![obj文件渲染](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview3.gif?raw=true "obj文件渲染")
 
 
 
-## Function 7 gaussian blur
-Solve slow speed, color without gamma adjustment, blurred translucent color is black 
-![gaussian blur](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview4.gif?raw=true "gaussian blur")
+## 功能7 高斯模糊
+解决速度慢、模糊半径不能设置、强度不够、颜色没有gamma调整、模糊半透明颜色变黑的问题
+![高斯模糊](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview4.gif?raw=true "高斯模糊")
 
 ```
     GLRenderClient client = renderThread.getRenderClient();
@@ -136,13 +136,17 @@ Solve slow speed, color without gamma adjustment, blurred translucent color is b
     gaussianBlurEffect.setBlurSigma(sigma);
 ```
 
-## Function 8 solve various problems in OpenGL
+## 功能8 解决OpenGL各种疑难问题
 
-1. Translucent objects are merged with black borders
-2. The problem of texture and image upside down
-3. The problem of image squashing when rotating
-4. Use BlendMode to implement 15 native Xfermodes of Android
-5. automatically check the success of each OpenGL command call
-6. Program, Shader, Framebuffer caching  to help reduce memory
-7. Support bitmaps that are not a power of 2 or a direct multiplication can also mipmap
-8. Solve the problem of different screen size and texture ratio, increase GravityMode, ScaleMode
+1. 半透明物体融合有黑边的问题
+2. 纹理与图像上下颠倒的问题
+3. 旋转时图像压扁的问题
+4. BlendMode实现Android原生的15种Xfermode
+5. 定位问题难，自动检验OpenGL每个命令的调用成功情况
+6. Program、Shader、Framebuffer缓存机制，帮助降低内存
+7. 支持不是2的幂次方或直乘的bitmap也可以mipmap
+8. 解决屏幕大小和纹理比例不一样的问题，增加GravityMode、ScaleMode
+
+# License
+
+查看许可证 [LICENSE](./LICENSE).
