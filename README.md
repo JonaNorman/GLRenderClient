@@ -1,8 +1,10 @@
-# 介绍
+# GLRenderClient
+
 简体中文 | [English](./README_EN.md)
+
 这是一个面向Android开发的OpenGL渲染库，致力于帮助广大Android开发者降低开发成本，它可以使用在图片编辑、视频图像编辑中。
 
-# 接入
+## 接入
 ``` java
 implementation('io.github.jonanorman.android:glrenderclient:0.1.0')
 ```
@@ -21,8 +23,8 @@ layerGroup.render(surfaceTexture);
 });
 renderThread.quitAndWait();
 ```
-
-## 功能1：自动解析shader参数
+## 功能
+### 功能1：自动解析shader参数
 不用根据参数的类型调用不同api设置不同变量 
 **之前**
 ```
@@ -60,7 +62,7 @@ shaderLayer.setDrawType(GLDrawType.DRAW_ARRAY);
 shaderLayer.setDrawArrayCount(4);
 ```
 
-## 功能2 异步渲染Android原生的View
+### 功能2 异步渲染Android原生的View
 ![异步渲染view](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview2.gif?raw=true "异步渲染view")
 
 ```
@@ -73,7 +75,7 @@ viewLayer.queueTouchEvent(motionEvent);
 viewLayer.render(surfaceTexture);
 ```
 
-## 功能3 多层级多时间线渲染
+### 功能3 多层级多时间线渲染
 ![多层级](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview1.gif?raw=true "多层级")
 ```
 GLRenderClient renderClient = renderThread.getRenderClient();
@@ -90,7 +92,7 @@ rootLayer.addLayer(group);
 rootLayer.render(surfaceTexture);
 ```
 
-## 功能4 特效嵌套渲染
+### 功能4 特效嵌套渲染
 
 ```
 GLEffectGroup effectGroup = renderClient.newEffectSet();
@@ -108,7 +110,7 @@ layer.addEffect(effectGroup);
 layer.render(surfaceTexture);
 ```
 
-## 功能5 shader参数关键帧
+### 功能5 shader参数关键帧
 
 ```
 KeyframeSet keyframes = KeyframeSet.ofFloat(10000, 500, 1000, 0);
@@ -118,12 +120,12 @@ layer.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_HEIGHT, keyframes);
 effect.setKeyframes(shaderKey,  KeyframeSet.ofFloat(10000, 500, 1000, 0));
 ```
 
-## 功能6 obj文件渲染
+### 功能6 obj文件渲染
 ![obj文件渲染](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview3.gif?raw=true "obj文件渲染")
 
 
 
-## 功能7 高斯模糊
+### 功能7 高斯模糊
 解决速度慢、模糊半径不能设置、强度不够、颜色没有gamma调整、模糊半透明颜色变黑的问题
 ![高斯模糊](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview4.gif?raw=true "高斯模糊")
 
@@ -136,7 +138,7 @@ effect.setKeyframes(shaderKey,  KeyframeSet.ofFloat(10000, 500, 1000, 0));
     gaussianBlurEffect.setBlurSigma(sigma);
 ```
 
-## 功能8 解决OpenGL各种疑难问题
+### 功能8 解决OpenGL各种疑难问题
 
 1. 半透明物体融合有黑边的问题
 2. 纹理与图像上下颠倒的问题
@@ -147,6 +149,6 @@ effect.setKeyframes(shaderKey,  KeyframeSet.ofFloat(10000, 500, 1000, 0));
 7. 支持不是2的幂次方或直乘的bitmap也可以mipmap
 8. 解决屏幕大小和纹理比例不一样的问题，增加GravityMode、ScaleMode
 
-# License
+## 开源许可证
 
 查看许可证 [LICENSE](./LICENSE).
