@@ -2,6 +2,8 @@
 
 简体中文 | [English](./README_EN.md)
 
+![GLRenderClient](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/logo.png?raw=true "GLRenderClient")
+
 这是一个面向Android开发的OpenGL渲染库，致力于帮助广大Android开发者降低开发成本，它可以使用在图片编辑、视频图像编辑中。
 
 ## 接入

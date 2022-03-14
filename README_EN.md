@@ -1,6 +1,8 @@
 # GLRenderClient
-
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://opensource.org/licenses/MIT)
+
+![GLRenderClient](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/logo.png?raw=true "GLRenderClient")
+
 
 This is a lightweight OpenGL rendering library for Android development, dedicated to help Android developers to reduce development costs, 
 forget the technical details of OpenGL, it can be used in the image editing, video  editing.
