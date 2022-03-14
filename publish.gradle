@@ -22,7 +22,7 @@ if (localPropertiesFile != null && localPropertiesFile.exists()) {
 
 
 def getPropertyValue(key) {
-    return project.ext.has(key) ? project.ext.getProperty(key) : project.rootProject.ext.getProperty(key)
+    return project.ext.has(key) ? project.ext.getProperty(key) : (project.rootProject.ext.has(key)?project.rootProject.ext.getProperty(key):null)
 }
 
 def mavenUsername = getPropertyValue("MAVEN_USER_NAME")
