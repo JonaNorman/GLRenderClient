@@ -8,7 +8,7 @@ This is a lightweight OpenGL rendering library for Android development, dedicate
 forget the technical details of OpenGL, it can be used in the image editing, video  editing.
 ## Import
 ``` 
-implementation('io.github.jonanorman.android:glrenderclient:0.1.0')
+implementation('io.github.jonanorman.android:glrenderclient:0.1.1')
 ```
 ```Java
 SurfaceTexture surfaceTexture = ((TextureView) findViewById(R.id.textureView)).getSurfaceTexture();

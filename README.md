@@ -8,7 +8,7 @@
 
 ## 接入
 ```
-implementation('io.github.jonanorman.android:glrenderclient:0.1.0')
+implementation('io.github.jonanorman.android:glrenderclient:0.1.1')
 ```
 ```Java
 SurfaceTexture surfaceTexture = ((TextureView) findViewById(R.id.textureView)).getSurfaceTexture();
