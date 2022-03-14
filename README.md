@@ -7,10 +7,10 @@
 这是一个面向Android开发的OpenGL渲染库，致力于帮助广大Android开发者降低开发成本，它可以使用在图片编辑、视频图像编辑中。
 
 ## 接入
-``` java
+```
 implementation('io.github.jonanorman.android:glrenderclient:0.1.0')
 ```
-```
+```Java
 SurfaceTexture surfaceTexture = ((TextureView) findViewById(R.id.textureView)).getSurfaceTexture();
 GLRenderThread renderThread = new GLRenderThread(new GLRenderClient.Builder());
 renderThread.start();
@@ -29,7 +29,7 @@ renderThread.quitAndWait();
 ### 功能1：自动解析shader参数
 不用根据参数的类型调用不同api设置不同变量 
 **之前**
-```
+```Java
 int uniformLocation1 = GLES20.glGetUniformLocation(programId, "viewSize");
 int textureUniformLocation = GLES20.glGetUniformLocation(programId, "inputTexture");
 int textureUniformLocation2 = GLES20.glGetUniformLocation(programId, "inputTexture2");
@@ -53,7 +53,7 @@ GLES20.glVertexAttribPointer(attributeLocation, size, GLES20.GL_FLOAT, false, 0,
 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 ```
 **现在**
-```
+```Java
 GLShaderLayer shaderLayer = renderClient.newShaderLayer(vertexCode,fragmentCode);
 GLShaderParam shaderParam = shaderLayer.getShaderParam();
 shaderParam.put("viewSize", width,height);
@@ -67,7 +67,7 @@ shaderLayer.setDrawArrayCount(4);
 ### 功能2 异步渲染Android原生的View
 ![异步渲染view](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview2.gif?raw=true "异步渲染view")
 
-```
+```Java
 GLViewLayer viewLayer = renderClient.newLayoutLayer(getApplicationContext(), R.style.AppTheme);
 viewLayer.setBackgroundColor(Color.WHITE);
 LayoutInflater layoutInflater = LayoutInflater.from(viewLayer.getContext());
@@ -79,7 +79,7 @@ viewLayer.render(surfaceTexture);
 
 ### 功能3 多层级多时间线渲染
 ![多层级](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview1.gif?raw=true "多层级")
-```
+```Java
 GLRenderClient renderClient = renderThread.getRenderClient();
 GLLayerGroup rootLayer = renderClient.newLayerGroup();
 rootLayer.setDuration(10000);
@@ -96,7 +96,7 @@ rootLayer.render(surfaceTexture);
 
 ### 功能4 特效嵌套渲染
 
-```
+```Java
 GLEffectGroup effectGroup = renderClient.newEffectSet();
 GLShaderEffect shaderEffect =renderClient.newShaderEffect();
 shaderEffect.setVertexShaderCode(vertexCode);
@@ -114,7 +114,7 @@ layer.render(surfaceTexture);
 
 ### 功能5 shader参数关键帧
 
-```
+```Java
 KeyframeSet keyframes = KeyframeSet.ofFloat(10000, 500, 1000, 0);
 layer.setKeyframes(GLLayer.KEY_FRAMES_KEY_LAYER_WIDTH, keyframes);
 keyframes = KeyframeSet.ofFloat(10000, 500, 600, 500);
@@ -131,7 +131,7 @@ effect.setKeyframes(shaderKey,  KeyframeSet.ofFloat(10000, 500, 1000, 0));
 解决速度慢、模糊半径不能设置、强度不够、颜色没有gamma调整、模糊半透明颜色变黑的问题
 ![高斯模糊](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview4.gif?raw=true "高斯模糊")
 
-```
+```Java
     GLRenderClient client = renderThread.getRenderClient();
     GLGaussianBlurEffect gaussianBlurEffect = new GLGaussianBlurEffect(client) {};
     layer.addEffect(gaussianBlurEffect);
