@@ -207,8 +207,8 @@ public class GLShaderLayerActivity extends AppCompatActivity {
         Matrix4 rotationMatrix = new Matrix4();
 
         renderLayer = new GLShaderLayer(CUBE_VERTEX_CODE, CUBE_FRAGMENT_CODE);
-        renderLayer.putShaderParam("vPosition", CUBE_POSITIONS);
-        renderLayer.putShaderParam("aColor", CUBE_COLORS);
+        renderLayer.setShaderParam("vPosition", CUBE_POSITIONS);
+        renderLayer.setShaderParam("aColor", CUBE_COLORS);
         renderLayer.setOnTouchListener(dragControl);
         renderLayer.setBackgroundColor(Color.YELLOW);
         renderLayer.addEnableCapability(GLEnable.Capability.DEPTH_TEST);
@@ -237,7 +237,7 @@ public class GLShaderLayerActivity extends AppCompatActivity {
                 mvpMatrix.postMul(rotationMatrix);
                 mvpMatrix.lookAt(0.0f, 0.0f, -10.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
                 mvpMatrix.perspective(45, aspect, 1, 10);
-                renderLayer.putShaderParam("positionMatrix", mvpMatrix.get());
+                renderLayer.setShaderParam("positionMatrix", mvpMatrix);
             }
         });
 

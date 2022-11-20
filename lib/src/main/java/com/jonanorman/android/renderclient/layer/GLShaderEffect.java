@@ -317,7 +317,7 @@ public class GLShaderEffect extends GLEffect {
     }
 
     public void setShaderParam(GLShaderParam param) {
-        setShaderParam(param);
+        shaderParam.set(param);
     }
 
 

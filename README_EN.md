@@ -1,15 +1,18 @@
 # GLRenderClient
+
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](http://opensource.org/licenses/MIT)
 
 ![GLRenderClient](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/logo.png?raw=true "GLRenderClient")
 
-
-This is a lightweight OpenGL rendering library for Android development, dedicated to help Android developers to reduce development costs, 
+This is a lightweight OpenGL rendering library for Android development, dedicated to help Android developers to reduce development costs,
 forget the technical details of OpenGL, it can be used in the image editing, video  editing.
+
 ## Import
-``` 
+
+```
 implementation('io.github.jonanorman.android:glrenderclient:0.1.1')
 ```
+
 ```Java
 SurfaceTexture surfaceTexture = ((TextureView) findViewById(R.id.textureView)).getSurfaceTexture();
 GLRenderThread renderThread = new GLRenderThread(new GLRenderClient.Builder());
@@ -25,11 +28,14 @@ layerGroup.render(surfaceTexture);
 });
 renderThread.quitAndWait();
 ```
+
 ## Feature
 
 ### Feature 1: automatically parses shader parameter
+
 You don't have to call different apis to set different variables depending on the type of the argument
 **before**
+
 ```Java
 int uniformLocation1 = GLES20.glGetUniformLocation(programId, "viewSize");
 int textureUniformLocation = GLES20.glGetUniformLocation(programId, "inputTexture");
@@ -53,7 +59,9 @@ floatBuffer.position(0);
 GLES20.glVertexAttribPointer(attributeLocation, size, GLES20.GL_FLOAT, false, 0,floatBuffer);
 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 ```
+
 **now**
+
 ```Java
 GLShaderLayer shaderLayer = renderClient.newShaderLayer(vertexCode,fragmentCode);
 GLShaderParam shaderParam = shaderLayer.getShaderParam();
@@ -66,6 +74,7 @@ shaderLayer.setDrawArrayCount(4);
 ```
 
 ### Feature 2: async render android native View
+
 ![async render View](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview2.gif?raw=true "async render View")
 
 ```Java
@@ -79,7 +88,9 @@ viewLayer.render(surfaceTexture);
 ```
 
 ### Feature 3: multi-layer and multi-timeline rendering
+
 ![multi-layer](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview1.gif?raw=true "multi-layer")
+
 ```Java
 GLRenderClient renderClient = renderThread.getRenderClient();
 GLLayerGroup rootLayer = renderClient.newLayerGroup();
@@ -124,12 +135,12 @@ effect.setKeyframes(shaderKey,  KeyframeSet.ofFloat(10000, 500, 1000, 0));
 ```
 
 ### Function 6: obj file rendering
+
 ![obj](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview3.gif?raw=true "obj")
 
-
-
 ### Function 7: gaussian blur
-Solve slow speed, color without gamma adjustment, blurred translucent color is black 
+
+Solve slow speed, color without gamma adjustment, blurred translucent color is black
 ![gaussian blur](https://github.com/JonaNorman/GLRenderClient/blob/main/screen/preview4.gif?raw=true "gaussian blur")
 
 ```Java
@@ -151,7 +162,6 @@ Solve slow speed, color without gamma adjustment, blurred translucent color is b
 6. Program, Shader, Framebuffer caching  to help reduce memory
 7. Support bitmaps that are not a power of 2 or a direct multiplication can also mipmap
 8. Solve the problem of different screen size and texture ratio, increase GravityMode, ScaleMode
-
 
 ## License
 

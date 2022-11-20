@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import com.jonanorman.android.renderclient.math.Keyframe;
 import com.jonanorman.android.renderclient.math.KeyframeSet;
 import com.jonanorman.android.renderclient.math.Matrix4;
+import com.jonanorman.android.renderclient.math.Vector3;
 import com.jonanorman.android.renderclient.opengl.GLBlend;
 import com.jonanorman.android.renderclient.opengl.GLDraw;
 import com.jonanorman.android.renderclient.opengl.GLEnable;
@@ -12,8 +13,9 @@ import com.jonanorman.android.renderclient.opengl.GLFrameBuffer;
 import com.jonanorman.android.renderclient.opengl.GLProgram;
 import com.jonanorman.android.renderclient.opengl.GLRenderClient;
 import com.jonanorman.android.renderclient.opengl.GLShader;
-import com.jonanorman.android.renderclient.opengl.GLShaderParam;
 import com.jonanorman.android.renderclient.opengl.GLShaderCache;
+import com.jonanorman.android.renderclient.opengl.GLShaderParam;
+import com.jonanorman.android.renderclient.opengl.GLTexture;
 import com.jonanorman.android.renderclient.opengl.GLViewPort;
 import com.jonanorman.android.renderclient.opengl.GLXfermode;
 import com.jonanorman.android.renderclient.opengl.gl20.GL20Blend;
@@ -24,6 +26,7 @@ import com.jonanorman.android.renderclient.opengl.gl20.GL20ViewPort;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class GLShaderLayer extends GLLayer {
@@ -286,8 +289,55 @@ public class GLShaderLayer extends GLLayer {
     }
 
 
-    public GLShaderParam getShaderParam() {
-        return shaderParam;
+    public void setShaderParam(String key, float... data) {
+        shaderParam.set(key, data);
+    }
+
+    public void setShaderParam(String key, Matrix4 matrix) {
+        shaderParam.set(key, matrix);
+    }
+
+    public void setShaderParam(String key, GLTexture texture) {
+        shaderParam.set(key, texture);
+    }
+
+    public void setShaderParam(String key, Vector3 vector3) {
+        shaderParam.set(key, vector3);
+    }
+
+    public void setShaderParam(String key, Keyframe keyframe) {
+        shaderParam.set(key, keyframe);
+    }
+
+    public void setShaderParam(String key, int... data) {
+        shaderParam.set(key, data);
+    }
+
+    public void setShaderParam(String key, boolean data) {
+        shaderParam.set(key, data);
+    }
+
+
+    public void setShaderParam(String key, boolean... data) {
+        shaderParam.set(key, data);
+    }
+
+
+    public void removeShaderParam(String key) {
+        shaderParam.remove(key);
+    }
+
+    public void setShaderParam(Map<String, float[]> param) {
+        shaderParam.set(param);
+    }
+
+    public void setShaderParam(GLShaderParam param) {
+        shaderParam.set(param);
+    }
+
+
+    public boolean containsKey(String key) {
+        return shaderParam.containsKey(key);
     }
 
 
