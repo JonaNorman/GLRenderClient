@@ -8,6 +8,8 @@ import android.animation.TimeInterpolator;
 import android.animation.TypeEvaluator;
 import android.view.animation.LinearInterpolator;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,16 +32,18 @@ public class KeyframeSet<T> implements Cloneable {
     };
 
 
-    private  TypeEvaluator<T> typeEvaluator;
+    private TypeEvaluator<T> typeEvaluator;
     private final Class<T> valueType;
     private final List<Keyframe<T>> keyframes = new ArrayList<>();
-    long startTime;
-    long duration = Long.MAX_VALUE;
+    private TimeStamp startTime;
+    private TimeStamp duration;
 
 
-    KeyframeSet(Class<T> valueType, TypeEvaluator<T> typeEvaluator) {
+    public KeyframeSet(Class<T> valueType, TypeEvaluator<T> typeEvaluator) {
         this.valueType = valueType;
         this.typeEvaluator = typeEvaluator;
+        this.startTime = TimeStamp.MIN_VALUE;
+        this.duration = TimeStamp.MATCH_PARENT_VALUE;
     }
 
     public Class<T> getValueType() {
@@ -47,12 +51,12 @@ public class KeyframeSet<T> implements Cloneable {
     }
 
 
-    public void addKeyFrame(Keyframe<T>... keyframes) {
+    public void add(Keyframe<T>... keyframes) {
         if (keyframes == null) return;
         this.keyframes.addAll(Arrays.asList(keyframes));
     }
 
-    public void removeKeyFrame(Keyframe<T>... keyframes) {
+    public void remove(Keyframe<T>... keyframes) {
         if (keyframes == null) return;
         this.keyframes.removeAll(Arrays.asList(keyframes));
     }
@@ -61,7 +65,7 @@ public class KeyframeSet<T> implements Cloneable {
         this.typeEvaluator = typeEvaluator;
     }
 
-    public void clearKeyFrame() {
+    public void clear() {
         this.keyframes.clear();
     }
 
@@ -75,27 +79,37 @@ public class KeyframeSet<T> implements Cloneable {
             newKeyframes[i] = keyframes.get(i).clone();
         }
         KeyframeSet newSet = new KeyframeSet(valueType, typeEvaluator);
-        newSet.addKeyFrame(newKeyframes);
+        newSet.add(newKeyframes);
         newSet.setStartTime(startTime);
         newSet.setDuration(duration);
         return newSet;
     }
 
 
-    public T getValueByTime(long currentTime, long currentDuration) {
-        long frameDuration = Math.min(getDuration() - getStartTime(), currentDuration - getStartTime());
-        float fraction = frameDuration == 0 ? 1 : (currentTime - getStartTime()) * 1.0f / frameDuration;
-        return getValue(fraction);
+    public boolean getValue(@NonNull TimeStamp currentTime, @NonNull TimeStamp parentDuration, Keyframe<T> result) {
+        long renderTimeNs = currentTime.toNanos() - startTime.toNanos();
+        long renderDurationNs;
+        if (duration != TimeStamp.MATCH_PARENT_VALUE && parentDuration != TimeStamp.MATCH_PARENT_VALUE) {
+            renderDurationNs = Math.min(duration.toNanos(), parentDuration.toNanos() - startTime.toNanos());
+        } else if (duration != TimeStamp.MATCH_PARENT_VALUE && parentDuration == TimeStamp.MATCH_PARENT_VALUE) {
+            renderDurationNs = duration.toNanos();
+        } else if (duration == TimeStamp.MATCH_PARENT_VALUE && parentDuration != TimeStamp.MATCH_PARENT_VALUE) {
+            renderDurationNs = parentDuration.toNanos() - startTime.toNanos();
+        } else {
+            renderDurationNs = 0;
+        }
+        float fraction = renderDurationNs == 0 ? 1 : MathUtils.clamp(renderTimeNs * 1.0f / renderDurationNs, 0, 1);
+        return getValue(fraction, result);
     }
 
 
-    public T getValue(float fraction) {
+    public boolean getValue(float fraction, Keyframe<T> result) {
         int numKeyframes = keyframes.size();
         if (numKeyframes == 0) {
             throw new IllegalStateException("keyframe set size is empty");
         }
         if (fraction < 0 || fraction > 1 || Float.isNaN(fraction)) {
-            return null;
+            return false;
         }
         Keyframe<T> preKeyFrame = null;
         Keyframe<T> nextKeyFrame = null;
@@ -111,11 +125,11 @@ public class KeyframeSet<T> implements Cloneable {
             if (fraction <= firstFrame.getFraction()) {
                 preKeyFrame = firstFrame;
                 nextKeyFrame = keyframes.get(1);
-                interpolator = preKeyFrame.defaultInterpolator ? null : preKeyFrame.getInterpolator();
+                interpolator = preKeyFrame.getInterpolator();
             } else if (fraction >= lastFrame.getFraction()) {
                 preKeyFrame = keyframes.get(numKeyframes - 2);
                 nextKeyFrame = lastFrame;
-                interpolator = preKeyFrame.defaultInterpolator ? null : preKeyFrame.getInterpolator();
+                interpolator = lastFrame.getInterpolator();
             } else {
                 for (int i = 0; i < numKeyframes; ++i) {
                     Keyframe keyframe = keyframes.get(i);
@@ -125,10 +139,11 @@ public class KeyframeSet<T> implements Cloneable {
                     }
                     preKeyFrame = keyframe;
                 }
-                interpolator = preKeyFrame.getInterpolator() == null ? DEFAULT_INTERPOLATOR : preKeyFrame.getInterpolator();
+                interpolator = preKeyFrame.getInterpolator();
             }
+            if (interpolator == null) interpolator = DEFAULT_INTERPOLATOR;
             float fractionLength = nextKeyFrame.getFraction() - preKeyFrame.getFraction();
-            if (interpolator != null && fractionLength != 0) {
+            if (fractionLength != 0) {
                 keyFraction = interpolator.getInterpolation(
                         (fraction - preKeyFrame.getFraction())
                                 / fractionLength);
@@ -140,30 +155,33 @@ public class KeyframeSet<T> implements Cloneable {
                     preKeyFrame.getValue(),
                     nextKeyFrame.getValue());
         }
-        return value;
+        result.setFraction(keyFraction);
+        result.setValue(value);
+        result.valueType = preKeyFrame.getValueType();
+        return true;
     }
 
     public TypeEvaluator<T> getTypeEvaluator() {
         return typeEvaluator;
     }
 
-    public void setDuration(long duration) {
+    public void setDuration(@NonNull TimeStamp duration) {
         this.duration = duration;
     }
 
-    public long getDuration() {
+    public TimeStamp getDuration() {
         return duration;
     }
 
-    public void setStartTime(long startTime) {
+    public void setStartTime(@NonNull TimeStamp startTime) {
         this.startTime = startTime;
     }
 
-    public long getStartTime() {
+    public TimeStamp getStartTime() {
         return startTime;
     }
 
-    public static KeyframeSet ofInt(long duration, int... values) {
+    public static KeyframeSet ofInt(TimeStamp duration, int... values) {
         int numKeyframes = values.length;
         Keyframe keyframes[] = new Keyframe[numKeyframes];
         keyframes[0] = Keyframe.ofInt(0f, values[0]);
@@ -174,11 +192,11 @@ public class KeyframeSet<T> implements Cloneable {
     }
 
     public static KeyframeSet ofInt(int... values) {
-        return ofInt(Long.MAX_VALUE, values);
+        return ofInt(TimeStamp.MATCH_PARENT_VALUE, values);
     }
 
 
-    public static KeyframeSet ofFloat(long duration, float... values) {
+    public static KeyframeSet ofFloat(TimeStamp duration, float... values) {
         int numKeyframes = values.length;
         Keyframe keyframes[] = new Keyframe[numKeyframes];
         keyframes[0] = Keyframe.ofFloat(0f, values[0]);
@@ -189,10 +207,10 @@ public class KeyframeSet<T> implements Cloneable {
     }
 
     public static KeyframeSet ofFloat(float... values) {
-        return ofFloat(Long.MAX_VALUE, values);
+        return ofFloat(TimeStamp.MATCH_PARENT_VALUE, values);
     }
 
-    public static KeyframeSet ofIntArray(long duration, int[][] values) {
+    public static KeyframeSet ofIntArray(TimeStamp duration, int[][] values) {
         if (values.length < 2) {
             throw new IllegalArgumentException("At least 2 values must be supplied");
         }
@@ -218,10 +236,10 @@ public class KeyframeSet<T> implements Cloneable {
     }
 
     public static KeyframeSet ofIntArray(int[][] values) {
-        return ofIntArray(Long.MAX_VALUE, values);
+        return ofIntArray(TimeStamp.MATCH_PARENT_VALUE, values);
     }
 
-    public static KeyframeSet ofFloatArray(long duration, float[][] values) {
+    public static KeyframeSet ofFloatArray(TimeStamp duration, float[][] values) {
         int numKeyframes = values.length;
         if (numKeyframes < 2) {
             throw new IllegalArgumentException("At least 2 values must be supplied");
@@ -247,13 +265,13 @@ public class KeyframeSet<T> implements Cloneable {
     }
 
     public static KeyframeSet ofFloatArray(float[][] values) {
-        return ofFloatArray(Long.MAX_VALUE, values);
+        return ofFloatArray(TimeStamp.MATCH_PARENT_VALUE, values);
     }
 
 
-    public static <T> KeyframeSet<T> ofKeyframe(long duration, TypeEvaluator<T> typeEvaluator, Keyframe<T>... frames) {
+    public static <T> KeyframeSet<T> ofKeyframe(TimeStamp duration, TypeEvaluator<T> typeEvaluator, Keyframe<T>... frames) {
         KeyframeSet newSet = new KeyframeSet(frames[0].valueType, typeEvaluator);
-        newSet.addKeyFrame(frames);
+        newSet.add(frames);
         newSet.setDuration(duration);
         return newSet;
     }

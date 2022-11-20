@@ -26,25 +26,77 @@
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLShaderLayerActivity"
-            android:label="GLShaderLayerActivity"></activity>
+            android:label="Shader图层">
+            <meta-data
+                android:name="example"
+                android:value="true" />
 
-        <activity
-            android:name="com.jonanorman.android.renderclient.sample.GLSurfaceLayerActivity"
-            android:label="GLSurfaceLayerActivity"></activity>
-
-        <activity
-            android:name="com.jonanorman.android.renderclient.sample.GLLayerGroupActivity"
-            android:label="GLLayerGroupActivity"></activity>
+        </activity>
 
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLViewLayerActivity"
-            android:label="GLViewLayerActivity"></activity>
+            android:label="View图层">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
+
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLCanvasLayerActivity"
+            android:label="Canvas图层">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
+
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLSurfaceTextureLayerActivity"
+            android:label="SurfaceTexture图层">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
+
+
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLMaterialObjectLayerActivity"
-            android:label="GLMaterialObjLayerActivity"></activity>
+            android:label="3D图层">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
+
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLLayerGroupActivity"
+            android:label="多图层多时间线">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
+
         <activity
             android:name="com.jonanorman.android.renderclient.sample.GLGaussianBlurEffectActivity"
-            android:label="GLGaussianBlurEffectActivity"></activity>
+            android:label="高斯模糊特效">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
+
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLEffectViewActivity"
+            android:label="View特效">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
+
+        <activity
+            android:name="com.jonanorman.android.renderclient.sample.GLAlphaOutlineEffectActivity"
+            android:label="描边特效">
+            <meta-data
+                android:name="example"
+                android:value="true" />
+        </activity>
     </application>
 
 </manifest>

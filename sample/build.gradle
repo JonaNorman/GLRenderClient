@@ -48,6 +48,8 @@ dependencies {
 //        changing = true;
 //    }
     implementation project(':lib')
+    implementation "com.github.skydoves:colorpickerview:2.2.4"
+
 }
 
 

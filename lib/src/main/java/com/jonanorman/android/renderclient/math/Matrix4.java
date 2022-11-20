@@ -9,9 +9,12 @@ public class Matrix4 implements Cloneable {
     private static final float[] MULTIPLY_MM_TEMP = new float[16];
     private static final float[] POINT_TEMP = new float[4];
     private static final float[] ANDROID_MATRIX_TEMP = new float[9];
+
     private final Stack<float[]> matrixStack = new Stack<>();
     private final float[] temp = new float[16];
-    private float[] val = new float[16];
+    private Matrix4 graphicsMatrixToOpenglMatrixTemp;
+
+    private float[] value = new float[16];
 
     public Matrix4(float[] matrix) {
         set(matrix);
@@ -28,19 +31,19 @@ public class Matrix4 implements Cloneable {
 
 
     public Matrix4() {
-        setIdentity();
+        clearIdentity();
     }
 
 
     public Matrix4 save() {
-        matrixStack.push(Arrays.copyOf(val, 16));
+        matrixStack.push(Arrays.copyOf(value, 16));
         return this;
     }
 
     public Matrix4 restore() {
         if (matrixStack.empty())
             return this;
-        val = matrixStack.pop();
+        value = matrixStack.pop();
         return this;
     }
 
@@ -158,43 +161,51 @@ public class Matrix4 implements Cloneable {
     }
 
 
-    public Matrix4 setIdentity() {
-        Matrix.setIdentityM(val, 0);
+    public Matrix4 clearIdentity() {
+        Matrix.setIdentityM(value, 0);
         return this;
     }
 
     public Matrix4 preMul(Matrix4 matrix4) {
-        multiplyMM(this.val, val, matrix4.get());
+        multiplyMM(this.value, value, matrix4.get());
         return this;
     }
 
     public Matrix4 preMul(float[] matrix) {
-        multiplyMM(this.val, this.val, matrix);
+        multiplyMM(this.value, this.value, matrix);
         return this;
     }
 
     public Matrix4 postMul(Matrix4 matrix) {
-        multiplyMM(this.val, matrix.get(), this.val);
+        multiplyMM(this.value, matrix.get(), this.value);
         return this;
     }
 
 
     public Matrix4 postMul(float[] matrix) {
-        multiplyMM(this.val, matrix, this.val);
+        multiplyMM(this.value, matrix, this.value);
         return this;
     }
 
+    public Matrix4 postMul(android.graphics.Matrix matrix) {
+        if (graphicsMatrixToOpenglMatrixTemp == null) {
+            graphicsMatrixToOpenglMatrixTemp = new Matrix4();
+        }
+        graphicsMatrixToOpenglMatrixTemp.set(matrix);
+        return postMul(graphicsMatrixToOpenglMatrixTemp);
+    }
+
     public float[] get() {
-        return val;
+        return value;
     }
 
     public Matrix4 set(float[] matrix) {
-        System.arraycopy(matrix, 0, val, 0, val.length);
+        System.arraycopy(matrix, 0, value, 0, value.length);
         return this;
     }
 
     public Matrix4 set(Matrix4 matrix4) {
-        System.arraycopy(matrix4.get(), 0, val, 0, val.length);
+        System.arraycopy(matrix4.get(), 0, value, 0, value.length);
         return this;
     }
 
@@ -203,47 +214,47 @@ public class Matrix4 implements Cloneable {
         synchronized (ANDROID_MATRIX_TEMP) {
             float[] values = ANDROID_MATRIX_TEMP;
             matrix.getValues(values);
-            val[0] = values[0 * 3 + 0];
-            val[1] = values[1 * 3 + 0];
-            val[2] = 0;
-            val[3] = values[2 * 3 + 0];
+            value[0] = values[0 * 3 + 0];
+            value[1] = values[1 * 3 + 0];
+            value[2] = 0;
+            value[3] = values[2 * 3 + 0];
 
-            val[4] = values[0 * 3 + 1];
-            val[5] = values[1 * 3 + 1];
-            val[6] = 0;
-            val[7] = values[2 * 3 + 1];
+            value[4] = values[0 * 3 + 1];
+            value[5] = values[1 * 3 + 1];
+            value[6] = 0;
+            value[7] = values[2 * 3 + 1];
 
-            val[8] = 0;
-            val[9] = 0;
-            val[10] = 1;
-            val[11] = 0;
+            value[8] = 0;
+            value[9] = 0;
+            value[10] = 1;
+            value[11] = 0;
 
-            val[12] = values[0 * 3 + 2];
-            val[13] = values[1 * 3 + 2];
-            val[14] = 0;
-            val[15] = values[2 * 3 + 2];
+            value[12] = values[0 * 3 + 2];
+            value[13] = values[1 * 3 + 2];
+            value[14] = 0;
+            value[15] = values[2 * 3 + 2];
         }
         return this;
     }
 
     public void invert(Matrix4 matrix4) {
-        boolean success = Matrix.invertM(matrix4.get(), 0, val, 0);
+        boolean success = Matrix.invertM(matrix4.get(), 0, value, 0);
         if (!success) {
-            matrix4.setIdentity();
+            matrix4.clearIdentity();
         }
     }
 
     public void mapPoints(float[] point) {
-        multiplyMV(point, val, point);
+        multiplyMV(point, value, point);
     }
 
     public void mapPoints(float[] resultPoint, float[] point) {
-        multiplyMV(resultPoint, val, point);
+        multiplyMV(resultPoint, value, point);
     }
 
     @Override
     public Matrix4 clone() {
-        Matrix4 matrix4 = new Matrix4(val);
+        Matrix4 matrix4 = new Matrix4(value);
         return matrix4;
     }
 

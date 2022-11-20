@@ -9,36 +9,36 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.jonanorman.android.renderclient.EGLConfigSimpleChooser;
-import com.jonanorman.android.renderclient.GLCapability;
-import com.jonanorman.android.renderclient.GLLayer;
-import com.jonanorman.android.renderclient.GLMaterialObjectLayer;
-import com.jonanorman.android.renderclient.GLRenderClient;
-import com.jonanorman.android.renderclient.GLRenderThread;
-import com.jonanorman.android.renderclient.GLWindowSurface;
+import com.jonanorman.android.renderclient.layer.GLLayer;
+import com.jonanorman.android.renderclient.layer.GLMaterialObjectLayer;
 import com.jonanorman.android.renderclient.math.GravityMode;
 import com.jonanorman.android.renderclient.math.Matrix4;
 import com.jonanorman.android.renderclient.math.Quaternion;
+import com.jonanorman.android.renderclient.math.TimeStamp;
 import com.jonanorman.android.renderclient.math.Vector3;
+import com.jonanorman.android.renderclient.opengl.EGLConfigSimpleChooser;
+import com.jonanorman.android.renderclient.opengl.GLEnable;
+import com.jonanorman.android.renderclient.opengl.GLRenderClient;
+import com.jonanorman.android.renderclient.opengl.GLRenderMessage;
+import com.jonanorman.android.renderclient.opengl.egl14.EGL14RenderClientFactory;
+import com.jonanorman.android.renderclient.view.GLTextureViewRender;
 
-public class GLMaterialObjectLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
+public class GLMaterialObjectLayerActivity extends AppCompatActivity {
 
-    private static final int MESSAGE_LAYER_CREATE = 1;
-    private static final int MESSAGE_SURFACE_RENDER = 2;
-    private static final int MESSAGE_SURFACE_MOTION_EVENT = 3;
+    private int layerCreateId;
 
-    private GLRenderThread renderThread;
-    private SurfaceTexture surfaceTexture = null;
-
+    private GLRenderMessage renderMessage;
+    private GLTextureViewRender textureViewRender;
+    private GLMaterialObjectLayer rootLayer;
 
     private Handler.Callback callback = new Handler.Callback() {
 
-        long startTime;
-        GLMaterialObjectLayer rootLayer;
+
         DragControl dragControl;
         Matrix4 rotationMatrix = new Matrix4();
         float rotationZ = 0;
@@ -46,157 +46,176 @@ public class GLMaterialObjectLayerActivity extends AppCompatActivity implements 
         @Override
         public boolean handleMessage(@NonNull Message msg) {
             int what = msg.what;
-            switch (what) {
-                case MESSAGE_LAYER_CREATE: {
-                    dragControl = new DragControl(getApplicationContext());
-                    GLRenderClient renderClient = renderThread.getRenderClient();
-                    rootLayer = new GLMaterialObjectLayer(renderClient);
-                    rootLayer.setOnTouchListener(dragControl);
-                    rootLayer.getGLEnable().add(GLCapability.DEPTH_TEST);
-                    rootLayer.setMaterialObjectFile(getApplicationContext(), "andy.obj");
-                    rootLayer.setMaterialTexture(getApplicationContext(), R.drawable.andy);
-                    rootLayer.addTransform(new GLLayer.LayerTransform() {
-                        @Override
-                        public void onLayerTransform(GLLayer layer, long renderTimeMs) {
-                            float scale = 4;
-                            Matrix4 modelMatrix = rootLayer.getModelMatrix();
-                            modelMatrix.setIdentity();
-                            modelMatrix.translate(0, -0.1f, 0);
-                            scale *= dragControl.getCurrentScale();
-                            modelMatrix.scale(scale, scale, scale);
+            if (what == layerCreateId) {
+                dragControl = new DragControl(getApplicationContext());
+                rootLayer = new GLMaterialObjectLayer();
+                rootLayer.setOnTouchListener(dragControl);
+                rootLayer.addOnRenderListener(renderListener);
+                rootLayer.addEnableCapability(GLEnable.Capability.DEPTH_TEST);
+                rootLayer.setMaterialObjectFile(getApplicationContext(), "andy.obj");
+                rootLayer.setMaterialTexture(getApplicationContext(), R.drawable.andy);
+                rootLayer.addOnTransformListener(new GLLayer.OnTransformListener() {
+                    @Override
+                    public void onTransform(GLLayer layer, TimeStamp renderTime) {
+                        float scale = 4;
+                        Matrix4 modelMatrix = rootLayer.getModelMatrix();
+                        modelMatrix.clearIdentity();
+                        modelMatrix.translate(0, -0.1f, 0);
+                        scale *= dragControl.getCurrentScale();
+                        modelMatrix.scale(scale, scale, scale);
 
-                            if (dragControl.isDragging()) {
-                                rotationMatrix.setIdentity();
-                                dragControl.currentRotation().toMatrix(rotationMatrix);
+                        if (dragControl.isDragging()) {
+                            rotationMatrix.clearIdentity();
+                            dragControl.currentRotation().toMatrix(rotationMatrix);
+                        } else {
+                            rotationMatrix.clearIdentity();
+                            if (rotationZ > 360) {
+                                rotationZ = 0;
                             } else {
-                                rotationMatrix.setIdentity();
-                                if (rotationZ > 360) {
-                                    rotationZ = 0;
-                                } else {
-                                    rotationZ = rotationZ + 1;
-                                }
-                                rotationMatrix.rotate(rotationZ, 0, 1, 0);
+                                rotationZ = rotationZ + 1;
                             }
-                            modelMatrix.postMul(rotationMatrix);
-                            modelMatrix.translate(0, 0.1f, 0);
-                            float aspect = layer.getRenderWidth() / layer.getRenderHeight();
-                            Matrix4 viewMatrix = rootLayer.getViewMatrix();
-                            viewMatrix.setIdentity();
-                            viewMatrix.lookAt(0.0f, 0.0f, -2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-                            Matrix4 projectionMatrix = rootLayer.getProjectionMatrix();
-                            projectionMatrix.setIdentity();
-                            projectionMatrix.perspective(45, aspect, 1, 100);
-
+                            rotationMatrix.rotate(rotationZ, 0, 1, 0);
                         }
-                    });
+                        modelMatrix.postMul(rotationMatrix);
+                        modelMatrix.translate(0, 0.1f, 0);
+                        float aspect = layer.getRenderWidth() / layer.getRenderHeight();
+                        Matrix4 viewMatrix = rootLayer.getViewMatrix();
+                        viewMatrix.clearIdentity();
+                        viewMatrix.lookAt(0.0f, 0.0f, -2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+                        Matrix4 projectionMatrix = rootLayer.getProjectionMatrix();
+                        projectionMatrix.clearIdentity();
+                        projectionMatrix.perspective(45, aspect, 1, 100);
+                    }
+                });
 
-                    rootLayer.setGravity(GravityMode.CENTER);
-                }
+                rootLayer.setGravity(GravityMode.CENTER);
 
                 return true;
-                case MESSAGE_SURFACE_MOTION_EVENT: {
-                    MotionEvent motionEvent = (MotionEvent) msg.obj;
-                    rootLayer.queueTouchEvent(motionEvent);
-                    return true;
-                }
-                case MESSAGE_SURFACE_RENDER:
-                    if (surfaceTexture != null) {
-                        long time = 0;
-                        if (startTime == 0) {
-                            startTime = System.currentTimeMillis();
-                        } else {
-                            time = System.currentTimeMillis() - startTime;
-                        }
-                        GLRenderClient renderClient = renderThread.getRenderClient();
-                        GLWindowSurface windowSurface = renderClient.obtainWindowSurface(surfaceTexture);
-                        rootLayer.setTime(time);
-                        rootLayer.render(windowSurface);
-                        if (!renderThread.hasMessages(MESSAGE_SURFACE_RENDER)) {
-                            renderThread.sendEmptyMessageDelayed(MESSAGE_SURFACE_RENDER, 30);
-                        }
-                        return true;
-                    } else {
-                        startTime = 0;
-                    }
             }
             return false;
         }
     };
 
+
+    private GLLayer.OnRenderListener renderListener = new GLLayer.OnRenderListener() {
+        long effectStartTime;
+        long sumTime;
+        long sumCount = 0;
+
+        @Override
+        public void onRenderStart(GLLayer layer) {
+            effectStartTime = System.currentTimeMillis();
+        }
+
+        @Override
+        public void onRenderEnd(GLLayer layer, boolean success) {
+            sumCount++;
+            sumTime += System.currentTimeMillis() - effectStartTime;
+            if (sumCount > 10) {
+                long avgTime = sumTime / sumCount;
+                sumCount = 0;
+                sumTime = 0;
+                textView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        textView.setText("render time:" + avgTime + "ms");
+                    }
+                });
+            }
+        }
+    };
+    private TextView textView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.texture_view);
+        setContentView(R.layout.activity_material_object_layer);
+
+        initRenderMessage();
+        initTextureView();
+        initTextView();
+
+    }
+
+    private void initTextView() {
+        textView = findViewById(R.id.textView);
+    }
+
+
+    private void initRenderMessage() {
+        GLRenderClient.Factory factory = new EGL14RenderClientFactory();
+        EGLConfigSimpleChooser.Builder simpleChooser = new EGLConfigSimpleChooser.Builder();
+        simpleChooser.setDepthSize(8);
+        factory.setEGLConfigChooser(simpleChooser.build());
+        renderMessage = GLRenderMessage.obtain(factory, callback);
+        layerCreateId = renderMessage.getAutoMessageId();
+
+        renderMessage.sendEmptyMessage(layerCreateId);
+    }
+
+    private void initTextureView() {
+        int motionEventId = renderMessage.getAutoMessageId();
         TextureView textureView = findViewById(R.id.textureView);
-        textureView.setSurfaceTextureListener(this);
         textureView.setOpaque(false);
         textureView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 Message message = Message.obtain();
-                message.what = MESSAGE_SURFACE_MOTION_EVENT;
+                message.what = motionEventId;
                 MotionEvent motionEvent = MotionEvent.obtain(event);
                 message.obj = motionEvent;
-                renderThread.sendMessage(message);
+                renderMessage.sendMessage(message);
                 return true;
             }
         });
-        GLRenderClient.Builder builder = new GLRenderClient.Builder();
-        EGLConfigSimpleChooser.Builder simpleChooser = new EGLConfigSimpleChooser.Builder();
-        simpleChooser.setDepthSize(8);
-        builder.setEGLConfigChooser(simpleChooser.build());
-        renderThread = new GLRenderThread(builder);
-        renderThread.start();
-        renderThread.setRenderCallback(callback);
-        renderThread.sendEmptyMessage(MESSAGE_LAYER_CREATE);
+        renderMessage.addHandlerCallback(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(@NonNull Message msg) {
+                int what = msg.what;
+                if (what == motionEventId) {
+                    MotionEvent motionEvent = (MotionEvent) msg.obj;
+                    rootLayer.queueTouchEvent(motionEvent);
+                    motionEvent.recycle();
+                    return true;
+                }
+                return false;
+            }
+        });
+        textureViewRender = new GLTextureViewRender(renderMessage, textureView);
+        textureViewRender.setFrameRenderCallback(new GLTextureViewRender.onFrameRenderCallback() {
+            long startTime;
+            TimeStamp timeStamp = TimeStamp.ofMills(0);
+
+            @Override
+            public void onFrameStart() {
+                startTime = System.currentTimeMillis();
+            }
+
+            @Override
+            public void onFrameRender(SurfaceTexture surfaceTexture) {
+
+                long durationMs = System.currentTimeMillis() - startTime;
+                startTime = System.currentTimeMillis();
+                timeStamp.setDuration(timeStamp.getDuration() + durationMs);
+                rootLayer.render(surfaceTexture, timeStamp);
+            }
+
+            @Override
+            public void onFrameStop() {
+
+            }
+        });
+        textureViewRender.start();
     }
 
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        renderThread.quitAndWait();
+        textureViewRender.release();
+        renderMessage.recycleAndWait();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        renderThread.removeMessages(MESSAGE_SURFACE_RENDER);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        renderThread.sendEmptyMessage(MESSAGE_SURFACE_RENDER);
-    }
-
-    @Override
-    public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
-        renderThread.post(new Runnable() {
-            @Override
-            public void run() {
-                surfaceTexture = surface;
-            }
-        });
-        renderThread.sendEmptyMessage(MESSAGE_SURFACE_RENDER);
-    }
-
-
-    @Override
-    public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
-
-    }
-
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
-        return true;
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surface) {
-
-    }
 
     public static final class DragControl implements GLLayer.OnTouchListener {
 

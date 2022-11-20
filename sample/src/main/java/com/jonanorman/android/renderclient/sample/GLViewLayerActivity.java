@@ -3,7 +3,6 @@ package com.jonanorman.android.renderclient.sample;
 import android.animation.ObjectAnimator;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,8 +11,6 @@ import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
@@ -24,196 +21,190 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.jonanorman.android.renderclient.GLRenderClient;
-import com.jonanorman.android.renderclient.GLRenderThread;
-import com.jonanorman.android.renderclient.GLViewLayer;
+import com.jonanorman.android.renderclient.layer.GLLayer;
+import com.jonanorman.android.renderclient.layer.GLViewLayer;
+import com.jonanorman.android.renderclient.math.TimeStamp;
+import com.jonanorman.android.renderclient.opengl.GLRenderMessage;
+import com.jonanorman.android.renderclient.view.GLTextureViewRender;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GLViewLayerActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener {
-
-    private static final int MESSAGE_LAYER_CREATE = 1;
-    private static final int MESSAGE_SURFACE_RENDER = 2;
-    private static final int MESSAGE_SURFACE_MOTION_EVENT = 3;
-
-    private GLRenderThread renderThread = new GLRenderThread(new GLRenderClient.Builder());
-    private SurfaceTexture surfaceTexture = null;
-    GLViewLayer viewLayer;
+public class GLViewLayerActivity extends AppCompatActivity {
 
 
-    private Handler.Callback callback = new Handler.Callback() {
+    private GLRenderMessage renderMessage;
+    private GLTextureViewRender textureViewRender;
+    private GLViewLayer renderLayer;
+    private TextureView textureView;
+    private TextView textView;
 
+
+    private GLTextureViewRender.onFrameRenderCallback frameRenderCallback = new GLTextureViewRender.onFrameRenderCallback() {
 
         long startTime;
-
+        TimeStamp timeStamp = TimeStamp.ofMills(0);
 
         @Override
-        public boolean handleMessage(@NonNull Message msg) {
-            int what = msg.what;
-            switch (what) {
-                case MESSAGE_LAYER_CREATE: {
-                    GLRenderClient renderClient = renderThread.getRenderClient();
-                    viewLayer = renderClient.newLayoutLayer(getApplicationContext(), R.style.AppTheme);
-                    viewLayer.setBackgroundColor(Color.WHITE);
-                }
+        public void onFrameStart() {
+            startTime = System.currentTimeMillis();
+        }
 
-                return true;
-                case MESSAGE_SURFACE_RENDER:
-                    if (surfaceTexture != null) {
-                        long time = 0;
-                        if (startTime == 0) {
-                            startTime = System.currentTimeMillis();
-                        } else {
-                            time = System.currentTimeMillis() - startTime;
-                        }
-                        viewLayer.setTime(time);
-                        viewLayer.render(surfaceTexture);
-                        if (!renderThread.hasMessages(MESSAGE_SURFACE_RENDER)) {
-                            renderThread.sendEmptyMessageDelayed(MESSAGE_SURFACE_RENDER, 30);
-                        }
-                        return true;
-                    } else {
-                        startTime = 0;
-                    }
-                    return true;
-                case MESSAGE_SURFACE_MOTION_EVENT: {
-                    MotionEvent motionEvent = (MotionEvent) msg.obj;
-                    viewLayer.queueTouchEvent(motionEvent);
-                    return true;
-                }
-            }
-            return false;
+        @Override
+        public void onFrameRender(SurfaceTexture surfaceTexture) {
+
+            long durationMs = System.currentTimeMillis() - startTime;
+            startTime = System.currentTimeMillis();
+            timeStamp.setDuration(timeStamp.getDuration() + durationMs);
+            renderLayer.render(surfaceTexture, timeStamp);
+
+        }
+
+        @Override
+        public void onFrameStop() {
+
         }
     };
+
+    private GLLayer.OnRenderListener renderListener = new GLLayer.OnRenderListener() {
+        long effectStartTime;
+        long sumTime;
+        long sumCount = 0;
+
+        @Override
+        public void onRenderStart(GLLayer layer) {
+            effectStartTime = System.currentTimeMillis();
+        }
+
+        @Override
+        public void onRenderEnd(GLLayer layer, boolean success) {
+            sumCount++;
+            sumTime += System.currentTimeMillis() - effectStartTime;
+            if (sumCount > 10) {
+                long avgTime = sumTime / sumCount;
+                sumCount = 0;
+                sumTime = 0;
+                textView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        textView.setText("render time:" + avgTime + "ms");
+                    }
+                });
+            }
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.texture_view);
-        TextureView textureView = findViewById(R.id.textureView);
-        textureView.setSurfaceTextureListener(this);
+        setContentView(R.layout.activity_view_layer);
+        initRenderMessage();
+        initTextureView();
+        initTextView();
+    }
+
+    private void initTextView() {
+        textView = findViewById(R.id.textView);
+    }
+
+    private void initTextureView() {
+
+        int motionEventId = renderMessage.getAutoMessageId();
+        textureView = findViewById(R.id.textureView);
+        textureView.setOpaque(false);
         textureView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 Message message = Message.obtain();
-                message.what = MESSAGE_SURFACE_MOTION_EVENT;
+                message.what = motionEventId;
                 MotionEvent motionEvent = MotionEvent.obtain(event);
                 message.obj = motionEvent;
-                renderThread.sendMessage(message);
+                renderMessage.sendMessage(message);
                 return true;
             }
         });
-        renderThread.start();
-        renderThread.setRenderCallback(callback);
-        renderThread.sendEmptyMessage(MESSAGE_LAYER_CREATE);
-        renderThread.post(new Runnable() {
+        renderMessage.addHandlerCallback(new Handler.Callback() {
+            @Override
+            public boolean handleMessage(@NonNull Message msg) {
+                int what = msg.what;
+                if (what == motionEventId) {
+                    MotionEvent motionEvent = (MotionEvent) msg.obj;
+                    renderLayer.queueTouchEvent(motionEvent);
+                    motionEvent.recycle();
+                    return true;
+                }
+                return false;
+            }
+        });
+        textureViewRender = new GLTextureViewRender(renderMessage, textureView);
+        textureViewRender.setFrameRenderCallback(frameRenderCallback);
+        textureViewRender.start();
+    }
+
+    private void initRenderMessage() {
+        renderMessage = GLRenderMessage.obtain();
+        renderMessage.post(new Runnable() {
             @Override
             public void run() {
-                LayoutInflater layoutInflater = LayoutInflater.from(viewLayer.getContext());
-                View view = layoutInflater.inflate(R.layout.layout_view_layer, null);
-                viewLayer.addView(view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                initLayer();
+            }
+        });
+    }
 
-                ListView listView = view.findViewById(R.id.list_view);
-                List<String> nameList = new ArrayList<>();
-                int length = 40;
-                for (int i = 0; i < length; i++) {
-                    nameList.add("item:" + i);
-                }
-                listView.setAdapter(new ArrayAdapter(
-                        layoutInflater.getContext(),
-                        android.R.layout.simple_list_item_1,
-                        nameList));
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    private void initLayer() {
+        renderLayer = new GLViewLayer(getApplicationContext(), R.style.AppTheme);
+        renderLayer.addOnRenderListener(renderListener);
+        renderLayer.setBackgroundColor(Color.WHITE);
 
-                        Toast.makeText(layoutInflater.getContext(), "listView position:" + position + " click", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                    @Override
-                    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                        Toast.makeText(layoutInflater.getContext(), "listView position:" + position + " long click", Toast.LENGTH_SHORT).show();
+        LayoutInflater layoutInflater = LayoutInflater.from(renderLayer.getContext());
+        View view = layoutInflater.inflate(R.layout.layout_view_layer, null);
+        renderLayer.addView(view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        ListView listView = view.findViewById(R.id.list_view);
+        List<String> nameList = new ArrayList<>();
+        int length = 40;
+        for (int i = 0; i < length; i++) {
+            nameList.add("item:" + i);
+        }
+        listView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return true;
+            }
+        });
+        listView.setAdapter(new ArrayAdapter(
+                layoutInflater.getContext(),
+                android.R.layout.simple_list_item_1,
+                nameList));
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //can not call this, because not exist viewRootImpl
 
-                        return true;
-                    }
-                });
-                listView.setSelector(new ColorDrawable(Color.WHITE));
-
-                TextView textView = view.findViewById(R.id.textView);
-                float curTranslationX = textView.getTranslationX();
-                ObjectAnimator animator = ObjectAnimator.ofFloat(textView, "translationX", curTranslationX, -250f, curTranslationX + 100);
-                animator.setDuration(3000);
-                animator.start();
-                Animation alpha = new RotateAnimation(0, 45);
-                alpha.setDuration(3000);
-                alpha.setFillAfter(true);
-                alpha.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {
-                        animation.getDuration();
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        animation.getDuration();
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {
-                        animation.getDuration();
-                    }
-                });
-
-                textView.startAnimation(alpha);
-
-
+                Toast.makeText(layoutInflater.getContext(), "listView position:" + position + " click", Toast.LENGTH_SHORT).show();
+            }
+        });
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(layoutInflater.getContext(), "listView position:" + position + " long click", Toast.LENGTH_SHORT).show();
+                return true;
             }
         });
 
-
+        TextView textView = view.findViewById(R.id.textView);
+        float curTranslationX = textView.getTranslationX();
+        ObjectAnimator animator = ObjectAnimator.ofFloat(textView, "translationX", curTranslationX, -250f, curTranslationX);
+        animator.setDuration(3000);
+        animator.start();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        renderThread.quitAndWait();
+        textureViewRender.release();
+        renderMessage.recycleAndWait();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        renderThread.removeMessages(MESSAGE_SURFACE_RENDER);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        renderThread.sendEmptyMessage(MESSAGE_SURFACE_RENDER);
-    }
-
-    @Override
-    public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
-        surfaceTexture = surface;
-        renderThread.sendEmptyMessage(MESSAGE_SURFACE_RENDER);
-    }
-
-
-    @Override
-    public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
-
-    }
-
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
-        return true;
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surface) {
-
-    }
 
 }
