@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/holo_blue_bright"
+    android:background="@android:color/black"
     android:paddingBottom="25dp">
 
 
@@ -19,6 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="right"
         android:layout_marginTop="30dp"
+        android:textColor="@android:color/white"
         android:layout_marginRight="30dp">
 
     </TextView>
@@ -30,6 +31,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:textColor="@android:color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="最大宽度:(0-100)"></TextView>
@@ -49,6 +51,7 @@
             </SeekBar>
 
             <TextView
+                android:textColor="@android:color/white"
                 android:id="@+id/seek_bar_1_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
@@ -59,6 +62,7 @@
 
 
         <TextView
+            android:textColor="@android:color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="强度:(0-1)">
@@ -80,6 +84,7 @@
             </SeekBar>
 
             <TextView
+                android:textColor="@android:color/white"
                 android:id="@+id/seek_bar_2_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
@@ -89,6 +94,7 @@
         </LinearLayout>
 
         <TextView
+            android:textColor="@android:color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="种类:(0-5)">
@@ -110,6 +116,7 @@
             </SeekBar>
 
             <TextView
+                android:textColor="@android:color/white"
                 android:id="@+id/seek_bar_3_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
