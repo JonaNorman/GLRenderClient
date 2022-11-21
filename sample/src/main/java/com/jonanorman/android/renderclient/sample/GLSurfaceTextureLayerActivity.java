@@ -91,10 +91,11 @@ public class GLSurfaceTextureLayerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activty_surfacetexture_layer);
+        initSurfaceAnimation();
         initRenderMessage();
         initTextureView();
         initTextView();
-        initSurfaceAnimation();
+
 
     }
 

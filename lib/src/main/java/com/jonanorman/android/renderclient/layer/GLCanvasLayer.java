@@ -16,20 +16,6 @@ import com.jonanorman.android.renderclient.opengl.gl20.GL20Texture;
 
 public class GLCanvasLayer extends GLTextureLayer {
 
-    private static final String FRAGMENT_SHADER = "#extension GL_OES_EGL_image_external : require\n" +
-            "precision mediump float;\n" +
-            "varying highp vec2 textureCoordinate;\n" +
-            "uniform samplerExternalOES inputImageTexture;\n" +
-            "uniform vec2 inputTextureSize;\n" +
-            "uniform vec2 viewPortSize;\n" +
-            "uniform float renderTime;\n" +
-            "uniform float renderDuration;\n" +
-            "\n" +
-            "void main()\n" +
-            "{\n" +
-            "    vec4 color  = texture2D(inputImageTexture, textureCoordinate);\n" +
-            "    gl_FragColor = color;\n" +
-            "}";
 
 
     private GLTexture viewTexture;
@@ -41,8 +27,7 @@ public class GLCanvasLayer extends GLTextureLayer {
 
 
     public GLCanvasLayer(CanvasProvider canvasProvider) {
-        super();
-        setFragmentShaderCode(FRAGMENT_SHADER);
+        super(true);
         this.canvasProvider = canvasProvider;
     }
 

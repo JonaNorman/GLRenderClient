@@ -16,8 +16,7 @@ public class GLAlphaSdfEffect extends GLEffectGroup {
                     "uniform sampler2D inputImageTexture;\n" +
                     "uniform vec2 inputTextureSize;\n" +
                     "uniform int distance;\n" +
-                    "#define D1 distance\n" +
-                    "#define D2 float(D1 * 2 + 1)\n" +
+                    "#define D float(distance)\n" +
                     "#define textureStep  vec2(1.0/inputTextureSize.x,.0/inputTextureSize.y)\n" +
                     "\n" +
                     "\n" +
@@ -25,21 +24,26 @@ public class GLAlphaSdfEffect extends GLEffectGroup {
                     "{\n" +
                     "    return texture2D(inputImageTexture,uv).a-0.5; \n" +
                     "}\n" +
+                    "float normalized(float d)\n" +
+                    "{\n" +
+                    "    return d/D*0.5+0.5; \n" +
+                    "}\n" +
                     "\n" +
                     "void main()\n" +
                     "{\n" +
                     "    vec2 uv = textureCoordinate;\n" +
                     "    float s = sign(source(uv));\n" +
                     "    float d = 0.;   \n" +
-                    "    for(int i= 0; i < D1; i++){\n" +
+                    "    for(int i= 0; i < distance; i++){\n" +
                     "        d++;\n" +
                     "        vec2 offset =  vec2(d * textureStep.x, 0.);\n" +
                     "        if(s * source(uv + offset) < 0.)break;\n" +
                     "        if(s * source(uv - offset) < 0.)break; \n" +
                     "    }\n" +
                     "\n" +
-                    "    float sd = -s * d / D2;\n" +
-                    "    gl_FragColor =vec4(vec3(sd),1.0);\n" +
+                    "    float sd = s*d;\n" +
+                    "    float dMin = normalized(sd);\n" +
+                    "    gl_FragColor =vec4(vec3(dMin),1.0);\n" +
                     "}";
 
     private final static String VERTICAL_FRAGMENT_SHADER =
@@ -48,16 +52,19 @@ public class GLAlphaSdfEffect extends GLEffectGroup {
                     "uniform sampler2D inputImageTexture;\n" +
                     "uniform vec2 inputTextureSize;\n" +
                     "uniform int distance;\n" +
-                    "#define D1 distance\n" +
-                    "#define D2 float(D1 * 2 + 1)\n" +
+                    "#define D float(distance)\n" +
                     "#define textureStep  vec2(1.0/inputTextureSize.x,1.0/inputTextureSize.y)\n" +
                     "\n" +
                     "\n" +
-                    "float sd(vec2 uv)\n" +
+                    "float reverseNormalized(float sd)\n" +
                     "{\n" +
-                    "    return texture2D(inputImageTexture, uv).x * D2;\n" +
+                    "    return (sd-0.5)*2.0*D;\n" +
                     "}\n" +
                     "\n" +
+                    "float sd(vec2 uv)\n" +
+                    "{\n" +
+                    "    return reverseNormalized(texture2D(inputImageTexture, uv).x);\n" +
+                    "}\n" +
                     "\n" +
                     "void main()\n" +
                     "{\n" +
@@ -65,7 +72,7 @@ public class GLAlphaSdfEffect extends GLEffectGroup {
                     "    float dx = sd(uv);\n" +
                     "    float dMin = abs(dx);\n" +
                     "    float dy = 0.;\n" +
-                    "    for(int i= 0; i < D1; i++){\n" +
+                    "    for(int i= 0; i < distance; i++){\n" +
                     "        dy += 1.;\n" +
                     "        vec2 offset =  vec2(0., dy * textureStep.y);\n" +
                     "        float dx1 = sd(uv + offset);\n" +
@@ -84,14 +91,9 @@ public class GLAlphaSdfEffect extends GLEffectGroup {
                     "        }\n" +
                     "\n" +
                     "        dMin *= sign(dx);\n" +
-                    "        float d = dMin/D2;\n" +
+                    "        float d = dMin/D;\n" +
                     "        \n" +
-                    "        d = 1.0 -d;\n" +
-                    "        \n" +
-                    "        d =smoothstep(0.5,1.0,d);\n" +
-                    "        \n" +
-                    "        \n" +
-                    "       \n" +
+                    "        d =d*0.5+0.5;\n" +
                     "        gl_FragColor =vec4(vec3(d),1.0);\n" +
                     "}\n" +
                     " ";

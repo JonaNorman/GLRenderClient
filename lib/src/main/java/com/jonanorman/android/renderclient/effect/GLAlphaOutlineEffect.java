@@ -79,28 +79,34 @@ public class GLAlphaOutlineEffect extends GLEffectGroup {
                 "uniform  vec4 outlineColor;\n" +
                 "uniform float outlineStyle;\n" +
                 "uniform int maxOutlineWidth;\n" +
-                "#define minAlphaStep 1.0/float(maxOutlineWidth)/3.0\n" +
+                "#define OUT_LINE_STEP float(maxOutlineWidth)/textureWidth\n" +
+
+                "float sd(vec2 uv)\n" +
+                "{\n" +
+                "    float x =  texture2D(inputImageTexture, uv).x;\n" +
+                "    float d = -2.0*x+1.0;\n" +
+                "    if(d>=1.0)return d+0.001;\n" +
+                "    return d;\n" +
+                "}\n" +
+
                 "\n" +
                 "\n" +
                 "float getOutlineMask(){\n" +
-                "    float sampledAlpha = texture2D(inputImageTexture, textureCoordinate).r;\n" +
-                "    sampledAlpha = (sampledAlpha-minAlphaStep)/(1.0-minAlphaStep);\n" +
-                "    sampledAlpha = clamp(sampledAlpha,0.0,1.0);\n" +
-                "    float b =   clamp(outlineWidth, 0.0, 0.99);\n" +
+                "    float d = sd(textureCoordinate);\n" +
+                "    float b =   outlineWidth;\n" +
                 "    if(outlineStyle ==1.0){\n" +
-                "        b = step((1.0-sampledAlpha),b);\n" +
+                "       return step(d,b);\n" +
                 "    }else if(outlineStyle == 2.0){\n" +
-                "       b = step(abs(sampledAlpha-0.5)*2.0,b*0.8);\n" +
+                "        return  step(abs(d-0.5)*2.0,b*0.5);\n" +
                 "    }else if(outlineStyle == 3.0){\n" +
-                "        b = texture2D(originalImageTexture, textureCoordinate+vec2(outlineWidth*float(maxOutlineWidth)/textureWidth*1.0,0.0)).a;\n" +
+                "         return  smoothstep(0.0,1.0,1.0-clamp(d/b,0.0,1.0));\n" +
                 "    }else if(outlineStyle == 4.0){\n" +
-                "        b = smoothstep(1.0-b,1.0,sampledAlpha);\n" +
+                "         return texture2D(originalImageTexture, textureCoordinate+vec2(outlineWidth*OUT_LINE_STEP,0.0)).a;\n" +
                 "    }else if(outlineStyle == 5.0){\n" +
-                "        b = texture2D(originalImageTexture, textureCoordinate-vec2(outlineWidth*float(maxOutlineWidth)/textureWidth*1.0,0.0)).a;\n" +
+                "        return  texture2D(originalImageTexture, textureCoordinate-vec2(outlineWidth*OUT_LINE_STEP,0.0)).a;\n" +
                 "    }else{\n" +
-                "        b = 0.0;\n" +
+                "        return  0.0;\n" +
                 "    }\n" +
-                "    return b;\n" +
                 "}\n" +
                 "\n" +
                 "\n" +
@@ -108,7 +114,7 @@ public class GLAlphaOutlineEffect extends GLEffectGroup {
                 "{\n" +
                 "    vec4 textureColor = texture2D(originalImageTexture, textureCoordinate);\n" +
                 "    float outlineAlpha = getOutlineMask();\n" +
-                "    gl_FragColor =textureColor+(1.0-textureColor.a)*outlineAlpha*outlineColor;;\n" +
+                "    gl_FragColor =textureColor+(1.0-textureColor.a)*outlineAlpha*outlineColor;\n" +
                 "\n" +
                 "}";
 

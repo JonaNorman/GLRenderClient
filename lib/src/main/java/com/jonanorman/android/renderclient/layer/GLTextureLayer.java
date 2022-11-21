@@ -72,7 +72,7 @@ public class GLTextureLayer extends GLShaderLayer {
             "\n" +
             "void main()\n" +
             "{\n" +
-            "    vec4 color  = texture2D(inputImageTexture, textureCoordinate,mipmapLevel);\n" +
+            "    vec4 color  = texture2D(inputImageTexture, textureCoordinate);\n" +
             "    if(!inputTexturePreMul) color = vec4(color.rgb*color.a,color.a);\n" +
             "    gl_FragColor = color;\n" +
             "}";
