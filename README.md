@@ -9,7 +9,7 @@
 ## 接入
 
 ```gradle
-implementation('io.github.jonanorman.android:glrenderclient:0.2.0')
+implementation('io.github.jonanorman.android:glrenderclient:0.2.1')
 ```
 
 ```Java
